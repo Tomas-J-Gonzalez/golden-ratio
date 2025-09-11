@@ -102,7 +102,7 @@ DECLARE
 BEGIN
   LOOP
     code := upper(substring(md5(random()::text) from 1 for 6));
-    SELECT COUNT(*) INTO exists_count FROM sessions WHERE sessions.code = code;
+    SELECT COUNT(*) INTO exists_count FROM sessions WHERE code = code;
     IF exists_count = 0 THEN
       EXIT;
     END IF;
