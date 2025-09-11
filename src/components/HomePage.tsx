@@ -140,7 +140,7 @@ export default function HomePage() {
               </CardDescription>
             </CardHeader>
             <CardContent className="flex-1 flex flex-col justify-center space-y-4">
-              <div>
+              <div className="space-y-2">
                 <Label htmlFor="moderatorName">Your Name</Label>
                 <Input
                   id="moderatorName"
@@ -173,7 +173,7 @@ export default function HomePage() {
               </CardDescription>
             </CardHeader>
             <CardContent className="flex-1 flex flex-col justify-center space-y-4">
-              <div>
+              <div className="space-y-2">
                 <Label htmlFor="sessionCode">Session Code</Label>
                 <Input
                   id="sessionCode"
@@ -184,7 +184,7 @@ export default function HomePage() {
                   className="text-center text-lg font-mono"
                 />
               </div>
-              <div>
+              <div className="space-y-2">
                 <Label htmlFor="nickname">Your Name</Label>
                 <Input
                   id="nickname"
