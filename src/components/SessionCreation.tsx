@@ -55,9 +55,6 @@ export default function SessionCreation() {
       }
       
       // Production mode - use Supabase
-      console.log('Creating session with code:', sessionCode)
-      console.log('Supabase client:', supabase)
-      console.log('Supabase URL:', process.env.NEXT_PUBLIC_SUPABASE_URL)
       const { data: session, error: sessionError } = await supabase
         .from('sessions')
         .insert({
@@ -68,16 +65,9 @@ export default function SessionCreation() {
         .select()
         .single()
 
-      if (sessionError) {
-        console.error('Session creation error:', sessionError)
-        console.error('Session error details:', JSON.stringify(sessionError, null, 2))
-        throw sessionError
-      }
-      
-      console.log('Session created successfully:', session)
+      if (sessionError) throw sessionError
 
       // Create moderator participant
-      console.log('Creating participant for session:', session.id)
       const { error: participantError } = await supabase
         .from('participants')
         .insert({
@@ -86,25 +76,13 @@ export default function SessionCreation() {
           is_moderator: true
         })
 
-      if (participantError) {
-        console.error('Participant creation error:', participantError)
-        console.error('Participant error details:', JSON.stringify(participantError, null, 2))
-        throw participantError
-      }
-      
-      console.log('Participant created successfully')
+      if (participantError) throw participantError
 
       // Navigate to session
       router.push(`/session/${sessionCode}`)
     } catch (error) {
       console.error('Error creating session:', error)
-      console.error('Error details:', {
-        message: error instanceof Error ? error.message : 'Unknown error',
-        stack: error instanceof Error ? error.stack : undefined,
-        supabaseUrl: process.env.NEXT_PUBLIC_SUPABASE_URL,
-        isDemoMode: process.env.NEXT_PUBLIC_SUPABASE_URL?.includes('placeholder')
-      })
-      alert(`Failed to create session: ${error instanceof Error ? error.message : 'Unknown error'}. Check console for details.`)
+      alert('Failed to create session. Please try again.')
     } finally {
       setIsCreating(false)
     }
