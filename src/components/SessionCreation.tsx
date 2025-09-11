@@ -55,6 +55,7 @@ export default function SessionCreation() {
       }
       
       // Production mode - use Supabase
+      console.log('Creating session with code:', sessionCode)
       const { data: session, error: sessionError } = await supabase
         .from('sessions')
         .insert({
@@ -65,9 +66,15 @@ export default function SessionCreation() {
         .select()
         .single()
 
-      if (sessionError) throw sessionError
+      if (sessionError) {
+        console.error('Session creation error:', sessionError)
+        throw sessionError
+      }
+      
+      console.log('Session created successfully:', session)
 
       // Create moderator participant
+      console.log('Creating participant for session:', session.id)
       const { error: participantError } = await supabase
         .from('participants')
         .insert({
@@ -76,13 +83,24 @@ export default function SessionCreation() {
           is_moderator: true
         })
 
-      if (participantError) throw participantError
+      if (participantError) {
+        console.error('Participant creation error:', participantError)
+        throw participantError
+      }
+      
+      console.log('Participant created successfully')
 
       // Navigate to session
       router.push(`/session/${sessionCode}`)
     } catch (error) {
       console.error('Error creating session:', error)
-      alert('Failed to create session. Please check your Supabase configuration or try again.')
+      console.error('Error details:', {
+        message: error instanceof Error ? error.message : 'Unknown error',
+        stack: error instanceof Error ? error.stack : undefined,
+        supabaseUrl: process.env.NEXT_PUBLIC_SUPABASE_URL,
+        isDemoMode: process.env.NEXT_PUBLIC_SUPABASE_URL?.includes('placeholder')
+      })
+      alert(`Failed to create session: ${error instanceof Error ? error.message : 'Unknown error'}. Check console for details.`)
     } finally {
       setIsCreating(false)
     }
