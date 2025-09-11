@@ -44,8 +44,8 @@ export default function HomePage() {
 
         <div className="grid md:grid-cols-2 gap-8">
           {/* Create Session */}
-          <Card className="w-full">
-            <CardHeader className="text-center">
+          <Card className="w-full h-96 flex flex-col">
+            <CardHeader className="text-center flex-shrink-0">
               <div className="mx-auto mb-4 p-3 bg-blue-100 rounded-full w-fit">
                 <Plus className="h-6 w-6 text-blue-600" />
               </div>
@@ -56,14 +56,14 @@ export default function HomePage() {
                 Start a new estimation session as the moderator
               </CardDescription>
             </CardHeader>
-            <CardContent>
+            <CardContent className="flex-1 flex items-center justify-center">
               <SessionCreation />
             </CardContent>
           </Card>
 
           {/* Join Session */}
-          <Card className="w-full">
-            <CardHeader className="text-center">
+          <Card className="w-full h-96 flex flex-col">
+            <CardHeader className="text-center flex-shrink-0">
               <div className="mx-auto mb-4 p-3 bg-green-100 rounded-full w-fit">
                 <Users className="h-6 w-6 text-green-600" />
               </div>
@@ -74,7 +74,7 @@ export default function HomePage() {
                 Enter a session code to join an ongoing estimation
               </CardDescription>
             </CardHeader>
-            <CardContent className="space-y-4">
+            <CardContent className="flex-1 flex flex-col justify-center space-y-4">
               <div>
                 <Label htmlFor="sessionCode">Session Code</Label>
                 <Input
