@@ -68,15 +68,20 @@ export default function SessionCreation() {
       if (sessionError) throw sessionError
 
       // Create moderator participant
-      const { error: participantError } = await supabase
+      const { data: participant, error: participantError } = await supabase
         .from('participants')
         .insert({
           session_id: session.id,
           nickname: moderatorName,
           is_moderator: true
         })
+        .select()
+        .single()
 
       if (participantError) throw participantError
+
+      // Store participant ID for this session
+      localStorage.setItem(`participant_${sessionCode}`, participant.id)
 
       // Navigate to session
       router.push(`/session/${sessionCode}`)

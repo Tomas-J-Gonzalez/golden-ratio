@@ -26,7 +26,6 @@ export default function TaskManagement({ sessionId, sessionCode, tasks, onTaskUp
   const addTask = async () => {
     if (!newTaskTitle.trim()) return
 
-    console.log('Adding task:', { newTaskTitle, sessionId, sessionCode, isModerator })
     setIsAdding(true)
     try {
       // Check if we're in demo mode

@@ -1,12 +1,12 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { supabase } from '@/lib/supabase'
-import { useRouter } from 'next/navigation'
+import { useRouter, useSearchParams } from 'next/navigation'
 
 interface JoinSessionProps {
   sessionCode: string
@@ -16,6 +16,15 @@ export default function JoinSession({ sessionCode }: JoinSessionProps) {
   const [nickname, setNickname] = useState('')
   const [isJoining, setIsJoining] = useState(false)
   const router = useRouter()
+  const searchParams = useSearchParams()
+
+  useEffect(() => {
+    // Get nickname from URL parameters
+    const nicknameParam = searchParams.get('nickname')
+    if (nicknameParam) {
+      setNickname(decodeURIComponent(nicknameParam))
+    }
+  }, [searchParams])
 
   const joinSession = async () => {
     if (!nickname.trim()) return
@@ -35,15 +44,20 @@ export default function JoinSession({ sessionCode }: JoinSessionProps) {
       }
 
       // Add participant to session
-      const { error: participantError } = await supabase
+      const { data: participant, error: participantError } = await supabase
         .from('participants')
         .insert({
           session_id: session.id,
           nickname: nickname,
           is_moderator: false
         })
+        .select()
+        .single()
 
       if (participantError) throw participantError
+
+      // Store participant ID for this session
+      localStorage.setItem(`participant_${sessionCode}`, participant.id)
 
       // Navigate to session
       router.push(`/session/${sessionCode}`)
