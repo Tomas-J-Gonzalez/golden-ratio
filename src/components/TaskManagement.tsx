@@ -12,12 +12,13 @@ import { Plus, Trash2, Play } from 'lucide-react'
 
 interface TaskManagementProps {
   sessionId: string
+  sessionCode: string
   tasks: Task[]
   onTaskUpdate: () => void
   isModerator: boolean
 }
 
-export default function TaskManagement({ sessionId, tasks, onTaskUpdate, isModerator }: TaskManagementProps) {
+export default function TaskManagement({ sessionId, sessionCode, tasks, onTaskUpdate, isModerator }: TaskManagementProps) {
   const [newTaskTitle, setNewTaskTitle] = useState('')
   const [newTaskDescription, setNewTaskDescription] = useState('')
   const [isAdding, setIsAdding] = useState(false)
@@ -41,9 +42,9 @@ export default function TaskManagement({ sessionId, tasks, onTaskUpdate, isModer
           created_at: new Date().toISOString()
         }
         
-        const existingTasks = JSON.parse(localStorage.getItem(`demo_tasks_${sessionId}`) || '[]')
+        const existingTasks = JSON.parse(localStorage.getItem(`demo_tasks_${sessionCode}`) || '[]')
         existingTasks.unshift(newTask)
-        localStorage.setItem(`demo_tasks_${sessionId}`, JSON.stringify(existingTasks))
+        localStorage.setItem(`demo_tasks_${sessionCode}`, JSON.stringify(existingTasks))
         
         setNewTaskTitle('')
         setNewTaskDescription('')
@@ -78,6 +79,19 @@ export default function TaskManagement({ sessionId, tasks, onTaskUpdate, isModer
     if (!confirm('Are you sure you want to delete this task?')) return
 
     try {
+      // Check if we're in demo mode
+      const isDemoMode = process.env.NEXT_PUBLIC_SUPABASE_URL?.includes('placeholder')
+      
+      if (isDemoMode) {
+        // Demo mode - remove from localStorage
+        const existingTasks = JSON.parse(localStorage.getItem(`demo_tasks_${sessionCode}`) || '[]')
+        const updatedTasks = existingTasks.filter((task: Task) => task.id !== taskId)
+        localStorage.setItem(`demo_tasks_${sessionCode}`, JSON.stringify(updatedTasks))
+        onTaskUpdate()
+        return
+      }
+      
+      // Production mode - use Supabase
       const { error } = await supabase
         .from('tasks')
         .delete()
@@ -98,11 +112,11 @@ export default function TaskManagement({ sessionId, tasks, onTaskUpdate, isModer
       
       if (isDemoMode) {
         // Demo mode - update in localStorage
-        const existingTasks = JSON.parse(localStorage.getItem(`demo_tasks_${sessionId}`) || '[]')
-        const updatedTasks = existingTasks.map((task: any) => 
-          task.id === taskId ? { ...task, status: 'voting' } : task
+        const existingTasks = JSON.parse(localStorage.getItem(`demo_tasks_${sessionCode}`) || '[]')
+        const updatedTasks = existingTasks.map((task: Task) => 
+          task.id === taskId ? { ...task, status: 'voting' as const } : task
         )
-        localStorage.setItem(`demo_tasks_${sessionId}`, JSON.stringify(updatedTasks))
+        localStorage.setItem(`demo_tasks_${sessionCode}`, JSON.stringify(updatedTasks))
         onTaskUpdate()
         return
       }

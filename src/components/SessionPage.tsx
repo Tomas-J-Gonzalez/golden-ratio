@@ -334,7 +334,8 @@ export default function SessionPage({ sessionCode }: SessionPageProps) {
         {/* Task Management */}
         <div className="mb-8">
           <TaskManagement
-            sessionId={session.id}
+            sessionId={session?.id || sessionCode}
+            sessionCode={sessionCode}
             tasks={tasks}
             onTaskUpdate={handleTaskUpdate}
             isModerator={isModerator}
@@ -342,7 +343,7 @@ export default function SessionPage({ sessionCode }: SessionPageProps) {
         </div>
 
         {/* Task History */}
-        <TaskHistory tasks={tasks} sessionId={session.id} />
+        <TaskHistory tasks={tasks} sessionId={session?.id || sessionCode} />
       </div>
     </div>
   )

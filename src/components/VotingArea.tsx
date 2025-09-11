@@ -32,7 +32,7 @@ export default function VotingArea({
       if (isDemoMode) {
         // Demo mode - check localStorage
         const existingVotes = JSON.parse(localStorage.getItem(`demo_votes_${taskId}`) || '[]')
-        const existingVote = existingVotes.find((vote: any) => vote.participant_id === participantId)
+        const existingVote = existingVotes.find((vote: { participant_id: string; value: number }) => vote.participant_id === participantId)
         
         if (existingVote) {
           setSelectedValue(existingVote.value)
@@ -81,7 +81,7 @@ export default function VotingArea({
         }
         
         const existingVotes = JSON.parse(localStorage.getItem(`demo_votes_${taskId}`) || '[]')
-        const updatedVotes = existingVotes.filter((vote: any) => vote.participant_id !== participantId)
+        const updatedVotes = existingVotes.filter((vote: { participant_id: string }) => vote.participant_id !== participantId)
         updatedVotes.push(newVote)
         localStorage.setItem(`demo_votes_${taskId}`, JSON.stringify(updatedVotes))
         
