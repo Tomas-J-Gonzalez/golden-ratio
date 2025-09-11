@@ -341,6 +341,13 @@ export default function SessionPage({ sessionCode }: SessionPageProps) {
             isModerator={isModerator}
           />
         </div>
+        
+        {/* Debug info */}
+        <div className="mb-4 p-2 bg-gray-100 rounded text-sm">
+          <strong>Debug:</strong> isModerator: {isModerator ? 'true' : 'false'}, 
+          sessionId: {session?.id || sessionCode}, 
+          tasks: {tasks.length}
+        </div>
 
         {/* Task History */}
         <TaskHistory tasks={tasks} sessionId={session?.id || sessionCode} />
