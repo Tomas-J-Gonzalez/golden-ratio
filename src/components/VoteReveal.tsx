@@ -113,18 +113,26 @@ export default function VoteReveal({
           {/* Individual Votes */}
           <div className="space-y-3">
             <h4 className="font-medium">Individual Votes</h4>
-            <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               {votes.map((vote) => {
                 const participant = participants.find(p => p.id === vote.participant_id)
                 const scale = ESTIMATION_SCALE.find(s => s.value === vote.value)
                 return (
-                  <div key={vote.id} className="flex items-center gap-2 p-2 border rounded">
-                    <Badge className={getVoteColor(vote.value)}>
-                      {scale?.label}
-                    </Badge>
-                    <span className="text-sm font-medium">
-                      {participant?.nickname || 'Unknown'}
-                    </span>
+                  <div key={vote.id} className="p-3 border rounded-lg bg-gray-50">
+                    <div className="flex items-center gap-2 mb-2">
+                      <Badge className={getVoteColor(vote.value)}>
+                        {scale?.label}
+                      </Badge>
+                      <span className="text-sm font-medium">
+                        {participant?.nickname || 'Unknown'}
+                      </span>
+                    </div>
+                    <div className="text-xs space-y-1 text-gray-600">
+                      <div><strong>Hours:</strong> {scale?.hours}</div>
+                      <div><strong>Effort:</strong> {scale?.effort}</div>
+                      <div><strong>Breakpoints:</strong> {scale?.breakpoints}</div>
+                      <div><strong>Fidelity:</strong> {scale?.fidelity}</div>
+                    </div>
                   </div>
                 )
               })}
@@ -168,6 +176,28 @@ export default function VoteReveal({
                 onChange={(e) => setFinalEstimate(Number(e.target.value))}
                 placeholder="Enter final estimate"
               />
+              {finalEstimate > 0 && (
+                <div className="p-3 bg-blue-50 rounded-lg">
+                  <div className="text-sm font-medium mb-2">Estimate Breakdown:</div>
+                  {(() => {
+                    const selectedScale = ESTIMATION_SCALE.find(s => s.value === finalEstimate)
+                    return selectedScale ? (
+                      <div className="grid grid-cols-2 gap-2 text-xs">
+                        <div><strong>Hours:</strong> {selectedScale.hours}</div>
+                        <div><strong>Effort:</strong> {selectedScale.effort}</div>
+                        <div><strong>Sprints:</strong> {selectedScale.sprints}</div>
+                        <div><strong>Designers:</strong> {selectedScale.designers}</div>
+                        <div><strong>Breakpoints:</strong> {selectedScale.breakpoints}</div>
+                        <div><strong>Prototypes:</strong> {selectedScale.prototypes}</div>
+                        <div><strong>Fidelity:</strong> {selectedScale.fidelity}</div>
+                        <div className="col-span-2"><strong>Examples:</strong> {selectedScale.examples}</div>
+                      </div>
+                    ) : (
+                      <div className="text-xs text-gray-600">Custom estimate - no predefined scale match</div>
+                    )
+                  })()}
+                </div>
+              )}
             </div>
 
             <div className="space-y-2">

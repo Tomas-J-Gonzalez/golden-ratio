@@ -1,10 +1,83 @@
-// Estimation scale for design tasks
+// Comprehensive estimation scale for design tasks
 export const ESTIMATION_SCALE = [
-  { value: 1, label: 'XS', description: 'Very small task (1-2 hours)' },
-  { value: 2, label: 'S', description: 'Small task (2-4 hours)' },
-  { value: 4, label: 'M', description: 'Medium task (4-8 hours)' },
-  { value: 8, label: 'L', description: 'Large task (1-2 days)' },
-  { value: 16, label: 'XL', description: 'Very large task (2+ days)' },
+  { 
+    value: 1, 
+    label: 'XS', 
+    description: 'Quick Fix',
+    hours: '1-2 hours',
+    effort: 'Very Low',
+    sprints: '0.1 sprint',
+    designers: '1 designer',
+    breakpoints: 'Desktop only',
+    prototypes: 'None',
+    fidelity: 'Lo-fi',
+    examples: 'Color adjustments, text changes, minor spacing fixes'
+  },
+  { 
+    value: 2, 
+    label: 'S', 
+    description: 'Simple Component',
+    hours: '2-4 hours',
+    effort: 'Low',
+    sprints: '0.2 sprint',
+    designers: '1 designer',
+    breakpoints: 'Desktop + Mobile',
+    prototypes: 'Static mockups',
+    fidelity: 'Lo-fi',
+    examples: 'Button states, form inputs, simple cards'
+  },
+  { 
+    value: 4, 
+    label: 'M', 
+    description: 'Standard Feature',
+    hours: '4-8 hours',
+    effort: 'Medium',
+    sprints: '0.5 sprint',
+    designers: '1-2 designers',
+    breakpoints: 'Desktop + Tablet + Mobile',
+    prototypes: 'Basic interactions',
+    fidelity: 'Mid-fi',
+    examples: 'Navigation menus, data tables, user profiles'
+  },
+  { 
+    value: 8, 
+    label: 'L', 
+    description: 'Complex Feature',
+    hours: '1-2 days',
+    effort: 'High',
+    sprints: '1 sprint',
+    designers: '2-3 designers',
+    breakpoints: 'All breakpoints + responsive',
+    prototypes: 'Interactive prototypes',
+    fidelity: 'Hi-fi',
+    examples: 'Dashboard layouts, multi-step forms, complex workflows'
+  },
+  { 
+    value: 16, 
+    label: 'XL', 
+    description: 'Major Feature',
+    hours: '2-4 days',
+    effort: 'Very High',
+    sprints: '1-2 sprints',
+    designers: '3+ designers',
+    breakpoints: 'All breakpoints + accessibility',
+    prototypes: 'Advanced prototypes + user testing',
+    fidelity: 'Hi-fi + design system',
+    examples: 'Complete app redesigns, new product features, design systems'
+  },
+  { 
+    value: 32, 
+    label: 'XXL', 
+    description: 'Epic/Project',
+    hours: '1+ weeks',
+    effort: 'Extreme',
+    sprints: '2+ sprints',
+    designers: 'Full team',
+    breakpoints: 'All breakpoints + accessibility + internationalization',
+    prototypes: 'Full user journey prototypes',
+    fidelity: 'Hi-fi + design system + documentation',
+    examples: 'New product launches, major platform overhauls, design system creation'
+  }
 ]
 
 // Meeting buffer options

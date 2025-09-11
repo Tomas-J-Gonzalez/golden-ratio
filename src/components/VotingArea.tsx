@@ -146,17 +146,29 @@ export default function VotingArea({
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
           {ESTIMATION_SCALE.map((scale) => (
             <Button
               key={scale.value}
               variant={selectedValue === scale.value ? "default" : "outline"}
-              className="h-auto p-4 flex flex-col items-center space-y-2"
+              className="h-auto p-4 flex flex-col items-start space-y-3 text-left"
               onClick={() => setSelectedValue(scale.value)}
             >
-              <div className="text-2xl font-bold">{scale.label}</div>
-              <div className="text-xs text-center opacity-80">
-                {scale.description}
+              <div className="flex items-center justify-between w-full">
+                <div className="text-2xl font-bold">{scale.label}</div>
+                <div className="text-sm font-medium text-blue-600">{scale.hours}</div>
+              </div>
+              <div className="text-sm font-medium">{scale.description}</div>
+              <div className="text-xs space-y-1 opacity-80">
+                <div><strong>Effort:</strong> {scale.effort}</div>
+                <div><strong>Sprints:</strong> {scale.sprints}</div>
+                <div><strong>Designers:</strong> {scale.designers}</div>
+                <div><strong>Breakpoints:</strong> {scale.breakpoints}</div>
+                <div><strong>Prototypes:</strong> {scale.prototypes}</div>
+                <div><strong>Fidelity:</strong> {scale.fidelity}</div>
+              </div>
+              <div className="text-xs italic opacity-70 mt-2">
+                {scale.examples}
               </div>
             </Button>
           ))}
@@ -164,12 +176,33 @@ export default function VotingArea({
         
         {selectedValue !== null && (
           <div className="pt-4 border-t">
-            <div className="flex items-center justify-between mb-4">
-              <div>
-                <p className="font-medium">Selected: {ESTIMATION_SCALE.find(s => s.value === selectedValue)?.label}</p>
-                <p className="text-sm text-gray-600">
-                  {ESTIMATION_SCALE.find(s => s.value === selectedValue)?.description}
-                </p>
+            <div className="mb-4">
+              <div className="flex items-center justify-between mb-3">
+                <div>
+                  <p className="font-medium text-lg">Selected: {ESTIMATION_SCALE.find(s => s.value === selectedValue)?.label}</p>
+                  <p className="text-sm text-gray-600">
+                    {ESTIMATION_SCALE.find(s => s.value === selectedValue)?.description}
+                  </p>
+                </div>
+                <div className="text-right">
+                  <div className="text-lg font-bold text-blue-600">
+                    {ESTIMATION_SCALE.find(s => s.value === selectedValue)?.hours}
+                  </div>
+                  <div className="text-sm text-gray-500">
+                    {ESTIMATION_SCALE.find(s => s.value === selectedValue)?.sprints}
+                  </div>
+                </div>
+              </div>
+              
+              <div className="grid grid-cols-2 md:grid-cols-3 gap-3 text-sm bg-gray-50 p-3 rounded-lg">
+                <div><strong>Effort:</strong> {ESTIMATION_SCALE.find(s => s.value === selectedValue)?.effort}</div>
+                <div><strong>Designers:</strong> {ESTIMATION_SCALE.find(s => s.value === selectedValue)?.designers}</div>
+                <div><strong>Breakpoints:</strong> {ESTIMATION_SCALE.find(s => s.value === selectedValue)?.breakpoints}</div>
+                <div><strong>Prototypes:</strong> {ESTIMATION_SCALE.find(s => s.value === selectedValue)?.prototypes}</div>
+                <div><strong>Fidelity:</strong> {ESTIMATION_SCALE.find(s => s.value === selectedValue)?.fidelity}</div>
+                <div className="col-span-2 md:col-span-1">
+                  <strong>Examples:</strong> {ESTIMATION_SCALE.find(s => s.value === selectedValue)?.examples}
+                </div>
               </div>
             </div>
             <Button 
