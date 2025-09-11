@@ -56,6 +56,8 @@ export default function SessionCreation() {
       
       // Production mode - use Supabase
       console.log('Creating session with code:', sessionCode)
+      console.log('Supabase client:', supabase)
+      console.log('Supabase URL:', process.env.NEXT_PUBLIC_SUPABASE_URL)
       const { data: session, error: sessionError } = await supabase
         .from('sessions')
         .insert({
@@ -68,6 +70,7 @@ export default function SessionCreation() {
 
       if (sessionError) {
         console.error('Session creation error:', sessionError)
+        console.error('Session error details:', JSON.stringify(sessionError, null, 2))
         throw sessionError
       }
       
@@ -85,6 +88,7 @@ export default function SessionCreation() {
 
       if (participantError) {
         console.error('Participant creation error:', participantError)
+        console.error('Participant error details:', JSON.stringify(participantError, null, 2))
         throw participantError
       }
       
