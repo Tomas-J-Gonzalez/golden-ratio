@@ -7,13 +7,96 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { useRouter } from 'next/navigation'
 import { Plus, Users } from 'lucide-react'
-import SessionCreation from './SessionCreation'
+import { supabase } from '@/lib/supabase'
+import { generateSessionCode } from '@/lib/constants'
 
 export default function HomePage() {
   const [sessionCode, setSessionCode] = useState('')
   const [nickname, setNickname] = useState('')
   const [isJoining, setIsJoining] = useState(false)
+  const [moderatorName, setModeratorName] = useState('')
+  const [isCreating, setIsCreating] = useState(false)
   const router = useRouter()
+
+  const createSession = async () => {
+    if (!moderatorName.trim()) return
+
+    setIsCreating(true)
+    try {
+      const newSessionCode = generateSessionCode()
+      
+      // Check if we're in demo mode (placeholder Supabase URL)
+      const isDemoMode = process.env.NEXT_PUBLIC_SUPABASE_URL?.includes('placeholder')
+      
+      if (isDemoMode) {
+        // Demo mode - simulate session creation
+        console.log('Demo mode: Creating session with code:', newSessionCode)
+        
+        // Store demo session data
+        const demoSession = {
+          id: newSessionCode,
+          code: newSessionCode,
+          created_at: new Date().toISOString(),
+          moderator_id: moderatorName,
+          is_active: true
+        }
+        
+        localStorage.setItem(`demo_session_${newSessionCode}`, JSON.stringify(demoSession))
+        
+        // Store demo participant data
+        const demoParticipant = {
+          id: `demo_${Date.now()}`,
+          session_id: newSessionCode,
+          nickname: moderatorName,
+          is_moderator: true,
+          joined_at: new Date().toISOString()
+        }
+        
+        localStorage.setItem(`demo_participant_${newSessionCode}`, JSON.stringify(demoParticipant))
+        localStorage.setItem(`participant_${newSessionCode}`, demoParticipant.id)
+        
+        // Navigate to session
+        router.push(`/session/${newSessionCode}`)
+        return
+      }
+      
+      // Production mode - use Supabase
+      const { data: session, error: sessionError } = await supabase
+        .from('sessions')
+        .insert({
+          code: newSessionCode,
+          moderator_id: moderatorName
+        })
+        .select()
+        .single()
+
+      if (sessionError) throw sessionError
+
+      // Create moderator participant
+      const { data: participant, error: participantError } = await supabase
+        .from('participants')
+        .insert({
+          session_id: session.id,
+          nickname: moderatorName,
+          is_moderator: true
+        })
+        .select()
+        .single()
+
+      if (participantError) throw participantError
+
+      // Store participant ID for this session
+      localStorage.setItem(`participant_${newSessionCode}`, participant.id)
+
+      // Navigate to session
+      router.push(`/session/${newSessionCode}`)
+    } catch (error) {
+      console.error('Error creating session:', error)
+      alert('Failed to create session. Please try again.')
+    } finally {
+      setIsCreating(false)
+    }
+  }
 
   const joinSession = async () => {
     if (!sessionCode.trim() || !nickname.trim()) return
@@ -56,8 +139,23 @@ export default function HomePage() {
                 Start a new estimation session as the moderator
               </CardDescription>
             </CardHeader>
-            <CardContent className="flex-1 flex items-center justify-center">
-              <SessionCreation />
+            <CardContent className="flex-1 flex flex-col justify-center space-y-4">
+              <div>
+                <Label htmlFor="moderatorName">Your Name</Label>
+                <Input
+                  id="moderatorName"
+                  placeholder="Enter your name"
+                  value={moderatorName}
+                  onChange={(e) => setModeratorName(e.target.value)}
+                />
+              </div>
+              <Button
+                onClick={createSession}
+                disabled={isCreating || !moderatorName.trim()}
+                className="w-full"
+              >
+                {isCreating ? 'Creating...' : 'Create Session'}
+              </Button>
             </CardContent>
           </Card>
 
