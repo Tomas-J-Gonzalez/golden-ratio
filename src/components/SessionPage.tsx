@@ -106,9 +106,13 @@ export default function SessionPage({ sessionCode }: SessionPageProps) {
 
       // Find current participant (simplified - in real app, use proper auth)
       const participantId = localStorage.getItem(`participant_${sessionCode}`)
+      console.log('Looking for participant:', { participantId, sessionCode, participantsData })
       if (participantId) {
         const participant = participantsData?.find(p => p.id === participantId)
+        console.log('Found participant:', participant)
         setCurrentParticipant(participant || null)
+      } else {
+        console.log('No participant ID found in localStorage for session:', sessionCode)
       }
 
       // Find current voting task

@@ -113,11 +113,13 @@ export default function VotingArea({
     if (!isEstimationComplete()) return
 
     setIsSubmitting(true)
+    const finalEstimate = getCurrentEstimate()!
+    console.log('Submitting vote with:', { taskId, participantId, finalEstimate, factors })
+    
     try {
-      const finalEstimate = getCurrentEstimate()!
-      
       // Check if we're in demo mode
       const isDemoMode = process.env.NEXT_PUBLIC_SUPABASE_URL?.includes('placeholder')
+      console.log('Demo mode:', isDemoMode)
       
       if (isDemoMode) {
         // Demo mode - store in localStorage
@@ -156,7 +158,14 @@ export default function VotingArea({
       onVoteSubmitted()
     } catch (error) {
       console.error('Error submitting vote:', error)
-      alert('Failed to submit vote. Please try again.')
+      console.error('Error details:', {
+        taskId,
+        participantId,
+        finalEstimate,
+        factors,
+        error: error instanceof Error ? error.message : error
+      })
+      alert(`Failed to submit vote: ${error instanceof Error ? error.message : 'Unknown error'}`)
     } finally {
       setIsSubmitting(false)
     }
