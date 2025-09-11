@@ -1,84 +1,82 @@
-// Comprehensive estimation scale for design tasks
-export const ESTIMATION_SCALE = [
-  { 
-    value: 1, 
-    label: 'XS', 
-    description: 'Quick Fix',
-    hours: '1-2 hours',
-    effort: 'Very Low',
-    sprints: '0.1 sprint',
-    designers: '1 designer',
-    breakpoints: 'Desktop only',
-    prototypes: 'None',
-    fidelity: 'Lo-fi',
-    examples: 'Color adjustments, text changes, minor spacing fixes'
-  },
-  { 
-    value: 2, 
-    label: 'S', 
-    description: 'Simple Component',
-    hours: '2-4 hours',
-    effort: 'Low',
-    sprints: '0.2 sprint',
-    designers: '1 designer',
-    breakpoints: 'Desktop + Mobile',
-    prototypes: 'Static mockups',
-    fidelity: 'Lo-fi',
-    examples: 'Button states, form inputs, simple cards'
-  },
-  { 
-    value: 4, 
-    label: 'M', 
-    description: 'Standard Feature',
-    hours: '4-8 hours',
-    effort: 'Medium',
-    sprints: '0.5 sprint',
-    designers: '1-2 designers',
-    breakpoints: 'Desktop + Tablet + Mobile',
-    prototypes: 'Basic interactions',
-    fidelity: 'Mid-fi',
-    examples: 'Navigation menus, data tables, user profiles'
-  },
-  { 
-    value: 8, 
-    label: 'L', 
-    description: 'Complex Feature',
-    hours: '1-2 days',
-    effort: 'High',
-    sprints: '1 sprint',
-    designers: '2-3 designers',
-    breakpoints: 'All breakpoints + responsive',
-    prototypes: 'Interactive prototypes',
-    fidelity: 'Hi-fi',
-    examples: 'Dashboard layouts, multi-step forms, complex workflows'
-  },
-  { 
-    value: 16, 
-    label: 'XL', 
-    description: 'Major Feature',
-    hours: '2-4 days',
-    effort: 'Very High',
-    sprints: '1-2 sprints',
-    designers: '3+ designers',
-    breakpoints: 'All breakpoints + accessibility',
-    prototypes: 'Advanced prototypes + user testing',
-    fidelity: 'Hi-fi + design system',
-    examples: 'Complete app redesigns, new product features, design systems'
-  },
-  { 
-    value: 32, 
-    label: 'XXL', 
-    description: 'Epic/Project',
-    hours: '1+ weeks',
-    effort: 'Extreme',
-    sprints: '2+ sprints',
-    designers: 'Full team',
-    breakpoints: 'All breakpoints + accessibility + internationalization',
-    prototypes: 'Full user journey prototypes',
-    fidelity: 'Hi-fi + design system + documentation',
-    examples: 'New product launches, major platform overhauls, design system creation'
-  }
+// Flexible estimation factors for design tasks
+export const EFFORT_OPTIONS = [
+  { value: 1, label: 'Very Low', description: 'Minimal complexity, straightforward task' },
+  { value: 2, label: 'Low', description: 'Simple task with few variables' },
+  { value: 4, label: 'Medium', description: 'Moderate complexity, some unknowns' },
+  { value: 8, label: 'High', description: 'Complex task with multiple considerations' },
+  { value: 16, label: 'Very High', description: 'Highly complex with many variables' },
+  { value: 32, label: 'Extreme', description: 'Maximum complexity, many unknowns' }
 ]
+
+export const SPRINT_OPTIONS = [
+  { value: 0.1, label: '0.1 sprint', description: 'Quick task, part of a sprint' },
+  { value: 0.2, label: '0.2 sprint', description: 'Small task, quarter sprint' },
+  { value: 0.5, label: '0.5 sprint', description: 'Half sprint effort' },
+  { value: 1, label: '1 sprint', description: 'Full sprint commitment' },
+  { value: 1.5, label: '1.5 sprints', description: 'One and a half sprints' },
+  { value: 2, label: '2 sprints', description: 'Two full sprints' },
+  { value: 3, label: '3+ sprints', description: 'Multiple sprints, major effort' }
+]
+
+export const DESIGNER_OPTIONS = [
+  { value: 1, label: '1 designer', description: 'Single designer can handle' },
+  { value: 1.5, label: '1-2 designers', description: 'One primary, occasional support' },
+  { value: 2, label: '2 designers', description: 'Two designers working together' },
+  { value: 3, label: '2-3 designers', description: 'Small team collaboration' },
+  { value: 4, label: '3+ designers', description: 'Multiple designers required' },
+  { value: 5, label: 'Full team', description: 'Entire design team involved' }
+]
+
+export const BREAKPOINT_OPTIONS = [
+  { value: 1, label: 'Desktop only', description: 'Single breakpoint design' },
+  { value: 2, label: 'Desktop + Mobile', description: 'Two main breakpoints' },
+  { value: 3, label: 'Desktop + Tablet + Mobile', description: 'Three standard breakpoints' },
+  { value: 4, label: 'All breakpoints + responsive', description: 'Full responsive design' },
+  { value: 5, label: 'All + accessibility', description: 'Responsive + accessibility considerations' },
+  { value: 6, label: 'All + accessibility + i18n', description: 'Full responsive + accessibility + internationalization' }
+]
+
+export const PROTOTYPE_OPTIONS = [
+  { value: 1, label: 'None', description: 'No prototyping required' },
+  { value: 2, label: 'Static mockups', description: 'Static design mockups only' },
+  { value: 3, label: 'Basic interactions', description: 'Simple click-through prototypes' },
+  { value: 4, label: 'Interactive prototypes', description: 'Full interaction prototyping' },
+  { value: 5, label: 'Advanced prototypes', description: 'Complex interactions + animations' },
+  { value: 6, label: 'Full user journey', description: 'Complete user journey prototyping' }
+]
+
+export const FIDELITY_OPTIONS = [
+  { value: 1, label: 'Lo-fi', description: 'Low fidelity, wireframes/sketches' },
+  { value: 2, label: 'Mid-fi', description: 'Medium fidelity, detailed wireframes' },
+  { value: 3, label: 'Hi-fi', description: 'High fidelity, pixel-perfect designs' },
+  { value: 4, label: 'Hi-fi + design system', description: 'High fidelity + design system integration' },
+  { value: 5, label: 'Hi-fi + system + documentation', description: 'Complete design system with documentation' }
+]
+
+// Calculate total estimate based on individual factors
+export const calculateEstimate = (factors: {
+  effort: number;
+  sprints: number;
+  designers: number;
+  breakpoints: number;
+  prototypes: number;
+  fidelity: number;
+}) => {
+  const baseEstimate = factors.effort;
+  const complexityMultiplier = (factors.sprints + factors.designers + factors.breakpoints + factors.prototypes + factors.fidelity) / 5;
+  return Math.round(baseEstimate * complexityMultiplier);
+}
+
+// Convert estimate to hours range
+export const estimateToHours = (estimate: number) => {
+  if (estimate <= 2) return '1-2 hours';
+  if (estimate <= 4) return '2-4 hours';
+  if (estimate <= 8) return '4-8 hours';
+  if (estimate <= 16) return '1-2 days';
+  if (estimate <= 32) return '2-4 days';
+  if (estimate <= 64) return '1 week';
+  return '1+ weeks';
+}
 
 // Meeting buffer options
 export const MEETING_BUFFER_OPTIONS = [

@@ -35,6 +35,7 @@ CREATE TABLE IF NOT EXISTS votes (
   task_id UUID REFERENCES tasks(id) ON DELETE CASCADE,
   participant_id UUID REFERENCES participants(id) ON DELETE CASCADE,
   value INTEGER NOT NULL,
+  factors JSONB,
   created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
   UNIQUE(task_id, participant_id)
 );

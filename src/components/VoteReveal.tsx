@@ -8,7 +8,17 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { supabase, Vote } from '@/lib/supabase'
-import { ESTIMATION_SCALE, MEETING_BUFFER_OPTIONS, ITERATION_MULTIPLIER_OPTIONS } from '@/lib/constants'
+import { 
+  EFFORT_OPTIONS, 
+  SPRINT_OPTIONS, 
+  DESIGNER_OPTIONS, 
+  BREAKPOINT_OPTIONS, 
+  PROTOTYPE_OPTIONS, 
+  FIDELITY_OPTIONS,
+  MEETING_BUFFER_OPTIONS, 
+  ITERATION_MULTIPLIER_OPTIONS,
+  estimateToHours
+} from '@/lib/constants'
 import { CheckCircle, BarChart3 } from 'lucide-react'
 
 interface VoteRevealProps {
@@ -35,10 +45,8 @@ export default function VoteReveal({
 
   // Calculate vote statistics
   const voteStats = votes.reduce((acc, vote) => {
-    const scale = ESTIMATION_SCALE.find(s => s.value === vote.value)
-    if (scale) {
-      acc[scale.label] = (acc[scale.label] || 0) + 1
-    }
+    const label = `${vote.value} pts`
+    acc[label] = (acc[label] || 0) + 1
     return acc
   }, {} as Record<string, number>)
 
@@ -116,22 +124,33 @@ export default function VoteReveal({
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               {votes.map((vote) => {
                 const participant = participants.find(p => p.id === vote.participant_id)
-                const scale = ESTIMATION_SCALE.find(s => s.value === vote.value)
+                const factors = vote.factors || {} as {
+                  effort?: number;
+                  sprints?: number;
+                  designers?: number;
+                  breakpoints?: number;
+                  prototypes?: number;
+                  fidelity?: number;
+                }
+                const hoursEstimate = estimateToHours(vote.value)
                 return (
                   <div key={vote.id} className="p-3 border rounded-lg bg-gray-50">
                     <div className="flex items-center gap-2 mb-2">
                       <Badge className={getVoteColor(vote.value)}>
-                        {scale?.label}
+                        {vote.value} pts
                       </Badge>
                       <span className="text-sm font-medium">
                         {participant?.nickname || 'Unknown'}
                       </span>
                     </div>
                     <div className="text-xs space-y-1 text-gray-600">
-                      <div><strong>Hours:</strong> {scale?.hours}</div>
-                      <div><strong>Effort:</strong> {scale?.effort}</div>
-                      <div><strong>Breakpoints:</strong> {scale?.breakpoints}</div>
-                      <div><strong>Fidelity:</strong> {scale?.fidelity}</div>
+                      <div><strong>Hours:</strong> {hoursEstimate}</div>
+                      {factors.effort && <div><strong>Effort:</strong> {EFFORT_OPTIONS.find(o => o.value === factors.effort)?.label}</div>}
+                      {factors.sprints && <div><strong>Sprints:</strong> {SPRINT_OPTIONS.find(o => o.value === factors.sprints)?.label}</div>}
+                      {factors.designers && <div><strong>Designers:</strong> {DESIGNER_OPTIONS.find(o => o.value === factors.designers)?.label}</div>}
+                      {factors.breakpoints && <div><strong>Breakpoints:</strong> {BREAKPOINT_OPTIONS.find(o => o.value === factors.breakpoints)?.label}</div>}
+                      {factors.prototypes && <div><strong>Prototypes:</strong> {PROTOTYPE_OPTIONS.find(o => o.value === factors.prototypes)?.label}</div>}
+                      {factors.fidelity && <div><strong>Fidelity:</strong> {FIDELITY_OPTIONS.find(o => o.value === factors.fidelity)?.label}</div>}
                     </div>
                   </div>
                 )
@@ -178,24 +197,14 @@ export default function VoteReveal({
               />
               {finalEstimate > 0 && (
                 <div className="p-3 bg-blue-50 rounded-lg">
-                  <div className="text-sm font-medium mb-2">Estimate Breakdown:</div>
-                  {(() => {
-                    const selectedScale = ESTIMATION_SCALE.find(s => s.value === finalEstimate)
-                    return selectedScale ? (
-                      <div className="grid grid-cols-2 gap-2 text-xs">
-                        <div><strong>Hours:</strong> {selectedScale.hours}</div>
-                        <div><strong>Effort:</strong> {selectedScale.effort}</div>
-                        <div><strong>Sprints:</strong> {selectedScale.sprints}</div>
-                        <div><strong>Designers:</strong> {selectedScale.designers}</div>
-                        <div><strong>Breakpoints:</strong> {selectedScale.breakpoints}</div>
-                        <div><strong>Prototypes:</strong> {selectedScale.prototypes}</div>
-                        <div><strong>Fidelity:</strong> {selectedScale.fidelity}</div>
-                        <div className="col-span-2"><strong>Examples:</strong> {selectedScale.examples}</div>
-                      </div>
-                    ) : (
-                      <div className="text-xs text-gray-600">Custom estimate - no predefined scale match</div>
-                    )
-                  })()}
+                  <div className="text-sm font-medium mb-2">Estimate Summary:</div>
+                  <div className="grid grid-cols-2 gap-2 text-xs">
+                    <div><strong>Points:</strong> {finalEstimate}</div>
+                    <div><strong>Hours:</strong> {estimateToHours(finalEstimate)}</div>
+                    <div className="col-span-2 text-gray-600">
+                      Custom estimate based on team consensus
+                    </div>
+                  </div>
                 </div>
               )}
             </div>

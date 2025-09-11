@@ -39,6 +39,14 @@ export interface Vote {
   task_id: string
   participant_id: string
   value: number
+  factors?: {
+    effort: number
+    sprints: number
+    designers: number
+    breakpoints: number
+    prototypes: number
+    fidelity: number
+  }
   created_at: string
 }
 
