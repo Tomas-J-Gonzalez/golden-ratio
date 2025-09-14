@@ -27,49 +27,7 @@ export default function SessionPage({ sessionCode }: SessionPageProps) {
 
   const loadSessionData = useCallback(async () => {
     try {
-      // Check if we're in demo mode
-      const isDemoMode = process.env.NEXT_PUBLIC_SUPABASE_URL?.includes('placeholder')
-      
-      if (isDemoMode) {
-        // Demo mode - load from localStorage
-        const demoSessionData = localStorage.getItem(`demo_session_${sessionCode}`)
-        if (!demoSessionData) {
-          throw new Error('Demo session not found')
-        }
-        
-        const sessionData = JSON.parse(demoSessionData)
-        setSession(sessionData)
-        
-        // Load demo participants
-        const demoParticipants = JSON.parse(localStorage.getItem(`demo_participants_${sessionCode}`) || '[]')
-        setParticipants(demoParticipants)
-        
-        // Find current participant
-        const participantId = localStorage.getItem(`participant_${sessionCode}`)
-        if (participantId) {
-          const participant = demoParticipants.find((p: Participant) => p.id === participantId)
-          setCurrentParticipant(participant || null)
-        }
-        
-        // Load demo tasks
-        const demoTasks = JSON.parse(localStorage.getItem(`demo_tasks_${sessionCode}`) || '[]')
-        setTasks(demoTasks)
-        
-        // Find current voting task
-        const votingTask = demoTasks.find((t: Task) => t.status === 'voting')
-        setCurrentTask(votingTask || null)
-        
-        // Load votes for current task
-        if (votingTask) {
-          const demoVotes = JSON.parse(localStorage.getItem(`demo_votes_${votingTask.id}`) || '[]')
-          setVotes(demoVotes)
-        }
-        
-        setIsLoading(false)
-        return
-      }
-      
-      // Production mode - use Supabase
+      // Load session from Supabase
       const { data: sessionData, error: sessionError } = await supabase
         .from('sessions')
         .select('*')
@@ -103,7 +61,7 @@ export default function SessionPage({ sessionCode }: SessionPageProps) {
       if (tasksError) throw tasksError
       setTasks(tasksData || [])
 
-      // Find current participant (simplified - in real app, use proper auth)
+      // Find current participant
       const participantId = localStorage.getItem(`participant_${sessionCode}`)
       console.log('Looking for participant:', { participantId, sessionCode, participantsData })
       if (participantId) {
@@ -145,49 +103,9 @@ export default function SessionPage({ sessionCode }: SessionPageProps) {
   }
 
   const setupRealtimeSubscriptions = useCallback(() => {
-    // Check if we're in demo mode
-    const isDemoMode = process.env.NEXT_PUBLIC_SUPABASE_URL?.includes('placeholder')
-    
-    if (isDemoMode) {
-      // Demo mode - use localStorage events for real-time updates
-      const handleStorageChange = (e: StorageEvent) => {
-        if (e.key === `demo_tasks_${sessionCode}`) {
-          // Tasks updated, reload them
-          const demoTasks = JSON.parse(e.newValue || '[]')
-          setTasks(demoTasks)
-          
-          // Update current task if it's voting
-          const votingTask = demoTasks.find((t: Task) => t.status === 'voting')
-          setCurrentTask(votingTask || null)
-          
-          // Load votes for current task
-          if (votingTask) {
-            const demoVotes = JSON.parse(localStorage.getItem(`demo_votes_${votingTask.id}`) || '[]')
-            setVotes(demoVotes)
-          }
-        } else if (e.key === `demo_participants_${sessionCode}`) {
-          // Participants updated, reload them
-          const demoParticipants = JSON.parse(e.newValue || '[]')
-          setParticipants(demoParticipants)
-        } else if (e.key?.startsWith(`demo_votes_`)) {
-          // Votes updated, reload them if it's for the current task
-          if (currentTask && e.key === `demo_votes_${currentTask.id}`) {
-            const demoVotes = JSON.parse(e.newValue || '[]')
-            setVotes(demoVotes)
-          }
-        }
-      }
-      
-      window.addEventListener('storage', handleStorageChange)
-      
-      return () => {
-        window.removeEventListener('storage', handleStorageChange)
-      }
-    }
-    
     if (!session) return
 
-    // Production mode - set up real-time subscriptions
+    // Set up real-time subscriptions
     const tasksSubscription = supabase
       .channel('tasks')
       .on('postgres_changes', 
@@ -331,11 +249,6 @@ export default function SessionPage({ sessionCode }: SessionPageProps) {
             <div>
               <h1 className="text-3xl font-bold text-gray-900">Design Estimation Session</h1>
               <p className="text-gray-600">Session Code: <span className="font-mono font-bold">{sessionCode}</span></p>
-              {process.env.NEXT_PUBLIC_SUPABASE_URL?.includes('placeholder') && (
-                <p className="text-sm text-amber-600 font-medium mt-1">
-                  🚀 Demo Mode - Data stored locally
-                </p>
-              )}
             </div>
             <div className="flex items-center gap-4">
               <Button onClick={copySessionLink} variant="outline">

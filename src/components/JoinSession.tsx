@@ -31,41 +31,6 @@ export default function JoinSession({ sessionCode }: JoinSessionProps) {
 
     setIsJoining(true)
     try {
-      // Check if we're in demo mode
-      const isDemoMode = process.env.NEXT_PUBLIC_SUPABASE_URL?.includes('placeholder')
-      
-      if (isDemoMode) {
-        // Demo mode - check if session exists in localStorage
-        const demoSessionData = localStorage.getItem(`demo_session_${sessionCode}`)
-        if (!demoSessionData) {
-          throw new Error('Session not found')
-        }
-        
-        const demoSession = JSON.parse(demoSessionData)
-        
-        // Create new participant
-        const newParticipant = {
-          id: crypto.randomUUID(),
-          session_id: demoSession.id,
-          nickname: nickname,
-          is_moderator: false,
-          joined_at: new Date().toISOString()
-        }
-        
-        // Add to existing participants
-        const existingParticipants = JSON.parse(localStorage.getItem(`demo_participants_${sessionCode}`) || '[]')
-        const updatedParticipants = [...existingParticipants, newParticipant]
-        localStorage.setItem(`demo_participants_${sessionCode}`, JSON.stringify(updatedParticipants))
-        
-        // Store participant ID for this session
-        localStorage.setItem(`participant_${sessionCode}`, newParticipant.id)
-        
-        // Navigate to session
-        router.push(`/session/${sessionCode}`)
-        return
-      }
-      
-      // Production mode - use Supabase
       // Check if session exists
       const { data: session, error: sessionError } = await supabase
         .from('sessions')

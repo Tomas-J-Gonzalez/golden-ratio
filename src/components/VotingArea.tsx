@@ -51,21 +51,7 @@ export default function VotingArea({
 
   const checkExistingVote = useCallback(async () => {
     try {
-      // Check if we're in demo mode
-      const isDemoMode = process.env.NEXT_PUBLIC_SUPABASE_URL?.includes('placeholder')
-      
-      if (isDemoMode) {
-        // Demo mode - check localStorage
-        const demoVotes = JSON.parse(localStorage.getItem(`demo_votes_${taskId}`) || '[]')
-        const existingVote = demoVotes.find((vote: { participant_id: string; factors?: EstimationFactors }) => vote.participant_id === participantId)
-        if (existingVote) {
-          setFactors(existingVote.factors || {})
-          setHasVoted(true)
-        }
-        return
-      }
-      
-      // Production mode - use Supabase
+      // Check for existing vote in Supabase
       const { data: existingVote } = await supabase
         .from('votes')
         .select('*')
@@ -117,32 +103,7 @@ export default function VotingArea({
     console.log('Submitting vote with:', { taskId, participantId, finalEstimate, factors })
     
     try {
-      // Check if we're in demo mode
-      const isDemoMode = process.env.NEXT_PUBLIC_SUPABASE_URL?.includes('placeholder')
-      console.log('Demo mode:', isDemoMode)
-      
-      if (isDemoMode) {
-        // Demo mode - store in localStorage
-        const newVote = {
-          id: `demo_${Date.now()}`,
-          task_id: taskId,
-          participant_id: participantId,
-          value: finalEstimate,
-          factors: factors,
-          created_at: new Date().toISOString()
-        }
-        
-        const existingVotes = JSON.parse(localStorage.getItem(`demo_votes_${taskId}`) || '[]')
-        const updatedVotes = existingVotes.filter((vote: { participant_id: string }) => vote.participant_id !== participantId)
-        updatedVotes.push(newVote)
-        localStorage.setItem(`demo_votes_${taskId}`, JSON.stringify(updatedVotes))
-        
-        setHasVoted(true)
-        onVoteSubmitted()
-        return
-      }
-      
-      // Production mode - use Supabase
+      // Submit vote to Supabase
       const { error } = await supabase
         .from('votes')
         .upsert({

@@ -28,31 +28,7 @@ export default function TaskManagement({ sessionId, sessionCode, tasks, onTaskUp
 
     setIsAdding(true)
     try {
-      // Check if we're in demo mode
-      const isDemoMode = process.env.NEXT_PUBLIC_SUPABASE_URL?.includes('placeholder')
-      
-      if (isDemoMode) {
-        // Demo mode - add to localStorage
-        const newTask = {
-          id: crypto.randomUUID(),
-          session_id: sessionId,
-          title: newTaskTitle,
-          description: newTaskDescription || null,
-          status: 'pending',
-          created_at: new Date().toISOString()
-        }
-        
-        const existingTasks = JSON.parse(localStorage.getItem(`demo_tasks_${sessionCode}`) || '[]')
-        existingTasks.unshift(newTask)
-        localStorage.setItem(`demo_tasks_${sessionCode}`, JSON.stringify(existingTasks))
-        
-        setNewTaskTitle('')
-        setNewTaskDescription('')
-        onTaskUpdate()
-        return
-      }
-      
-      // Production mode - use Supabase
+      // Add task to Supabase
       const { error } = await supabase
         .from('tasks')
         .insert({
@@ -79,19 +55,7 @@ export default function TaskManagement({ sessionId, sessionCode, tasks, onTaskUp
     if (!confirm('Are you sure you want to delete this task?')) return
 
     try {
-      // Check if we're in demo mode
-      const isDemoMode = process.env.NEXT_PUBLIC_SUPABASE_URL?.includes('placeholder')
-      
-      if (isDemoMode) {
-        // Demo mode - remove from localStorage
-        const existingTasks = JSON.parse(localStorage.getItem(`demo_tasks_${sessionCode}`) || '[]')
-        const updatedTasks = existingTasks.filter((task: Task) => task.id !== taskId)
-        localStorage.setItem(`demo_tasks_${sessionCode}`, JSON.stringify(updatedTasks))
-        onTaskUpdate()
-        return
-      }
-      
-      // Production mode - use Supabase
+      // Delete task from Supabase
       const { error } = await supabase
         .from('tasks')
         .delete()
@@ -107,21 +71,7 @@ export default function TaskManagement({ sessionId, sessionCode, tasks, onTaskUp
 
   const startVoting = async (taskId: string) => {
     try {
-      // Check if we're in demo mode
-      const isDemoMode = process.env.NEXT_PUBLIC_SUPABASE_URL?.includes('placeholder')
-      
-      if (isDemoMode) {
-        // Demo mode - update in localStorage
-        const existingTasks = JSON.parse(localStorage.getItem(`demo_tasks_${sessionCode}`) || '[]')
-        const updatedTasks = existingTasks.map((task: Task) => 
-          task.id === taskId ? { ...task, status: 'voting' as const } : task
-        )
-        localStorage.setItem(`demo_tasks_${sessionCode}`, JSON.stringify(updatedTasks))
-        onTaskUpdate()
-        return
-      }
-      
-      // Production mode - use Supabase
+      // Update task status to voting in Supabase
       const { error } = await supabase
         .from('tasks')
         .update({ status: 'voting' })

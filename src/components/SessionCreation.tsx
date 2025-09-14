@@ -21,40 +21,7 @@ export default function SessionCreation() {
     try {
       const sessionCode = generateSessionCode()
       
-      // Check if we're in demo mode (placeholder Supabase URL)
-      const isDemoMode = process.env.NEXT_PUBLIC_SUPABASE_URL?.includes('placeholder')
-      
-      if (isDemoMode) {
-        // Demo mode - simulate session creation
-        console.log('Demo mode: Creating session with code:', sessionCode)
-        
-        // Store demo session data in localStorage
-        const demoSession = {
-          id: crypto.randomUUID(),
-          code: sessionCode,
-          moderator_id: crypto.randomUUID(),
-          is_active: true,
-          created_at: new Date().toISOString()
-        }
-        
-        const demoParticipant = {
-          id: crypto.randomUUID(),
-          session_id: demoSession.id,
-          nickname: moderatorName,
-          is_moderator: true,
-          joined_at: new Date().toISOString()
-        }
-        
-        localStorage.setItem(`demo_session_${sessionCode}`, JSON.stringify(demoSession))
-        localStorage.setItem(`demo_participants_${sessionCode}`, JSON.stringify([demoParticipant]))
-        localStorage.setItem(`participant_${sessionCode}`, demoParticipant.id)
-        
-        // Navigate to session
-        router.push(`/session/${sessionCode}`)
-        return
-      }
-      
-      // Production mode - use Supabase
+      // Create session in Supabase
       const { data: session, error: sessionError } = await supabase
         .from('sessions')
         .insert({
@@ -102,11 +69,6 @@ export default function SessionCreation() {
           </CardTitle>
           <CardDescription>
             Start a new design task estimation session for your team
-            {process.env.NEXT_PUBLIC_SUPABASE_URL?.includes('placeholder') && (
-              <div className="mt-2 text-sm text-amber-600 font-medium">
-                🚀 Demo Mode - Using local storage
-              </div>
-            )}
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
