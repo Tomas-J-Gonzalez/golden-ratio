@@ -9,7 +9,7 @@ import TaskManagement from './TaskManagement'
 import VotingArea from './VotingArea'
 import VoteReveal from './VoteReveal'
 import TaskHistory from './TaskHistory'
-import { Users, Copy, Check } from 'lucide-react'
+import { Users, Copy, Check, LogOut } from 'lucide-react'
 
 interface SessionPageProps {
   sessionCode: string
@@ -194,6 +194,46 @@ export default function SessionPage({ sessionCode }: SessionPageProps) {
     setTimeout(() => setCopied(false), 2000)
   }
 
+  const leaveSession = async () => {
+    if (!currentParticipant) return
+
+    const isModerator = currentParticipant.is_moderator
+    const confirmMessage = isModerator 
+      ? 'Are you sure you want to leave this session? As the moderator, this will end the session for all participants.'
+      : 'Are you sure you want to leave this session?'
+
+    if (!confirm(confirmMessage)) return
+
+    try {
+      if (isModerator) {
+        // If moderator leaves, deactivate the session
+        const { error: sessionError } = await supabase
+          .from('sessions')
+          .update({ is_active: false })
+          .eq('id', session?.id)
+
+        if (sessionError) throw sessionError
+      }
+
+      // Remove participant from session
+      const { error: participantError } = await supabase
+        .from('participants')
+        .delete()
+        .eq('id', currentParticipant.id)
+
+      if (participantError) throw participantError
+
+      // Clear participant data from localStorage
+      localStorage.removeItem(`participant_${sessionCode}`)
+
+      // Redirect to home page
+      window.location.href = '/'
+    } catch (error) {
+      console.error('Error leaving session:', error)
+      alert('Failed to leave session. Please try again.')
+    }
+  }
+
   const handleVoteSubmitted = () => {
     if (currentTask) {
       loadVotesForTask(currentTask.id)
@@ -255,6 +295,12 @@ export default function SessionPage({ sessionCode }: SessionPageProps) {
                 {copied ? <Check className="w-4 h-4 mr-2" /> : <Copy className="w-4 h-4 mr-2" />}
                 {copied ? 'Copied!' : 'Copy Link'}
               </Button>
+              {currentParticipant && (
+                <Button onClick={leaveSession} variant="destructive">
+                  <LogOut className="w-4 h-4 mr-2" />
+                  Leave Session
+                </Button>
+              )}
             </div>
           </div>
 
