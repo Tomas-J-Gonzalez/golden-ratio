@@ -41,16 +41,15 @@ export default function SessionPage({ sessionCode }: SessionPageProps) {
         setSession(sessionData)
         
         // Load demo participants
-        const demoParticipants = []
+        const demoParticipants = JSON.parse(localStorage.getItem(`demo_participants_${sessionCode}`) || '[]')
+        setParticipants(demoParticipants)
+        
+        // Find current participant
         const participantId = localStorage.getItem(`participant_${sessionCode}`)
         if (participantId) {
-          const demoParticipantData = localStorage.getItem(`demo_participant_${sessionCode}`)
-          if (demoParticipantData) {
-            demoParticipants.push(JSON.parse(demoParticipantData))
-            setCurrentParticipant(JSON.parse(demoParticipantData))
-          }
+          const participant = demoParticipants.find((p: Participant) => p.id === participantId)
+          setCurrentParticipant(participant || null)
         }
-        setParticipants(demoParticipants)
         
         // Load demo tasks
         const demoTasks = JSON.parse(localStorage.getItem(`demo_tasks_${sessionCode}`) || '[]')
@@ -150,8 +149,40 @@ export default function SessionPage({ sessionCode }: SessionPageProps) {
     const isDemoMode = process.env.NEXT_PUBLIC_SUPABASE_URL?.includes('placeholder')
     
     if (isDemoMode) {
-      // Demo mode - no real-time subscriptions needed
-      return () => {}
+      // Demo mode - use localStorage events for real-time updates
+      const handleStorageChange = (e: StorageEvent) => {
+        if (e.key === `demo_tasks_${sessionCode}`) {
+          // Tasks updated, reload them
+          const demoTasks = JSON.parse(e.newValue || '[]')
+          setTasks(demoTasks)
+          
+          // Update current task if it's voting
+          const votingTask = demoTasks.find((t: Task) => t.status === 'voting')
+          setCurrentTask(votingTask || null)
+          
+          // Load votes for current task
+          if (votingTask) {
+            const demoVotes = JSON.parse(localStorage.getItem(`demo_votes_${votingTask.id}`) || '[]')
+            setVotes(demoVotes)
+          }
+        } else if (e.key === `demo_participants_${sessionCode}`) {
+          // Participants updated, reload them
+          const demoParticipants = JSON.parse(e.newValue || '[]')
+          setParticipants(demoParticipants)
+        } else if (e.key?.startsWith(`demo_votes_`)) {
+          // Votes updated, reload them if it's for the current task
+          if (currentTask && e.key === `demo_votes_${currentTask.id}`) {
+            const demoVotes = JSON.parse(e.newValue || '[]')
+            setVotes(demoVotes)
+          }
+        }
+      }
+      
+      window.addEventListener('storage', handleStorageChange)
+      
+      return () => {
+        window.removeEventListener('storage', handleStorageChange)
+      }
     }
     
     if (!session) return
@@ -161,9 +192,29 @@ export default function SessionPage({ sessionCode }: SessionPageProps) {
       .channel('tasks')
       .on('postgres_changes', 
         { event: '*', schema: 'public', table: 'tasks', filter: `session_id=eq.${session.id}` },
-        () => {
-          // Reload session data when tasks change
-          window.location.reload()
+        async () => {
+          // Reload tasks when they change
+          try {
+            const { data: tasksData, error: tasksError } = await supabase
+              .from('tasks')
+              .select('*')
+              .eq('session_id', session.id)
+              .order('created_at', { ascending: false })
+
+            if (tasksError) throw tasksError
+            setTasks(tasksData || [])
+
+            // Update current task if it's voting
+            const votingTask = tasksData?.find(t => t.status === 'voting')
+            setCurrentTask(votingTask || null)
+
+            // Load votes for current task
+            if (votingTask) {
+              loadVotesForTask(votingTask.id)
+            }
+          } catch (error) {
+            console.error('Error reloading tasks:', error)
+          }
         }
       )
       .subscribe()
@@ -172,7 +223,7 @@ export default function SessionPage({ sessionCode }: SessionPageProps) {
       .channel('votes')
       .on('postgres_changes', 
         { event: '*', schema: 'public', table: 'votes' },
-        () => {
+        async () => {
           if (currentTask) {
             loadVotesForTask(currentTask.id)
           }
@@ -184,9 +235,20 @@ export default function SessionPage({ sessionCode }: SessionPageProps) {
       .channel('participants')
       .on('postgres_changes', 
         { event: '*', schema: 'public', table: 'participants', filter: `session_id=eq.${session.id}` },
-        () => {
-          // Reload session data when participants change
-          window.location.reload()
+        async () => {
+          // Reload participants when they change
+          try {
+            const { data: participantsData, error: participantsError } = await supabase
+              .from('participants')
+              .select('*')
+              .eq('session_id', session.id)
+              .order('joined_at', { ascending: true })
+
+            if (participantsError) throw participantsError
+            setParticipants(participantsData || [])
+          } catch (error) {
+            console.error('Error reloading participants:', error)
+          }
         }
       )
       .subscribe()
@@ -200,8 +262,12 @@ export default function SessionPage({ sessionCode }: SessionPageProps) {
 
   useEffect(() => {
     loadSessionData()
-    setupRealtimeSubscriptions()
-  }, [sessionCode])
+  }, [sessionCode, loadSessionData])
+
+  useEffect(() => {
+    const cleanup = setupRealtimeSubscriptions()
+    return cleanup
+  }, [setupRealtimeSubscriptions])
 
   const copySessionLink = () => {
     const link = `${window.location.origin}/join/${sessionCode}`

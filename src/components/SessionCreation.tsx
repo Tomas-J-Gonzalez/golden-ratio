@@ -46,7 +46,7 @@ export default function SessionCreation() {
         }
         
         localStorage.setItem(`demo_session_${sessionCode}`, JSON.stringify(demoSession))
-        localStorage.setItem(`demo_participant_${sessionCode}`, JSON.stringify(demoParticipant))
+        localStorage.setItem(`demo_participants_${sessionCode}`, JSON.stringify([demoParticipant]))
         localStorage.setItem(`participant_${sessionCode}`, demoParticipant.id)
         
         // Navigate to session
