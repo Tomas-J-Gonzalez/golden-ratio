@@ -16,17 +16,20 @@ import {
   estimateToTShirtSize
 } from '@/lib/constants'
 
+// Support both old and new factor structures for backward compatibility
 interface VoteFactors {
   effort: number
-  time: number
+  time?: number
   sprints: number
-  designerCount: number
-  designerLevels: number[]
+  designerCount?: number
+  designerLevels?: number[]
+  designers?: number // Legacy field
   breakpoints: number
   fidelity: number
-  meetingBuffer: number
-  iterationMultiplier: number
-  finalEstimate: number
+  meetingBuffer?: number
+  iterationMultiplier?: number
+  finalEstimate?: number
+  prototypes?: number // Legacy field
 }
 
 interface VotingResultsProps {
@@ -50,11 +53,14 @@ export default function VotingResults({ taskTitle, votes, participants }: Voting
       case 'sprints':
         return SPRINT_OPTIONS.find(o => o.value === value)?.label || 'Unknown'
       case 'designerCount':
+      case 'designers': // Legacy support
         return DESIGNER_COUNT_OPTIONS.find(o => o.value === value)?.label || 'Unknown'
       case 'breakpoints':
         return BREAKPOINT_OPTIONS.find(o => o.value === value)?.label || 'Unknown'
       case 'fidelity':
         return FIDELITY_OPTIONS.find(o => o.value === value)?.label || 'Unknown'
+      case 'prototypes': // Legacy support
+        return 'Prototypes (legacy)'
       case 'meetingBuffer':
         return MEETING_BUFFER_OPTIONS.find(o => o.value === value)?.label || 'Unknown'
       case 'iterationMultiplier':
@@ -132,9 +138,9 @@ export default function VotingResults({ taskTitle, votes, participants }: Voting
                 
                 <div className="grid grid-cols-2 gap-3 text-sm">
                   <div><strong>Effort:</strong> {getFactorLabel('effort', factors.effort)}</div>
-                  <div><strong>Time:</strong> {getFactorLabel('time', factors.time)}</div>
+                  {factors.time && <div><strong>Time:</strong> {getFactorLabel('time', factors.time)}</div>}
                   <div><strong>Sprints:</strong> {getFactorLabel('sprints', factors.sprints)}</div>
-                  <div><strong>Designers:</strong> {getFactorLabel('designerCount', factors.designerCount)}</div>
+                  <div><strong>Designers:</strong> {getFactorLabel('designerCount', factors.designerCount || factors.designers)}</div>
                   {factors.designerLevels && factors.designerLevels.length > 0 && (
                     <div className="col-span-2 text-xs text-gray-600">
                       {getDesignerLevels(factors.designerLevels)}
@@ -142,8 +148,9 @@ export default function VotingResults({ taskTitle, votes, participants }: Voting
                   )}
                   <div><strong>Breakpoints:</strong> {getFactorLabel('breakpoints', factors.breakpoints)}</div>
                   <div><strong>Fidelity:</strong> {getFactorLabel('fidelity', factors.fidelity)}</div>
-                  <div><strong>Meeting Buffer:</strong> {getFactorLabel('meetingBuffer', factors.meetingBuffer)}</div>
-                  <div><strong>Iterations:</strong> {getFactorLabel('iterationMultiplier', factors.iterationMultiplier)}</div>
+                  {factors.prototypes && <div><strong>Prototypes:</strong> {getFactorLabel('prototypes', factors.prototypes)}</div>}
+                  {factors.meetingBuffer && <div><strong>Meeting Buffer:</strong> {getFactorLabel('meetingBuffer', factors.meetingBuffer)}</div>}
+                  {factors.iterationMultiplier && <div><strong>Iterations:</strong> {getFactorLabel('iterationMultiplier', factors.iterationMultiplier)}</div>}
                 </div>
               </div>
             )
