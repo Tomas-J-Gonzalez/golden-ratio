@@ -11,7 +11,7 @@ import {
   EFFORT_OPTIONS, 
   SPRINT_OPTIONS, 
   DESIGNER_COUNT_OPTIONS,
-  DESIGNER_LEVEL_OPTIONS,
+  INDIVIDUAL_DESIGNER_LEVELS,
   BREAKPOINT_OPTIONS, 
   FIDELITY_OPTIONS,
   MEETING_BUFFER_OPTIONS,
@@ -31,7 +31,7 @@ interface EstimationFactors {
   effort: number | null
   sprints: number | null
   designerCount: number | null
-  designerLevel: number | null
+  designerLevels: number[] // Array of designer levels
   breakpoints: number | null
   fidelity: number | null
   finalEstimate: number | null
@@ -49,7 +49,7 @@ export default function VotingArea({
     effort: null,
     sprints: null,
     designerCount: null,
-    designerLevel: null,
+    designerLevels: [],
     breakpoints: null,
     fidelity: null,
     finalEstimate: null,
@@ -89,8 +89,31 @@ export default function VotingArea({
     }))
   }
 
+  const updateDesignerCount = (count: number) => {
+    setFactors(prev => {
+      const newDesignerLevels = Array(count).fill(1) // Initialize with Junior level
+      return { ...prev, designerCount: count, designerLevels: newDesignerLevels }
+    })
+  }
+
+  const updateDesignerLevel = (index: number, level: number) => {
+    setFactors(prev => {
+      const newDesignerLevels = [...prev.designerLevels]
+      newDesignerLevels[index] = level
+      return { ...prev, designerLevels: newDesignerLevels }
+    })
+  }
+
   const isEstimationComplete = () => {
-    return Object.values(factors).every(value => value !== null)
+    return factors.effort !== null &&
+           factors.sprints !== null &&
+           factors.designerCount !== null &&
+           factors.designerLevels.length === factors.designerCount &&
+           factors.breakpoints !== null &&
+           factors.fidelity !== null &&
+           factors.finalEstimate !== null &&
+           factors.meetingBuffer !== null &&
+           factors.iterationMultiplier !== null
   }
 
   const getCurrentEstimate = () => {
@@ -99,7 +122,7 @@ export default function VotingArea({
       effort: factors.effort!,
       sprints: factors.sprints!,
       designerCount: factors.designerCount!,
-      designerLevel: factors.designerLevel!,
+      designerLevels: factors.designerLevels,
       breakpoints: factors.breakpoints!,
       fidelity: factors.fidelity!
     })
@@ -148,7 +171,7 @@ export default function VotingArea({
       effort: null,
       sprints: null,
       designerCount: null,
-      designerLevel: null,
+      designerLevels: [],
       breakpoints: null,
       fidelity: null,
       finalEstimate: null,
@@ -187,6 +210,61 @@ export default function VotingArea({
     )
   }
 
+  const renderDesignerSelector = () => {
+    return (
+      <div className="space-y-3">
+        <h4 className="font-medium text-sm">
+          Designers <span className="text-red-500">*</span>
+        </h4>
+        
+        {/* Designer Count Selection */}
+        <div className="space-y-2">
+          <Label className="text-xs">Number of Designers</Label>
+          <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+            {DESIGNER_COUNT_OPTIONS.map((option) => (
+              <Button
+                key={option.value}
+                variant={factors.designerCount === option.value ? "default" : "outline"}
+                size="sm"
+                className="h-auto p-2 flex flex-col items-center text-center"
+                onClick={() => updateDesignerCount(option.value)}
+              >
+                <div className="font-medium text-xs">{option.label}</div>
+              </Button>
+            ))}
+          </div>
+        </div>
+
+        {/* Individual Designer Level Assignment */}
+        {factors.designerCount && factors.designerCount > 0 && (
+          <div className="space-y-2">
+            <Label className="text-xs">Assign Level to Each Designer</Label>
+            <div className="space-y-2">
+              {Array.from({ length: factors.designerCount }, (_, index) => (
+                <div key={index} className="flex items-center gap-2">
+                  <span className="text-xs font-medium w-16">Designer {index + 1}:</span>
+                  <div className="flex gap-1 flex-wrap">
+                    {INDIVIDUAL_DESIGNER_LEVELS.map((level) => (
+                      <Button
+                        key={level.value}
+                        variant={factors.designerLevels[index] === level.value ? "default" : "outline"}
+                        size="sm"
+                        className="h-8 px-2 text-xs"
+                        onClick={() => updateDesignerLevel(index, level.value)}
+                      >
+                        {level.label}
+                      </Button>
+                    ))}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+      </div>
+    )
+  }
+
   if (hasVoted) {
     const finalEstimate = getCurrentEstimate()
     const tShirtEstimate = finalEstimate ? estimateToTShirtSize(finalEstimate) : 'Unknown'
@@ -213,7 +291,18 @@ export default function VotingArea({
           <div className="grid grid-cols-2 gap-3 text-sm">
             <div><strong>Effort:</strong> {EFFORT_OPTIONS.find(o => o.value === factors.effort)?.label}</div>
             <div><strong>Sprints:</strong> {SPRINT_OPTIONS.find(o => o.value === factors.sprints)?.label}</div>
-            <div><strong>Designers:</strong> {DESIGNER_COUNT_OPTIONS.find(o => o.value === factors.designerCount)?.label} ({DESIGNER_LEVEL_OPTIONS.find(o => o.value === factors.designerLevel)?.label})</div>
+            <div className="col-span-2">
+              <strong>Designers:</strong> {factors.designerCount} designer{factors.designerCount !== 1 ? 's' : ''}
+              {factors.designerLevels.length > 0 && (
+                <div className="mt-1 text-xs">
+                  {factors.designerLevels.map((level, index) => (
+                    <span key={index} className="inline-block mr-2">
+                      Designer {index + 1}: {INDIVIDUAL_DESIGNER_LEVELS.find(l => l.value === level)?.label}
+                    </span>
+                  ))}
+                </div>
+              )}
+            </div>
             <div><strong>Breakpoints:</strong> {BREAKPOINT_OPTIONS.find(o => o.value === factors.breakpoints)?.label}</div>
             <div><strong>Fidelity:</strong> {FIDELITY_OPTIONS.find(o => o.value === factors.fidelity)?.label}</div>
             <div><strong>Meeting Buffer:</strong> {MEETING_BUFFER_OPTIONS.find(o => o.value === factors.meetingBuffer)?.label}</div>
@@ -260,8 +349,7 @@ export default function VotingArea({
         <div className="space-y-6">
           {renderFactorSelector('Effort Level', 'effort', EFFORT_OPTIONS)}
           {renderFactorSelector('Sprint Allocation', 'sprints', SPRINT_OPTIONS)}
-          {renderFactorSelector('Number of Designers', 'designerCount', DESIGNER_COUNT_OPTIONS)}
-          {renderFactorSelector('Designer Level', 'designerLevel', DESIGNER_LEVEL_OPTIONS)}
+          {renderDesignerSelector()}
           {renderFactorSelector('Breakpoints', 'breakpoints', BREAKPOINT_OPTIONS)}
           {renderFactorSelector('Fidelity Level', 'fidelity', FIDELITY_OPTIONS)}
           {renderFactorSelector('Meeting Buffer', 'meetingBuffer', MEETING_BUFFER_OPTIONS)}

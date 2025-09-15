@@ -33,6 +33,15 @@ export const DESIGNER_LEVEL_OPTIONS = [
   { value: 3, label: 'Director', description: 'Design director level' }
 ]
 
+// Designer level options for individual designer assignment
+export const INDIVIDUAL_DESIGNER_LEVELS = [
+  { value: 1, label: 'Junior', description: 'Junior designer' },
+  { value: 1.5, label: 'Intermediate', description: 'Mid-level designer' },
+  { value: 2, label: 'Senior', description: 'Senior designer' },
+  { value: 2.5, label: 'Lead', description: 'Lead designer' },
+  { value: 3, label: 'Director', description: 'Design director' }
+]
+
 export const BREAKPOINT_OPTIONS = [
   { value: 1, label: 'Desktop only', description: 'Single breakpoint design' },
   { value: 2, label: 'Desktop + Mobile', description: 'Two main breakpoints' },
@@ -62,12 +71,15 @@ export const calculateEstimate = (factors: {
   effort: number;
   sprints: number;
   designerCount: number;
-  designerLevel: number;
+  designerLevels: number[]; // Array of designer levels
   breakpoints: number;
   fidelity: number;
 }) => {
   const baseEstimate = factors.effort;
-  const complexityMultiplier = (factors.sprints + factors.designerCount + factors.designerLevel + factors.breakpoints + factors.fidelity) / 5;
+  const averageDesignerLevel = factors.designerLevels.length > 0 
+    ? factors.designerLevels.reduce((sum, level) => sum + level, 0) / factors.designerLevels.length
+    : 1;
+  const complexityMultiplier = (factors.sprints + factors.designerCount + averageDesignerLevel + factors.breakpoints + factors.fidelity) / 5;
   return Math.round(baseEstimate * complexityMultiplier);
 }
 
