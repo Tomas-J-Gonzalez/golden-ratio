@@ -137,9 +137,9 @@ export default function VotingArea({
     setFactors({
       effort: null,
       sprints: null,
-      designers: null,
+      designerCount: null,
+      designerLevel: null,
       breakpoints: null,
-      prototypes: null,
       fidelity: null
     })
   }
