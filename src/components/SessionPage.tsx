@@ -282,7 +282,6 @@ export default function SessionPage({ sessionCode }: SessionPageProps) {
     }
   }
 
-
   if (isLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
@@ -318,7 +317,7 @@ export default function SessionPage({ sessionCode }: SessionPageProps) {
     if (currentTask && allParticipantsVoted && currentTask.status === 'voting') {
       updateTaskStatusToVotingCompleted(currentTask.id)
     }
-  }, [currentTask, allParticipantsVoted])
+  }, [currentTask, allParticipantsVoted, updateTaskStatusToVotingCompleted])
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -363,7 +362,6 @@ export default function SessionPage({ sessionCode }: SessionPageProps) {
               <div>
                 {allParticipantsVoted ? (
                   <VotingResults
-                    taskId={currentTask.id}
                     taskTitle={currentTask.title}
                     votes={votes}
                     participants={participants}

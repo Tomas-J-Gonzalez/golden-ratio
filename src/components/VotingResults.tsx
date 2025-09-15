@@ -17,13 +17,12 @@ import {
 } from '@/lib/constants'
 
 interface VotingResultsProps {
-  taskId: string
   taskTitle: string
   votes: Vote[]
   participants: Participant[]
 }
 
-export default function VotingResults({ taskId, taskTitle, votes, participants }: VotingResultsProps) {
+export default function VotingResults({ taskTitle, votes, participants }: VotingResultsProps) {
   const getParticipantName = (participantId: string) => {
     const participant = participants.find(p => p.id === participantId)
     return participant ? participant.nickname : 'Unknown'
@@ -61,7 +60,7 @@ export default function VotingResults({ taskId, taskTitle, votes, participants }
   // Calculate statistics
   const estimates = votes.map(vote => {
     if (vote.factors && typeof vote.factors === 'object') {
-      const factors = vote.factors as any
+      const factors = vote.factors as Record<string, number>
       // Simple calculation for display - you might want to use the actual calculateEstimate function
       const baseEstimate = factors.time || 1
       const complexityMultiplier = (factors.effort + factors.sprints + (factors.designerCount || 1) + factors.breakpoints + factors.fidelity) / 5
@@ -106,7 +105,7 @@ export default function VotingResults({ taskId, taskTitle, votes, participants }
         <div className="space-y-4">
           <h4 className="font-medium text-sm">Individual Estimates</h4>
           {votes.map((vote) => {
-            const factors = vote.factors as any
+            const factors = vote.factors as Record<string, number>
             const estimate = estimates[votes.indexOf(vote)]
             
             return (

@@ -5,11 +5,10 @@ import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import { CheckCircle, RotateCcw, Calculator } from 'lucide-react'
+import { CheckCircle, Calculator } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
 import { 
   EFFORT_OPTIONS, 
-  TIME_OPTIONS,
   SPRINT_OPTIONS, 
   DESIGNER_COUNT_OPTIONS,
   INDIVIDUAL_DESIGNER_LEVELS,
@@ -166,20 +165,6 @@ export default function VotingArea({
     }
   }
 
-  const changeVote = () => {
-    setHasVoted(false)
-    setFactors({
-      effort: null,
-      time: null,
-      sprints: null,
-      designerCount: null,
-      designerLevels: [],
-      breakpoints: null,
-      fidelity: null,
-      meetingBuffer: null,
-      iterationMultiplier: null
-    })
-  }
 
   const renderFactorSelector = (
     title: string,
