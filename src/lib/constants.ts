@@ -1,10 +1,10 @@
-// Flexible estimation factors for design tasks
+// T-shirt sizing for effort estimation
 export const EFFORT_OPTIONS = [
-  { value: 1, label: 'Very Low', description: 'Minimal complexity, straightforward task' },
-  { value: 2, label: 'Low', description: 'Simple task with few variables' },
-  { value: 4, label: 'Medium', description: 'Moderate complexity, some unknowns' },
-  { value: 8, label: 'High', description: 'Complex task with multiple considerations' },
-  { value: 16, label: 'Very High', description: 'Highly complex with many variables' }
+  { value: 1, label: 'XS', description: 'Extra Small - 1-2 hours' },
+  { value: 2, label: 'S', description: 'Small - 4-8 hours' },
+  { value: 4, label: 'M', description: 'Medium - 1-2 days' },
+  { value: 8, label: 'L', description: 'Large - 3-5 days' },
+  { value: 16, label: 'XL', description: 'Extra Large - 1+ weeks' }
 ]
 
 export const SPRINT_OPTIONS = [
@@ -71,15 +71,19 @@ export const calculateEstimate = (factors: {
   return Math.round(baseEstimate * complexityMultiplier);
 }
 
-// Convert estimate to hours range
+// Convert estimate to t-shirt size and hours range
+export const estimateToTShirtSize = (estimate: number) => {
+  if (estimate <= 2) return 'XS (1-2 hours)';
+  if (estimate <= 4) return 'S (4-8 hours)';
+  if (estimate <= 8) return 'M (1-2 days)';
+  if (estimate <= 16) return 'L (3-5 days)';
+  if (estimate <= 32) return 'XL (1+ weeks)';
+  return 'XXL (2+ weeks)';
+}
+
+// Legacy function for backward compatibility
 export const estimateToHours = (estimate: number) => {
-  if (estimate <= 2) return '1-2 hours';
-  if (estimate <= 4) return '2-4 hours';
-  if (estimate <= 8) return '4-8 hours';
-  if (estimate <= 16) return '1-2 days';
-  if (estimate <= 32) return '2-4 days';
-  if (estimate <= 64) return '1 week';
-  return '1+ weeks';
+  return estimateToTShirtSize(estimate);
 }
 
 // Meeting buffer options

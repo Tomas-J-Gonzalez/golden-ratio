@@ -17,7 +17,7 @@ import {
   MEETING_BUFFER_OPTIONS,
   ITERATION_MULTIPLIER_OPTIONS,
   calculateEstimate,
-  estimateToHours
+  estimateToTShirtSize
 } from '@/lib/constants'
 
 interface VotingAreaProps {
@@ -166,18 +166,20 @@ export default function VotingArea({
     
     return (
       <div className="space-y-3">
-        <h4 className="font-medium text-sm">{title}</h4>
-        <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+        <h4 className="font-medium text-sm">
+          {title} <span className="text-red-500">*</span>
+        </h4>
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2">
           {options.map((option) => (
             <Button
               key={option.value}
               variant={selectedValue === option.value ? "default" : "outline"}
               size="sm"
-              className="h-auto p-3 flex flex-col items-start text-left"
+              className="h-auto p-3 flex flex-col items-start text-left min-h-[60px] break-words"
               onClick={() => updateFactor(factorType, option.value)}
             >
-              <div className="font-medium text-xs">{option.label}</div>
-              <div className="text-xs opacity-70 mt-1">{option.description}</div>
+              <div className="font-medium text-xs leading-tight">{option.label}</div>
+              <div className="text-xs opacity-70 mt-1 leading-tight break-words">{option.description}</div>
             </Button>
           ))}
         </div>
@@ -187,7 +189,7 @@ export default function VotingArea({
 
   if (hasVoted) {
     const finalEstimate = getCurrentEstimate()
-    const hoursEstimate = finalEstimate ? estimateToHours(finalEstimate) : 'Unknown'
+    const tShirtEstimate = finalEstimate ? estimateToTShirtSize(finalEstimate) : 'Unknown'
     
     return (
       <Card>
@@ -203,8 +205,8 @@ export default function VotingArea({
         <CardContent className="space-y-4">
           <div className="p-4 bg-green-50 rounded-lg">
             <div className="text-center">
-              <div className="text-2xl font-bold text-green-600">{finalEstimate} points</div>
-              <div className="text-sm text-green-700">{hoursEstimate}</div>
+              <div className="text-2xl font-bold text-green-600">{tShirtEstimate}</div>
+              <div className="text-sm text-green-700">Final Estimate</div>
             </div>
           </div>
           
@@ -216,7 +218,7 @@ export default function VotingArea({
             <div><strong>Fidelity:</strong> {FIDELITY_OPTIONS.find(o => o.value === factors.fidelity)?.label}</div>
             <div><strong>Meeting Buffer:</strong> {MEETING_BUFFER_OPTIONS.find(o => o.value === factors.meetingBuffer)?.label}</div>
             <div><strong>Design Iterations:</strong> {ITERATION_MULTIPLIER_OPTIONS.find(o => o.value === factors.iterationMultiplier)?.label}</div>
-            <div><strong>Final Estimate:</strong> {factors.finalEstimate} points</div>
+            <div><strong>Final Estimate:</strong> {factors.finalEstimate ? estimateToTShirtSize(factors.finalEstimate) : 'Not set'}</div>
           </div>
           
           <Button variant="outline" onClick={changeVote} className="w-full">
@@ -268,7 +270,7 @@ export default function VotingArea({
 
         {/* Final Estimate Input */}
         <div className="space-y-2">
-          <Label htmlFor="final-estimate">Final Estimate (points)</Label>
+          <Label htmlFor="final-estimate">Final Estimate (t-shirt size)</Label>
           <Input
             id="final-estimate"
             type="number"
@@ -285,8 +287,8 @@ export default function VotingArea({
             <div className="p-3 bg-blue-50 rounded-lg">
               <div className="text-sm font-medium mb-2">Estimate Summary:</div>
               <div className="grid grid-cols-2 gap-2 text-xs">
-                <div><strong>Points:</strong> {factors.finalEstimate}</div>
-                <div><strong>Hours:</strong> {estimateToHours(factors.finalEstimate)}</div>
+                <div><strong>Size:</strong> {estimateToTShirtSize(factors.finalEstimate)}</div>
+                <div><strong>Value:</strong> {factors.finalEstimate}</div>
                 <div className="col-span-2 text-gray-600">
                   Final estimate based on all factors
                 </div>

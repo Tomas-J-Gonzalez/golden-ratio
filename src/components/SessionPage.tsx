@@ -7,7 +7,6 @@ import { Badge } from '@/components/ui/badge'
 import { supabase, Session, Task, Participant, Vote } from '@/lib/supabase'
 import TaskManagement from './TaskManagement'
 import VotingArea from './VotingArea'
-import VoteReveal from './VoteReveal'
 import TaskHistory from './TaskHistory'
 import { Users, Copy, Check, LogOut } from 'lucide-react'
 
@@ -346,14 +345,14 @@ export default function SessionPage({ sessionCode }: SessionPageProps) {
             {currentTask && (
               <div>
                 {allParticipantsVoted ? (
-                  <VoteReveal
-                    taskId={currentTask.id}
-                    taskTitle={currentTask.title}
-                    votes={votes}
-                    participants={participants}
-                    isModerator={isModerator}
-                    onEstimateFinalized={handleEstimateFinalized}
-                  />
+                  <Card>
+                    <CardContent className="pt-6 text-center">
+                      <p className="text-green-600 font-medium">All participants have voted on: <strong>{currentTask.title}</strong></p>
+                      <p className="text-sm text-gray-600 mt-2">
+                        {votes.length} of {participants.length} participants completed their estimates
+                      </p>
+                    </CardContent>
+                  </Card>
                 ) : currentParticipant ? (
                   <VotingArea
                     taskId={currentTask.id}
@@ -379,24 +378,24 @@ export default function SessionPage({ sessionCode }: SessionPageProps) {
           <div className="space-y-4">
             {/* Participants */}
             <Card>
-              <CardHeader className="pb-2">
-                <CardTitle className="flex items-center gap-2 text-base">
-                  <Users className="w-4 h-4" />
+              <CardHeader className="pb-1 pt-3">
+                <CardTitle className="flex items-center gap-2 text-sm">
+                  <Users className="w-3 h-3" />
                   Participants ({participants.length})
                 </CardTitle>
               </CardHeader>
-              <CardContent className="pt-0">
-                <div className="flex flex-wrap gap-2">
+              <CardContent className="pt-1 pb-3">
+                <div className="flex flex-wrap gap-1">
                   {participants.map((participant) => {
                     const hasVoted = currentTask ? votes.some(vote => vote.participant_id === participant.id) : false
                     return (
                       <Badge 
                         key={participant.id} 
                         variant={hasVoted ? "default" : "outline"}
-                        className="text-xs"
+                        className="text-xs px-2 py-0.5"
                       >
                         {participant.nickname}
-                        {participant.is_moderator && " (Mod)"}
+                        {participant.is_moderator && " (M)"}
                         {hasVoted && " ✓"}
                       </Badge>
                     )

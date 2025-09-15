@@ -148,9 +148,7 @@ export default function TaskManagement({ sessionId, tasks, onTaskUpdate, isModer
         )}
 
         <div className="space-y-3">
-          {tasks.length === 0 ? (
-            <p className="text-gray-500 text-center py-8">No tasks yet. {isModerator && 'Create your first task above.'}</p>
-          ) : (
+          {tasks.length > 0 && (
             tasks.map((task) => (
               <div key={task.id} className="flex items-center justify-between p-4 border rounded-lg">
                 <div className="flex-1">
