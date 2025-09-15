@@ -105,12 +105,15 @@ export default function SessionPage({ sessionCode }: SessionPageProps) {
   const setupRealtimeSubscriptions = useCallback(() => {
     if (!session) return
 
+    console.log('Setting up real-time subscriptions for session:', session.id)
+
     // Set up real-time subscriptions
     const tasksSubscription = supabase
-      .channel('tasks')
+      .channel(`tasks-${session.id}`)
       .on('postgres_changes', 
         { event: '*', schema: 'public', table: 'tasks', filter: `session_id=eq.${session.id}` },
-        async () => {
+        async (payload) => {
+          console.log('Tasks changed:', payload)
           // Reload tasks when they change
           try {
             const { data: tasksData, error: tasksError } = await supabase
@@ -135,25 +138,43 @@ export default function SessionPage({ sessionCode }: SessionPageProps) {
           }
         }
       )
-      .subscribe()
+      .subscribe((status) => {
+        console.log('Tasks subscription status:', status)
+      })
 
     const votesSubscription = supabase
-      .channel('votes')
+      .channel(`votes-${session.id}`)
       .on('postgres_changes', 
         { event: '*', schema: 'public', table: 'votes' },
-        async () => {
-          if (currentTask) {
-            loadVotesForTask(currentTask.id)
+        async (payload) => {
+          console.log('Votes changed:', payload)
+          // Reload votes for all tasks in this session
+          try {
+            const { data: tasksData, error: tasksError } = await supabase
+              .from('tasks')
+              .select('*')
+              .eq('session_id', session.id)
+              .eq('status', 'voting')
+              .single()
+
+            if (!tasksError && tasksData) {
+              loadVotesForTask(tasksData.id)
+            }
+          } catch (error) {
+            console.error('Error reloading votes:', error)
           }
         }
       )
-      .subscribe()
+      .subscribe((status) => {
+        console.log('Votes subscription status:', status)
+      })
 
     const participantsSubscription = supabase
-      .channel('participants')
+      .channel(`participants-${session.id}`)
       .on('postgres_changes', 
         { event: '*', schema: 'public', table: 'participants', filter: `session_id=eq.${session.id}` },
-        async () => {
+        async (payload) => {
+          console.log('Participants changed:', payload)
           // Reload participants when they change
           try {
             const { data: participantsData, error: participantsError } = await supabase
@@ -169,14 +190,17 @@ export default function SessionPage({ sessionCode }: SessionPageProps) {
           }
         }
       )
-      .subscribe()
+      .subscribe((status) => {
+        console.log('Participants subscription status:', status)
+      })
 
     return () => {
+      console.log('Cleaning up real-time subscriptions')
       tasksSubscription.unsubscribe()
       votesSubscription.unsubscribe()
       participantsSubscription.unsubscribe()
     }
-  }, [session, currentTask])
+  }, [session])
 
   useEffect(() => {
     loadSessionData()
