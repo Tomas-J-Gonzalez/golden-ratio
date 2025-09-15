@@ -84,19 +84,19 @@ export const estimateToHours = (estimate: number) => {
 
 // Meeting buffer options
 export const MEETING_BUFFER_OPTIONS = [
-  { value: 0, label: 'No buffer' },
-  { value: 0.1, label: '+10%' },
-  { value: 0.2, label: '+20%' },
-  { value: 0.3, label: '+30%' },
-  { value: 0.5, label: '+50%' },
+  { value: 0, label: 'No buffer', description: 'No additional time for meetings' },
+  { value: 0.1, label: '+10%', description: '10% additional time for meetings' },
+  { value: 0.2, label: '+20%', description: '20% additional time for meetings' },
+  { value: 0.3, label: '+30%', description: '30% additional time for meetings' },
+  { value: 0.5, label: '+50%', description: '50% additional time for meetings' },
 ]
 
 // Iteration multiplier options
 export const ITERATION_MULTIPLIER_OPTIONS = [
-  { value: 1, label: '1x (No iteration)' },
-  { value: 2, label: '2x (2 rounds)' },
-  { value: 3, label: '3x (3 rounds)' },
-  { value: 4, label: '4x (4 rounds)' },
+  { value: 1, label: '1x (No iteration)', description: 'No additional design iterations' },
+  { value: 2, label: '2x (2 rounds)', description: '2 rounds of design iterations' },
+  { value: 3, label: '3x (3 rounds)', description: '3 rounds of design iterations' },
+  { value: 4, label: '4x (4 rounds)', description: '4 rounds of design iterations' },
 ]
 
 // Generate unique session code
