@@ -268,7 +268,7 @@ export default function SessionPage({ sessionCode }: SessionPageProps) {
     loadSessionData()
   }
 
-  const updateTaskStatusToVotingCompleted = async (taskId: string) => {
+  const updateTaskStatusToVotingCompleted = useCallback(async (taskId: string) => {
     try {
       const { error } = await supabase
         .from('tasks')
@@ -280,7 +280,18 @@ export default function SessionPage({ sessionCode }: SessionPageProps) {
     } catch (error) {
       console.error('Error updating task status:', error)
     }
-  }
+  }, [loadSessionData])
+
+  // Calculate derived values
+  const isModerator = currentParticipant?.is_moderator || false
+  const allParticipantsVoted = currentTask && votes.length >= participants.length
+
+  // Update task status to voting_completed when all participants have voted
+  useEffect(() => {
+    if (currentTask && allParticipantsVoted && currentTask.status === 'voting') {
+      updateTaskStatusToVotingCompleted(currentTask.id)
+    }
+  }, [currentTask, allParticipantsVoted, updateTaskStatusToVotingCompleted])
 
   if (isLoading) {
     return (
@@ -308,16 +319,6 @@ export default function SessionPage({ sessionCode }: SessionPageProps) {
       </div>
     )
   }
-
-  const isModerator = currentParticipant?.is_moderator || false
-  const allParticipantsVoted = currentTask && votes.length >= participants.length
-
-  // Update task status to voting_completed when all participants have voted
-  useEffect(() => {
-    if (currentTask && allParticipantsVoted && currentTask.status === 'voting') {
-      updateTaskStatusToVotingCompleted(currentTask.id)
-    }
-  }, [currentTask, allParticipantsVoted, updateTaskStatusToVotingCompleted])
 
   return (
     <div className="min-h-screen bg-gray-50">
