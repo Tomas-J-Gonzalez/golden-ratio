@@ -16,6 +16,19 @@ import {
   estimateToTShirtSize
 } from '@/lib/constants'
 
+interface VoteFactors {
+  effort: number
+  time: number
+  sprints: number
+  designerCount: number
+  designerLevels: number[]
+  breakpoints: number
+  fidelity: number
+  meetingBuffer: number
+  iterationMultiplier: number
+  finalEstimate: number
+}
+
 interface VotingResultsProps {
   taskTitle: string
   votes: Vote[]
@@ -105,7 +118,7 @@ export default function VotingResults({ taskTitle, votes, participants }: Voting
         <div className="space-y-4">
           <h4 className="font-medium text-sm">Individual Estimates</h4>
           {votes.map((vote) => {
-            const factors = vote.factors as Record<string, number>
+            const factors = vote.factors as VoteFactors
             const estimate = estimates[votes.indexOf(vote)]
             
             return (
