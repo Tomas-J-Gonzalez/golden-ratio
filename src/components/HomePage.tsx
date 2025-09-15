@@ -103,11 +103,39 @@ export default function HomePage() {
 
     setIsJoining(true)
     try {
-      // Navigate to join page
-      router.push(`/join/${sessionCode}?nickname=${encodeURIComponent(nickname)}`)
+      // Check if session exists
+      const { data: session, error: sessionError } = await supabase
+        .from('sessions')
+        .select('id')
+        .eq('code', sessionCode)
+        .eq('is_active', true)
+        .single()
+
+      if (sessionError || !session) {
+        throw new Error('Session not found or inactive')
+      }
+
+      // Add participant to session
+      const { data: participant, error: participantError } = await supabase
+        .from('participants')
+        .insert({
+          session_id: session.id,
+          nickname: nickname,
+          is_moderator: false
+        })
+        .select()
+        .single()
+
+      if (participantError) throw participantError
+
+      // Store participant ID for this session
+      localStorage.setItem(`participant_${sessionCode}`, participant.id)
+
+      // Navigate directly to session
+      router.push(`/session/${sessionCode}`)
     } catch (error) {
       console.error('Error joining session:', error)
-      alert('Failed to join session. Please try again.')
+      alert('Failed to join session. Please check the session code.')
     } finally {
       setIsJoining(false)
     }
