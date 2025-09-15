@@ -149,9 +149,9 @@ export default function VoteReveal({
                       <div><strong>Hours:</strong> {hoursEstimate}</div>
                       {factors.effort && <div><strong>Effort:</strong> {EFFORT_OPTIONS.find(o => o.value === factors.effort)?.label}</div>}
                       {factors.sprints && <div><strong>Sprints:</strong> {SPRINT_OPTIONS.find(o => o.value === factors.sprints)?.label}</div>}
-                      {factors.designerCount && factors.designerLevel ? (
+                      {('designerCount' in factors && 'designerLevel' in factors && factors.designerCount && factors.designerLevel) ? (
                         <div><strong>Designers:</strong> {DESIGNER_COUNT_OPTIONS.find(o => o.value === factors.designerCount)?.label} ({DESIGNER_LEVEL_OPTIONS.find(o => o.value === factors.designerLevel)?.label})</div>
-                      ) : factors.designers && (
+                      ) : ('designers' in factors && factors.designers) && (
                         <div><strong>Designers:</strong> {DESIGNER_COUNT_OPTIONS.find(o => o.value === factors.designers)?.label || 'Legacy format'}</div>
                       )}
                       {factors.breakpoints && <div><strong>Breakpoints:</strong> {BREAKPOINT_OPTIONS.find(o => o.value === factors.breakpoints)?.label}</div>}
