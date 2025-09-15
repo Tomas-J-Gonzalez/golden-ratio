@@ -116,6 +116,10 @@ export default function TaskManagement({ sessionId, sessionCode, tasks, onTaskUp
                 placeholder="e.g., Redesign navigation bar"
                 value={newTaskTitle}
                 onChange={(e) => setNewTaskTitle(e.target.value)}
+                autoComplete="off"
+                autoCorrect="off"
+                autoCapitalize="off"
+                spellCheck="false"
               />
             </div>
             <div className="space-y-2">
@@ -126,6 +130,10 @@ export default function TaskManagement({ sessionId, sessionCode, tasks, onTaskUp
                 value={newTaskDescription}
                 onChange={(e) => setNewTaskDescription(e.target.value)}
                 rows={3}
+                autoComplete="off"
+                autoCorrect="off"
+                autoCapitalize="off"
+                spellCheck="false"
               />
             </div>
             <Button 

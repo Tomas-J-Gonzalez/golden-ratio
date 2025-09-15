@@ -175,6 +175,10 @@ export default function HomePage() {
                   placeholder="Enter your name"
                   value={moderatorName}
                   onChange={(e) => setModeratorName(e.target.value)}
+                  autoComplete="off"
+                  autoCorrect="off"
+                  autoCapitalize="off"
+                  spellCheck="false"
                 />
               </div>
               <Button
@@ -210,6 +214,10 @@ export default function HomePage() {
                   onChange={(e) => setSessionCode(e.target.value.toUpperCase())}
                   maxLength={6}
                   className="text-center text-lg font-mono"
+                  autoComplete="off"
+                  autoCorrect="off"
+                  autoCapitalize="off"
+                  spellCheck="false"
                 />
               </div>
               <div className="space-y-2">
@@ -219,6 +227,10 @@ export default function HomePage() {
                   placeholder="Enter your nickname"
                   value={nickname}
                   onChange={(e) => setNickname(e.target.value)}
+                  autoComplete="off"
+                  autoCorrect="off"
+                  autoCapitalize="off"
+                  spellCheck="false"
                 />
               </div>
               <Button

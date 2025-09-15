@@ -320,7 +320,7 @@ export default function SessionPage({ sessionCode }: SessionPageProps) {
                 {copied ? 'Copied!' : 'Copy Link'}
               </Button>
               {currentParticipant && (
-                <Button onClick={leaveSession} variant="destructive">
+                <Button onClick={leaveSession} variant="outline" className="border-black text-black hover:bg-black hover:text-white">
                   <LogOut className="w-4 h-4 mr-2" />
                   Leave Session
                 </Button>

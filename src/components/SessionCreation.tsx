@@ -80,6 +80,10 @@ export default function SessionCreation() {
               value={moderatorName}
               onChange={(e) => setModeratorName(e.target.value)}
               onKeyDown={(e) => e.key === 'Enter' && createSession()}
+              autoComplete="off"
+              autoCorrect="off"
+              autoCapitalize="off"
+              spellCheck="false"
             />
           </div>
           <Button 

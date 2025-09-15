@@ -194,6 +194,10 @@ export default function VoteReveal({
                 value={finalEstimate}
                 onChange={(e) => setFinalEstimate(Number(e.target.value))}
                 placeholder="Enter final estimate"
+                autoComplete="off"
+                autoCorrect="off"
+                autoCapitalize="off"
+                spellCheck="false"
               />
               {finalEstimate > 0 && (
                 <div className="p-3 bg-blue-50 rounded-lg">
