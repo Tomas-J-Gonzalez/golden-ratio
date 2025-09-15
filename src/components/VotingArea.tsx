@@ -38,6 +38,7 @@ interface EstimationFactors {
   fidelity: number | null
   meetingBuffer: number | null
   iterationMultiplier: number | null
+  finalEstimate: number | null
 }
 
 export default function VotingArea({ 
@@ -55,7 +56,8 @@ export default function VotingArea({
     breakpoints: null,
     fidelity: null,
     meetingBuffer: null,
-    iterationMultiplier: null
+    iterationMultiplier: null,
+    finalEstimate: null
   })
   const [hasVoted, setHasVoted] = useState(false)
   const [isSubmitting, setIsSubmitting] = useState(false)
