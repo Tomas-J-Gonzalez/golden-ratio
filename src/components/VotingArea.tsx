@@ -320,7 +320,7 @@ export default function VotingArea({
   }
 
   const currentEstimate = getCurrentEstimate()
-  const hoursEstimate = currentEstimate ? estimateToHours(currentEstimate) : 'Complete all factors'
+  const hoursEstimate = currentEstimate ? estimateToTShirtSize(currentEstimate) : 'Complete all factors'
 
   return (
     <Card>

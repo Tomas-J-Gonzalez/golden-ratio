@@ -267,11 +267,6 @@ export default function SessionPage({ sessionCode }: SessionPageProps) {
     loadSessionData()
   }
 
-  const handleEstimateFinalized = () => {
-    loadSessionData()
-    setCurrentTask(null)
-    setVotes([])
-  }
 
   if (isLoading) {
     return (
