@@ -346,7 +346,7 @@ export default function SessionPage({ sessionCode }: SessionPageProps) {
         </div>
 
         {/* Main Content - 2 Column Layout */}
-        <div className="flex flex-col lg:grid lg:grid-cols-2 gap-6">
+        <div className="flex flex-col lg:grid lg:grid-cols-[70%_30%] gap-6">
           {/* Left Column - Task Management & Current Voting */}
           <div className="space-y-6 order-2 lg:order-1">
             {/* Task Management - Moved to top */}
