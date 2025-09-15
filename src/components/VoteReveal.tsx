@@ -14,7 +14,6 @@ import {
   DESIGNER_COUNT_OPTIONS,
   DESIGNER_LEVEL_OPTIONS,
   BREAKPOINT_OPTIONS, 
-  PROTOTYPE_OPTIONS, 
   FIDELITY_OPTIONS,
   MEETING_BUFFER_OPTIONS, 
   ITERATION_MULTIPLIER_OPTIONS,
@@ -132,7 +131,7 @@ export default function VoteReveal({
                   designerCount?: number;
                   designerLevel?: number;
                   breakpoints?: number;
-                  prototypes?: number;
+                  prototypes?: number; // Legacy support
                   fidelity?: number;
                 }
                 const hoursEstimate = estimateToHours(vote.value)
@@ -156,7 +155,6 @@ export default function VoteReveal({
                         <div><strong>Designers:</strong> {DESIGNER_COUNT_OPTIONS.find(o => o.value === factors.designers)?.label || 'Legacy format'}</div>
                       )}
                       {factors.breakpoints && <div><strong>Breakpoints:</strong> {BREAKPOINT_OPTIONS.find(o => o.value === factors.breakpoints)?.label}</div>}
-                      {factors.prototypes && <div><strong>Prototypes:</strong> {PROTOTYPE_OPTIONS.find(o => o.value === factors.prototypes)?.label}</div>}
                       {factors.fidelity && <div><strong>Fidelity:</strong> {FIDELITY_OPTIONS.find(o => o.value === factors.fidelity)?.label}</div>}
                     </div>
                   </div>

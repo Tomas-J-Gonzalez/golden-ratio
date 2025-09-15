@@ -11,7 +11,6 @@ import {
   DESIGNER_COUNT_OPTIONS,
   DESIGNER_LEVEL_OPTIONS,
   BREAKPOINT_OPTIONS, 
-  PROTOTYPE_OPTIONS, 
   FIDELITY_OPTIONS,
   calculateEstimate,
   estimateToHours
@@ -30,7 +29,6 @@ interface EstimationFactors {
   designerCount: number | null
   designerLevel: number | null
   breakpoints: number | null
-  prototypes: number | null
   fidelity: number | null
 }
 
@@ -46,7 +44,6 @@ export default function VotingArea({
     designerCount: null,
     designerLevel: null,
     breakpoints: null,
-    prototypes: null,
     fidelity: null
   })
   const [hasVoted, setHasVoted] = useState(false)
@@ -94,7 +91,6 @@ export default function VotingArea({
       designerCount: factors.designerCount!,
       designerLevel: factors.designerLevel!,
       breakpoints: factors.breakpoints!,
-      prototypes: factors.prototypes!,
       fidelity: factors.fidelity!
     })
   }
@@ -204,7 +200,6 @@ export default function VotingArea({
             <div><strong>Sprints:</strong> {SPRINT_OPTIONS.find(o => o.value === factors.sprints)?.label}</div>
             <div><strong>Designers:</strong> {DESIGNER_COUNT_OPTIONS.find(o => o.value === factors.designerCount)?.label} ({DESIGNER_LEVEL_OPTIONS.find(o => o.value === factors.designerLevel)?.label})</div>
             <div><strong>Breakpoints:</strong> {BREAKPOINT_OPTIONS.find(o => o.value === factors.breakpoints)?.label}</div>
-            <div><strong>Prototypes:</strong> {PROTOTYPE_OPTIONS.find(o => o.value === factors.prototypes)?.label}</div>
             <div><strong>Fidelity:</strong> {FIDELITY_OPTIONS.find(o => o.value === factors.fidelity)?.label}</div>
           </div>
           
@@ -250,7 +245,6 @@ export default function VotingArea({
           {renderFactorSelector('Number of Designers', 'designerCount', DESIGNER_COUNT_OPTIONS)}
           {renderFactorSelector('Designer Level', 'designerLevel', DESIGNER_LEVEL_OPTIONS)}
           {renderFactorSelector('Breakpoints', 'breakpoints', BREAKPOINT_OPTIONS)}
-          {renderFactorSelector('Prototyping', 'prototypes', PROTOTYPE_OPTIONS)}
           {renderFactorSelector('Fidelity Level', 'fidelity', FIDELITY_OPTIONS)}
         </div>
         

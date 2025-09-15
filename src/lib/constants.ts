@@ -4,8 +4,7 @@ export const EFFORT_OPTIONS = [
   { value: 2, label: 'Low', description: 'Simple task with few variables' },
   { value: 4, label: 'Medium', description: 'Moderate complexity, some unknowns' },
   { value: 8, label: 'High', description: 'Complex task with multiple considerations' },
-  { value: 16, label: 'Very High', description: 'Highly complex with many variables' },
-  { value: 32, label: 'Extreme', description: 'Maximum complexity, many unknowns' }
+  { value: 16, label: 'Very High', description: 'Highly complex with many variables' }
 ]
 
 export const SPRINT_OPTIONS = [
@@ -38,9 +37,7 @@ export const BREAKPOINT_OPTIONS = [
   { value: 1, label: 'Desktop only', description: 'Single breakpoint design' },
   { value: 2, label: 'Desktop + Mobile', description: 'Two main breakpoints' },
   { value: 3, label: 'Desktop + Tablet + Mobile', description: 'Three standard breakpoints' },
-  { value: 4, label: 'All breakpoints + responsive', description: 'Full responsive design' },
-  { value: 5, label: 'All + accessibility', description: 'Responsive + accessibility considerations' },
-  { value: 6, label: 'All + accessibility + i18n', description: 'Full responsive + accessibility + internationalization' }
+  { value: 4, label: 'All breakpoints', description: 'Full responsive design' }
 ]
 
 export const PROTOTYPE_OPTIONS = [
@@ -56,8 +53,8 @@ export const FIDELITY_OPTIONS = [
   { value: 1, label: 'Lo-fi', description: 'Low fidelity, wireframes/sketches' },
   { value: 2, label: 'Mid-fi', description: 'Medium fidelity, detailed wireframes' },
   { value: 3, label: 'Hi-fi', description: 'High fidelity, pixel-perfect designs' },
-  { value: 4, label: 'Hi-fi + design system', description: 'High fidelity + design system integration' },
-  { value: 5, label: 'Hi-fi + system + documentation', description: 'Complete design system with documentation' }
+  { value: 4, label: 'Interactive prototype', description: 'Interactive prototype with animations' },
+  { value: 5, label: 'Production-ready', description: 'Production-ready designs with specifications' }
 ]
 
 // Calculate total estimate based on individual factors
@@ -67,11 +64,10 @@ export const calculateEstimate = (factors: {
   designerCount: number;
   designerLevel: number;
   breakpoints: number;
-  prototypes: number;
   fidelity: number;
 }) => {
   const baseEstimate = factors.effort;
-  const complexityMultiplier = (factors.sprints + factors.designerCount + factors.designerLevel + factors.breakpoints + factors.prototypes + factors.fidelity) / 6;
+  const complexityMultiplier = (factors.sprints + factors.designerCount + factors.designerLevel + factors.breakpoints + factors.fidelity) / 5;
   return Math.round(baseEstimate * complexityMultiplier);
 }
 
