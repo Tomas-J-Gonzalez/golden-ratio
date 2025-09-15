@@ -9,6 +9,7 @@ import { CheckCircle, RotateCcw, Calculator } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
 import { 
   EFFORT_OPTIONS, 
+  TIME_OPTIONS,
   SPRINT_OPTIONS, 
   DESIGNER_COUNT_OPTIONS,
   INDIVIDUAL_DESIGNER_LEVELS,
@@ -29,12 +30,12 @@ interface VotingAreaProps {
 
 interface EstimationFactors {
   effort: number | null
+  time: number | null
   sprints: number | null
   designerCount: number | null
   designerLevels: number[] // Array of designer levels
   breakpoints: number | null
   fidelity: number | null
-  finalEstimate: number | null
   meetingBuffer: number | null
   iterationMultiplier: number | null
 }
@@ -47,12 +48,12 @@ export default function VotingArea({
 }: VotingAreaProps) {
   const [factors, setFactors] = useState<EstimationFactors>({
     effort: null,
+    time: null,
     sprints: null,
     designerCount: null,
     designerLevels: [],
     breakpoints: null,
     fidelity: null,
-    finalEstimate: null,
     meetingBuffer: null,
     iterationMultiplier: null
   })
@@ -106,12 +107,12 @@ export default function VotingArea({
 
   const isEstimationComplete = () => {
     return factors.effort !== null &&
+           factors.time !== null &&
            factors.sprints !== null &&
            factors.designerCount !== null &&
            factors.designerLevels.length === factors.designerCount &&
            factors.breakpoints !== null &&
            factors.fidelity !== null &&
-           factors.finalEstimate !== null &&
            factors.meetingBuffer !== null &&
            factors.iterationMultiplier !== null
   }
@@ -169,12 +170,12 @@ export default function VotingArea({
     setHasVoted(false)
     setFactors({
       effort: null,
+      time: null,
       sprints: null,
       designerCount: null,
       designerLevels: [],
       breakpoints: null,
       fidelity: null,
-      finalEstimate: null,
       meetingBuffer: null,
       iterationMultiplier: null
     })
@@ -310,10 +311,6 @@ export default function VotingArea({
             <div><strong>Final Estimate:</strong> {factors.finalEstimate ? estimateToTShirtSize(factors.finalEstimate) : 'Not set'}</div>
           </div>
           
-          <Button variant="outline" onClick={changeVote} className="w-full">
-            <RotateCcw className="w-4 h-4 mr-2" />
-            Change Vote
-          </Button>
         </CardContent>
       </Card>
     )

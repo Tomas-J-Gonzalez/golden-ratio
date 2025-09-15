@@ -91,6 +91,8 @@ export default function TaskManagement({ sessionId, tasks, onTaskUpdate, isModer
         return <Badge variant="secondary">Pending</Badge>
       case 'voting':
         return <Badge variant="default">Voting</Badge>
+      case 'voting_completed':
+        return <Badge variant="outline" className="bg-green-100 text-green-800">Voting Completed</Badge>
       case 'completed':
         return <Badge variant="outline">Completed</Badge>
       default:

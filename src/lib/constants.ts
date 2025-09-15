@@ -1,10 +1,19 @@
-// T-shirt sizing for effort estimation
+// Effort level options (complexity)
 export const EFFORT_OPTIONS = [
-  { value: 1, label: 'XS', description: 'Extra Small - 1-2 hours' },
-  { value: 2, label: 'S', description: 'Small - 4-8 hours' },
-  { value: 4, label: 'M', description: 'Medium - 1-2 days' },
-  { value: 8, label: 'L', description: 'Large - 3-5 days' },
-  { value: 16, label: 'XL', description: 'Extra Large - 1+ weeks' }
+  { value: 1, label: 'Very Low', description: 'Minimal complexity' },
+  { value: 2, label: 'Low', description: 'Simple task' },
+  { value: 4, label: 'Medium', description: 'Moderate complexity' },
+  { value: 8, label: 'High', description: 'Complex task' },
+  { value: 16, label: 'Very High', description: 'Highly complex' }
+]
+
+// Time estimation options
+export const TIME_OPTIONS = [
+  { value: 1, label: 'XS', description: '1-2 hours' },
+  { value: 2, label: 'S', description: '4-8 hours' },
+  { value: 4, label: 'M', description: '1-2 days' },
+  { value: 8, label: 'L', description: '3-5 days' },
+  { value: 16, label: 'XL', description: '1+ weeks' }
 ]
 
 export const SPRINT_OPTIONS = [
@@ -69,17 +78,18 @@ export const FIDELITY_OPTIONS = [
 // Calculate total estimate based on individual factors
 export const calculateEstimate = (factors: {
   effort: number;
+  time: number;
   sprints: number;
   designerCount: number;
   designerLevels: number[]; // Array of designer levels
   breakpoints: number;
   fidelity: number;
 }) => {
-  const baseEstimate = factors.effort;
+  const baseEstimate = factors.time; // Use time as base
   const averageDesignerLevel = factors.designerLevels.length > 0 
     ? factors.designerLevels.reduce((sum, level) => sum + level, 0) / factors.designerLevels.length
     : 1;
-  const complexityMultiplier = (factors.sprints + factors.designerCount + averageDesignerLevel + factors.breakpoints + factors.fidelity) / 5;
+  const complexityMultiplier = (factors.effort + factors.sprints + factors.designerCount + averageDesignerLevel + factors.breakpoints + factors.fidelity) / 6;
   return Math.round(baseEstimate * complexityMultiplier);
 }
 

@@ -7,6 +7,7 @@ import { Badge } from '@/components/ui/badge'
 import { supabase, Session, Task, Participant, Vote } from '@/lib/supabase'
 import TaskManagement from './TaskManagement'
 import VotingArea from './VotingArea'
+import VotingResults from './VotingResults'
 import TaskHistory from './TaskHistory'
 import { Users, Copy, Check, LogOut } from 'lucide-react'
 
@@ -267,6 +268,20 @@ export default function SessionPage({ sessionCode }: SessionPageProps) {
     loadSessionData()
   }
 
+  const updateTaskStatusToVotingCompleted = async (taskId: string) => {
+    try {
+      const { error } = await supabase
+        .from('tasks')
+        .update({ status: 'voting_completed' })
+        .eq('id', taskId)
+
+      if (error) throw error
+      loadSessionData()
+    } catch (error) {
+      console.error('Error updating task status:', error)
+    }
+  }
+
 
   if (isLoading) {
     return (
@@ -297,6 +312,13 @@ export default function SessionPage({ sessionCode }: SessionPageProps) {
 
   const isModerator = currentParticipant?.is_moderator || false
   const allParticipantsVoted = currentTask && votes.length >= participants.length
+
+  // Update task status to voting_completed when all participants have voted
+  useEffect(() => {
+    if (currentTask && allParticipantsVoted && currentTask.status === 'voting') {
+      updateTaskStatusToVotingCompleted(currentTask.id)
+    }
+  }, [currentTask, allParticipantsVoted])
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -340,14 +362,12 @@ export default function SessionPage({ sessionCode }: SessionPageProps) {
             {currentTask && (
               <div>
                 {allParticipantsVoted ? (
-                  <Card>
-                    <CardContent className="pt-6 text-center">
-                      <p className="text-green-600 font-medium">All participants have voted on: <strong>{currentTask.title}</strong></p>
-                      <p className="text-sm text-gray-600 mt-2">
-                        {votes.length} of {participants.length} participants completed their estimates
-                      </p>
-                    </CardContent>
-                  </Card>
+                  <VotingResults
+                    taskId={currentTask.id}
+                    taskTitle={currentTask.title}
+                    votes={votes}
+                    participants={participants}
+                  />
                 ) : currentParticipant ? (
                   <VotingArea
                     taskId={currentTask.id}
