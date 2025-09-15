@@ -327,30 +327,6 @@ export default function SessionPage({ sessionCode }: SessionPageProps) {
               )}
             </div>
           </div>
-
-          {/* Participants - Compact */}
-          <Card>
-            <CardHeader className="pb-3">
-              <CardTitle className="flex items-center gap-2 text-lg">
-                <Users className="w-4 h-4" />
-                Participants ({participants.length})
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="pt-0">
-              <div className="flex flex-wrap gap-2">
-                {participants.map((participant) => (
-                  <Badge 
-                    key={participant.id} 
-                    variant={participant.is_moderator ? "default" : "secondary"}
-                    className="text-xs"
-                  >
-                    {participant.nickname}
-                    {participant.is_moderator && " (Mod)"}
-                  </Badge>
-                ))}
-              </div>
-            </CardContent>
-          </Card>
         </div>
 
         {/* Main Content - 2 Column Layout */}
@@ -398,8 +374,37 @@ export default function SessionPage({ sessionCode }: SessionPageProps) {
             )}
           </div>
 
-          {/* Right Column - Task History */}
-          <div>
+          {/* Right Column - Participants & Task History */}
+          <div className="space-y-6">
+            {/* Participants */}
+            <Card>
+              <CardHeader className="pb-3">
+                <CardTitle className="flex items-center gap-2 text-lg">
+                  <Users className="w-4 h-4" />
+                  Participants ({participants.length})
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="pt-0">
+                <div className="flex flex-wrap gap-2">
+                  {participants.map((participant) => {
+                    const hasVoted = currentTask ? votes.some(vote => vote.participant_id === participant.id) : false
+                    return (
+                      <Badge 
+                        key={participant.id} 
+                        variant={hasVoted ? "default" : "outline"}
+                        className="text-xs"
+                      >
+                        {participant.nickname}
+                        {participant.is_moderator && " (Mod)"}
+                        {hasVoted && " ✓"}
+                      </Badge>
+                    )
+                  })}
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Task History */}
             <TaskHistory tasks={tasks} sessionId={session?.id || sessionCode} />
           </div>
         </div>
