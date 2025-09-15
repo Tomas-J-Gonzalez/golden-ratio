@@ -376,11 +376,11 @@ export default function SessionPage({ sessionCode }: SessionPageProps) {
           </div>
 
           {/* Right Column - Participants & Task History */}
-          <div className="space-y-6">
+          <div className="space-y-4">
             {/* Participants */}
             <Card>
-              <CardHeader className="pb-3">
-                <CardTitle className="flex items-center gap-2 text-lg">
+              <CardHeader className="pb-2">
+                <CardTitle className="flex items-center gap-2 text-base">
                   <Users className="w-4 h-4" />
                   Participants ({participants.length})
                 </CardTitle>
@@ -405,8 +405,10 @@ export default function SessionPage({ sessionCode }: SessionPageProps) {
               </CardContent>
             </Card>
 
-            {/* Task History */}
-            <TaskHistory tasks={tasks} sessionId={session?.id || sessionCode} />
+            {/* Task History - Only show if there are completed tasks */}
+            {tasks.some(task => task.status === 'completed') && (
+              <TaskHistory tasks={tasks} sessionId={session?.id || sessionCode} />
+            )}
           </div>
         </div>
       </div>
