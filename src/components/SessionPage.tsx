@@ -306,21 +306,21 @@ export default function SessionPage({ sessionCode }: SessionPageProps) {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <div className="container mx-auto px-4 py-8">
+      <div className="container mx-auto px-4 py-6">
         {/* Header */}
-        <div className="mb-8">
+        <div className="mb-6">
           <div className="flex items-center justify-between mb-4">
             <div>
-              <h1 className="text-3xl font-bold text-gray-900">Design Estimation Session</h1>
+              <h1 className="text-2xl font-bold text-gray-900">Design Estimation Session</h1>
               <p className="text-gray-600">Session Code: <span className="font-mono font-bold">{sessionCode}</span></p>
             </div>
-            <div className="flex items-center gap-4">
-              <Button onClick={copySessionLink} variant="outline">
+            <div className="flex items-center gap-3">
+              <Button onClick={copySessionLink} variant="outline" size="sm">
                 {copied ? <Check className="w-4 h-4 mr-2" /> : <Copy className="w-4 h-4 mr-2" />}
                 {copied ? 'Copied!' : 'Copy Link'}
               </Button>
               {currentParticipant && (
-                <Button onClick={leaveSession} variant="outline" className="border-black text-black hover:bg-black hover:text-white">
+                <Button onClick={leaveSession} variant="outline" size="sm" className="border-black text-black hover:bg-black hover:text-white">
                   <LogOut className="w-4 h-4 mr-2" />
                   Leave Session
                 </Button>
@@ -328,23 +328,24 @@ export default function SessionPage({ sessionCode }: SessionPageProps) {
             </div>
           </div>
 
-          {/* Participants */}
+          {/* Participants - Compact */}
           <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Users className="w-5 h-5" />
+            <CardHeader className="pb-3">
+              <CardTitle className="flex items-center gap-2 text-lg">
+                <Users className="w-4 h-4" />
                 Participants ({participants.length})
               </CardTitle>
             </CardHeader>
-            <CardContent>
+            <CardContent className="pt-0">
               <div className="flex flex-wrap gap-2">
                 {participants.map((participant) => (
                   <Badge 
                     key={participant.id} 
                     variant={participant.is_moderator ? "default" : "secondary"}
+                    className="text-xs"
                   >
                     {participant.nickname}
-                    {participant.is_moderator && " (Moderator)"}
+                    {participant.is_moderator && " (Mod)"}
                   </Badge>
                 ))}
               </div>
@@ -352,51 +353,57 @@ export default function SessionPage({ sessionCode }: SessionPageProps) {
           </Card>
         </div>
 
-        {/* Current Task Voting */}
-        {currentTask && (
-          <div className="mb-8">
-            {allParticipantsVoted ? (
-              <VoteReveal
-                taskId={currentTask.id}
-                taskTitle={currentTask.title}
-                votes={votes}
-                participants={participants}
-                isModerator={isModerator}
-                onEstimateFinalized={handleEstimateFinalized}
-              />
-            ) : currentParticipant ? (
-              <VotingArea
-                taskId={currentTask.id}
-                taskTitle={currentTask.title}
-                participantId={currentParticipant.id}
-                onVoteSubmitted={handleVoteSubmitted}
-              />
-            ) : (
-              <Card>
-                <CardContent className="pt-6 text-center">
-                  <p>Waiting for participants to vote on: <strong>{currentTask.title}</strong></p>
-                  <p className="text-sm text-gray-600 mt-2">
-                    {votes.length} of {participants.length} participants have voted
-                  </p>
-                </CardContent>
-              </Card>
+        {/* Main Content - 2 Column Layout */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          {/* Left Column - Task Management & Current Voting */}
+          <div className="space-y-6">
+            {/* Task Management - Moved to top */}
+            <TaskManagement
+              sessionId={session?.id || sessionCode}
+              sessionCode={sessionCode}
+              tasks={tasks}
+              onTaskUpdate={handleTaskUpdate}
+              isModerator={isModerator}
+            />
+
+            {/* Current Task Voting */}
+            {currentTask && (
+              <div>
+                {allParticipantsVoted ? (
+                  <VoteReveal
+                    taskId={currentTask.id}
+                    taskTitle={currentTask.title}
+                    votes={votes}
+                    participants={participants}
+                    isModerator={isModerator}
+                    onEstimateFinalized={handleEstimateFinalized}
+                  />
+                ) : currentParticipant ? (
+                  <VotingArea
+                    taskId={currentTask.id}
+                    taskTitle={currentTask.title}
+                    participantId={currentParticipant.id}
+                    onVoteSubmitted={handleVoteSubmitted}
+                  />
+                ) : (
+                  <Card>
+                    <CardContent className="pt-6 text-center">
+                      <p>Waiting for participants to vote on: <strong>{currentTask.title}</strong></p>
+                      <p className="text-sm text-gray-600 mt-2">
+                        {votes.length} of {participants.length} participants have voted
+                      </p>
+                    </CardContent>
+                  </Card>
+                )}
+              </div>
             )}
           </div>
-        )}
 
-        {/* Task Management */}
-        <div className="mb-8">
-          <TaskManagement
-            sessionId={session?.id || sessionCode}
-            sessionCode={sessionCode}
-            tasks={tasks}
-            onTaskUpdate={handleTaskUpdate}
-            isModerator={isModerator}
-          />
+          {/* Right Column - Task History */}
+          <div>
+            <TaskHistory tasks={tasks} sessionId={session?.id || sessionCode} />
+          </div>
         </div>
-
-        {/* Task History */}
-        <TaskHistory tasks={tasks} sessionId={session?.id || sessionCode} />
       </div>
     </div>
   )

@@ -11,7 +11,8 @@ import { supabase, Vote } from '@/lib/supabase'
 import { 
   EFFORT_OPTIONS, 
   SPRINT_OPTIONS, 
-  DESIGNER_OPTIONS, 
+  DESIGNER_COUNT_OPTIONS,
+  DESIGNER_LEVEL_OPTIONS,
   BREAKPOINT_OPTIONS, 
   PROTOTYPE_OPTIONS, 
   FIDELITY_OPTIONS,
@@ -127,7 +128,8 @@ export default function VoteReveal({
                 const factors = vote.factors || {} as {
                   effort?: number;
                   sprints?: number;
-                  designers?: number;
+                  designerCount?: number;
+                  designerLevel?: number;
                   breakpoints?: number;
                   prototypes?: number;
                   fidelity?: number;
@@ -147,7 +149,9 @@ export default function VoteReveal({
                       <div><strong>Hours:</strong> {hoursEstimate}</div>
                       {factors.effort && <div><strong>Effort:</strong> {EFFORT_OPTIONS.find(o => o.value === factors.effort)?.label}</div>}
                       {factors.sprints && <div><strong>Sprints:</strong> {SPRINT_OPTIONS.find(o => o.value === factors.sprints)?.label}</div>}
-                      {factors.designers && <div><strong>Designers:</strong> {DESIGNER_OPTIONS.find(o => o.value === factors.designers)?.label}</div>}
+                      {factors.designerCount && factors.designerLevel && (
+                        <div><strong>Designers:</strong> {DESIGNER_COUNT_OPTIONS.find(o => o.value === factors.designerCount)?.label} ({DESIGNER_LEVEL_OPTIONS.find(o => o.value === factors.designerLevel)?.label})</div>
+                      )}
                       {factors.breakpoints && <div><strong>Breakpoints:</strong> {BREAKPOINT_OPTIONS.find(o => o.value === factors.breakpoints)?.label}</div>}
                       {factors.prototypes && <div><strong>Prototypes:</strong> {PROTOTYPE_OPTIONS.find(o => o.value === factors.prototypes)?.label}</div>}
                       {factors.fidelity && <div><strong>Fidelity:</strong> {FIDELITY_OPTIONS.find(o => o.value === factors.fidelity)?.label}</div>}

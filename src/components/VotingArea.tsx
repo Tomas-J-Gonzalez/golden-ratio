@@ -8,7 +8,8 @@ import { supabase } from '@/lib/supabase'
 import { 
   EFFORT_OPTIONS, 
   SPRINT_OPTIONS, 
-  DESIGNER_OPTIONS, 
+  DESIGNER_COUNT_OPTIONS,
+  DESIGNER_LEVEL_OPTIONS,
   BREAKPOINT_OPTIONS, 
   PROTOTYPE_OPTIONS, 
   FIDELITY_OPTIONS,
@@ -26,7 +27,8 @@ interface VotingAreaProps {
 interface EstimationFactors {
   effort: number | null
   sprints: number | null
-  designers: number | null
+  designerCount: number | null
+  designerLevel: number | null
   breakpoints: number | null
   prototypes: number | null
   fidelity: number | null
@@ -41,7 +43,8 @@ export default function VotingArea({
   const [factors, setFactors] = useState<EstimationFactors>({
     effort: null,
     sprints: null,
-    designers: null,
+    designerCount: null,
+    designerLevel: null,
     breakpoints: null,
     prototypes: null,
     fidelity: null
@@ -88,7 +91,8 @@ export default function VotingArea({
     return calculateEstimate({
       effort: factors.effort!,
       sprints: factors.sprints!,
-      designers: factors.designers!,
+      designerCount: factors.designerCount!,
+      designerLevel: factors.designerLevel!,
       breakpoints: factors.breakpoints!,
       prototypes: factors.prototypes!,
       fidelity: factors.fidelity!
@@ -198,7 +202,7 @@ export default function VotingArea({
           <div className="grid grid-cols-2 gap-3 text-sm">
             <div><strong>Effort:</strong> {EFFORT_OPTIONS.find(o => o.value === factors.effort)?.label}</div>
             <div><strong>Sprints:</strong> {SPRINT_OPTIONS.find(o => o.value === factors.sprints)?.label}</div>
-            <div><strong>Designers:</strong> {DESIGNER_OPTIONS.find(o => o.value === factors.designers)?.label}</div>
+            <div><strong>Designers:</strong> {DESIGNER_COUNT_OPTIONS.find(o => o.value === factors.designerCount)?.label} ({DESIGNER_LEVEL_OPTIONS.find(o => o.value === factors.designerLevel)?.label})</div>
             <div><strong>Breakpoints:</strong> {BREAKPOINT_OPTIONS.find(o => o.value === factors.breakpoints)?.label}</div>
             <div><strong>Prototypes:</strong> {PROTOTYPE_OPTIONS.find(o => o.value === factors.prototypes)?.label}</div>
             <div><strong>Fidelity:</strong> {FIDELITY_OPTIONS.find(o => o.value === factors.fidelity)?.label}</div>
@@ -243,7 +247,8 @@ export default function VotingArea({
         <div className="space-y-6">
           {renderFactorSelector('Effort Level', 'effort', EFFORT_OPTIONS)}
           {renderFactorSelector('Sprint Allocation', 'sprints', SPRINT_OPTIONS)}
-          {renderFactorSelector('Designers Involved', 'designers', DESIGNER_OPTIONS)}
+          {renderFactorSelector('Number of Designers', 'designerCount', DESIGNER_COUNT_OPTIONS)}
+          {renderFactorSelector('Designer Level', 'designerLevel', DESIGNER_LEVEL_OPTIONS)}
           {renderFactorSelector('Breakpoints', 'breakpoints', BREAKPOINT_OPTIONS)}
           {renderFactorSelector('Prototyping', 'prototypes', PROTOTYPE_OPTIONS)}
           {renderFactorSelector('Fidelity Level', 'fidelity', FIDELITY_OPTIONS)}

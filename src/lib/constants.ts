@@ -18,13 +18,20 @@ export const SPRINT_OPTIONS = [
   { value: 3, label: '3+ sprints', description: 'Multiple sprints, major effort' }
 ]
 
-export const DESIGNER_OPTIONS = [
+export const DESIGNER_COUNT_OPTIONS = [
   { value: 1, label: '1 designer', description: 'Single designer can handle' },
-  { value: 1.5, label: '1-2 designers', description: 'One primary, occasional support' },
   { value: 2, label: '2 designers', description: 'Two designers working together' },
-  { value: 3, label: '2-3 designers', description: 'Small team collaboration' },
-  { value: 4, label: '3+ designers', description: 'Multiple designers required' },
-  { value: 5, label: 'Full team', description: 'Entire design team involved' }
+  { value: 3, label: '3 designers', description: 'Small team collaboration' },
+  { value: 4, label: '4 designers', description: 'Medium team effort' },
+  { value: 5, label: '5+ designers', description: 'Large team required' }
+]
+
+export const DESIGNER_LEVEL_OPTIONS = [
+  { value: 1, label: 'Junior', description: 'Junior designer level' },
+  { value: 1.5, label: 'Intermediate', description: 'Mid-level designer' },
+  { value: 2, label: 'Senior', description: 'Senior designer' },
+  { value: 2.5, label: 'Lead', description: 'Lead designer' },
+  { value: 3, label: 'Director', description: 'Design director level' }
 ]
 
 export const BREAKPOINT_OPTIONS = [
@@ -57,13 +64,14 @@ export const FIDELITY_OPTIONS = [
 export const calculateEstimate = (factors: {
   effort: number;
   sprints: number;
-  designers: number;
+  designerCount: number;
+  designerLevel: number;
   breakpoints: number;
   prototypes: number;
   fidelity: number;
 }) => {
   const baseEstimate = factors.effort;
-  const complexityMultiplier = (factors.sprints + factors.designers + factors.breakpoints + factors.prototypes + factors.fidelity) / 5;
+  const complexityMultiplier = (factors.sprints + factors.designerCount + factors.designerLevel + factors.breakpoints + factors.prototypes + factors.fidelity) / 6;
   return Math.round(baseEstimate * complexityMultiplier);
 }
 
