@@ -15,9 +15,10 @@ interface TaskManagementProps {
   tasks: Task[]
   onTaskUpdate: () => void
   isModerator: boolean
+  hasActiveVoting: boolean
 }
 
-export default function TaskManagement({ sessionId, tasks, onTaskUpdate, isModerator }: TaskManagementProps) {
+export default function TaskManagement({ sessionId, tasks, onTaskUpdate, isModerator, hasActiveVoting }: TaskManagementProps) {
   const [newTaskTitle, setNewTaskTitle] = useState('')
   const [newTaskDescription, setNewTaskDescription] = useState('')
   const [isAdding, setIsAdding] = useState(false)
@@ -106,7 +107,7 @@ export default function TaskManagement({ sessionId, tasks, onTaskUpdate, isModer
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
-        {isModerator && (
+        {isModerator && !hasActiveVoting && (
           <div className="space-y-4 p-4 border rounded-lg bg-gray-50">
             <div className="space-y-2">
               <Label htmlFor="task-title">Task Title</Label>
@@ -182,7 +183,8 @@ export default function TaskManagement({ sessionId, tasks, onTaskUpdate, isModer
                       variant="destructive"
                       onClick={() => deleteTask(task.id)}
                     >
-                      <Trash2 className="w-4 h-4" />
+                      <Trash2 className="w-4 h-4 mr-2" />
+                      Delete task
                     </Button>
                   </div>
                 )}
