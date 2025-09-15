@@ -178,7 +178,8 @@ export default function TaskManagement({ sessionId, tasks, onTaskUpdate, isModer
                     )}
                     <Button
                       size="sm"
-                      variant="destructive"
+                      variant="outline"
+                      className="border-black text-black hover:bg-black hover:text-white"
                       onClick={() => deleteTask(task.id)}
                     >
                       <Trash2 className="w-4 h-4 mr-2" />
