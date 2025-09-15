@@ -12,13 +12,12 @@ import { Plus, Trash2, Play } from 'lucide-react'
 
 interface TaskManagementProps {
   sessionId: string
-  sessionCode: string
   tasks: Task[]
   onTaskUpdate: () => void
   isModerator: boolean
 }
 
-export default function TaskManagement({ sessionId, sessionCode, tasks, onTaskUpdate, isModerator }: TaskManagementProps) {
+export default function TaskManagement({ sessionId, tasks, onTaskUpdate, isModerator }: TaskManagementProps) {
   const [newTaskTitle, setNewTaskTitle] = useState('')
   const [newTaskDescription, setNewTaskDescription] = useState('')
   const [isAdding, setIsAdding] = useState(false)

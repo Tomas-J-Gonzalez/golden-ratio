@@ -360,7 +360,6 @@ export default function SessionPage({ sessionCode }: SessionPageProps) {
             {/* Task Management - Moved to top */}
             <TaskManagement
               sessionId={session?.id || sessionCode}
-              sessionCode={sessionCode}
               tasks={tasks}
               onTaskUpdate={handleTaskUpdate}
               isModerator={isModerator}
