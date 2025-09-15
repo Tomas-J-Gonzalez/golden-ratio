@@ -9,6 +9,7 @@ import { CheckCircle, Calculator } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
 import { 
   EFFORT_OPTIONS, 
+  TIME_OPTIONS,
   SPRINT_OPTIONS, 
   DESIGNER_COUNT_OPTIONS,
   INDIVIDUAL_DESIGNER_LEVELS,
@@ -120,6 +121,7 @@ export default function VotingArea({
     if (!isEstimationComplete()) return null
     return calculateEstimate({
       effort: factors.effort!,
+      time: factors.time!,
       sprints: factors.sprints!,
       designerCount: factors.designerCount!,
       designerLevels: factors.designerLevels,
@@ -276,6 +278,7 @@ export default function VotingArea({
           
           <div className="grid grid-cols-2 gap-3 text-sm">
             <div><strong>Effort:</strong> {EFFORT_OPTIONS.find(o => o.value === factors.effort)?.label}</div>
+            <div><strong>Time:</strong> {TIME_OPTIONS.find(o => o.value === factors.time)?.label}</div>
             <div><strong>Sprints:</strong> {SPRINT_OPTIONS.find(o => o.value === factors.sprints)?.label}</div>
             <div className="col-span-2">
               <strong>Designers:</strong> {factors.designerCount} designer{factors.designerCount !== 1 ? 's' : ''}
@@ -330,6 +333,7 @@ export default function VotingArea({
         {/* Factor Selectors */}
         <div className="space-y-6">
           {renderFactorSelector('Effort Level', 'effort', EFFORT_OPTIONS)}
+          {renderFactorSelector('Time Estimation', 'time', TIME_OPTIONS)}
           {renderFactorSelector('Sprint Allocation', 'sprints', SPRINT_OPTIONS)}
           {renderDesignerSelector()}
           {renderFactorSelector('Breakpoints', 'breakpoints', BREAKPOINT_OPTIONS)}
