@@ -140,7 +140,7 @@ export default function VotingResults({ taskTitle, votes, participants }: Voting
                   <div><strong>Effort:</strong> {getFactorLabel('effort', factors.effort)}</div>
                   {factors.time && <div><strong>Time:</strong> {getFactorLabel('time', factors.time)}</div>}
                   <div><strong>Sprints:</strong> {getFactorLabel('sprints', factors.sprints)}</div>
-                  <div><strong>Designers:</strong> {getFactorLabel('designerCount', factors.designerCount || factors.designers)}</div>
+                  {(factors.designerCount || factors.designers) && <div><strong>Designers:</strong> {getFactorLabel('designerCount', factors.designerCount || factors.designers || 0)}</div>}
                   {factors.designerLevels && factors.designerLevels.length > 0 && (
                     <div className="col-span-2 text-xs text-gray-600">
                       {getDesignerLevels(factors.designerLevels)}
