@@ -3,6 +3,8 @@
 import { useState, useEffect, useCallback } from 'react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import { Input } from '@/components/ui/input'
+import { Label } from '@/components/ui/label'
 import { CheckCircle, RotateCcw, Calculator } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
 import { 
@@ -12,6 +14,8 @@ import {
   DESIGNER_LEVEL_OPTIONS,
   BREAKPOINT_OPTIONS, 
   FIDELITY_OPTIONS,
+  MEETING_BUFFER_OPTIONS,
+  ITERATION_MULTIPLIER_OPTIONS,
   calculateEstimate,
   estimateToHours
 } from '@/lib/constants'
@@ -30,6 +34,9 @@ interface EstimationFactors {
   designerLevel: number | null
   breakpoints: number | null
   fidelity: number | null
+  finalEstimate: number | null
+  meetingBuffer: number | null
+  iterationMultiplier: number | null
 }
 
 export default function VotingArea({ 
@@ -44,7 +51,10 @@ export default function VotingArea({
     designerCount: null,
     designerLevel: null,
     breakpoints: null,
-    fidelity: null
+    fidelity: null,
+    finalEstimate: null,
+    meetingBuffer: null,
+    iterationMultiplier: null
   })
   const [hasVoted, setHasVoted] = useState(false)
   const [isSubmitting, setIsSubmitting] = useState(false)
@@ -140,7 +150,10 @@ export default function VotingArea({
       designerCount: null,
       designerLevel: null,
       breakpoints: null,
-      fidelity: null
+      fidelity: null,
+      finalEstimate: null,
+      meetingBuffer: null,
+      iterationMultiplier: null
     })
   }
 
@@ -201,6 +214,9 @@ export default function VotingArea({
             <div><strong>Designers:</strong> {DESIGNER_COUNT_OPTIONS.find(o => o.value === factors.designerCount)?.label} ({DESIGNER_LEVEL_OPTIONS.find(o => o.value === factors.designerLevel)?.label})</div>
             <div><strong>Breakpoints:</strong> {BREAKPOINT_OPTIONS.find(o => o.value === factors.breakpoints)?.label}</div>
             <div><strong>Fidelity:</strong> {FIDELITY_OPTIONS.find(o => o.value === factors.fidelity)?.label}</div>
+            <div><strong>Meeting Buffer:</strong> {MEETING_BUFFER_OPTIONS.find(o => o.value === factors.meetingBuffer)?.label}</div>
+            <div><strong>Design Iterations:</strong> {ITERATION_MULTIPLIER_OPTIONS.find(o => o.value === factors.iterationMultiplier)?.label}</div>
+            <div><strong>Final Estimate:</strong> {factors.finalEstimate} points</div>
           </div>
           
           <Button variant="outline" onClick={changeVote} className="w-full">
@@ -246,6 +262,37 @@ export default function VotingArea({
           {renderFactorSelector('Designer Level', 'designerLevel', DESIGNER_LEVEL_OPTIONS)}
           {renderFactorSelector('Breakpoints', 'breakpoints', BREAKPOINT_OPTIONS)}
           {renderFactorSelector('Fidelity Level', 'fidelity', FIDELITY_OPTIONS)}
+          {renderFactorSelector('Meeting Buffer', 'meetingBuffer', MEETING_BUFFER_OPTIONS)}
+          {renderFactorSelector('Design Iterations', 'iterationMultiplier', ITERATION_MULTIPLIER_OPTIONS)}
+        </div>
+
+        {/* Final Estimate Input */}
+        <div className="space-y-2">
+          <Label htmlFor="final-estimate">Final Estimate (points)</Label>
+          <Input
+            id="final-estimate"
+            type="number"
+            min="1"
+            value={factors.finalEstimate || ''}
+            onChange={(e) => setFactors(prev => ({ ...prev, finalEstimate: Number(e.target.value) || null }))}
+            placeholder="Enter final estimate"
+            autoComplete="off"
+            autoCorrect="off"
+            autoCapitalize="off"
+            spellCheck="false"
+          />
+          {factors.finalEstimate && factors.finalEstimate > 0 && (
+            <div className="p-3 bg-blue-50 rounded-lg">
+              <div className="text-sm font-medium mb-2">Estimate Summary:</div>
+              <div className="grid grid-cols-2 gap-2 text-xs">
+                <div><strong>Points:</strong> {factors.finalEstimate}</div>
+                <div><strong>Hours:</strong> {estimateToHours(factors.finalEstimate)}</div>
+                <div className="col-span-2 text-gray-600">
+                  Final estimate based on all factors
+                </div>
+              </div>
+            </div>
+          )}
         </div>
         
         {isEstimationComplete() && (

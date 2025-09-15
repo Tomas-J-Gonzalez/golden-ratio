@@ -343,9 +343,18 @@ export default function SessionPage({ sessionCode }: SessionPageProps) {
             />
 
             {/* Current Task Voting */}
-            {currentTask && !allParticipantsVoted && (
+            {currentTask && (
               <div>
-                {currentParticipant ? (
+                {allParticipantsVoted ? (
+                  <VoteReveal
+                    taskId={currentTask.id}
+                    taskTitle={currentTask.title}
+                    votes={votes}
+                    participants={participants}
+                    isModerator={isModerator}
+                    onEstimateFinalized={handleEstimateFinalized}
+                  />
+                ) : currentParticipant ? (
                   <VotingArea
                     taskId={currentTask.id}
                     taskTitle={currentTask.title}
@@ -398,18 +407,6 @@ export default function SessionPage({ sessionCode }: SessionPageProps) {
 
             {/* Task History */}
             <TaskHistory tasks={tasks} sessionId={session?.id || sessionCode} />
-
-            {/* Finalize Estimate - Only show when all participants have voted */}
-            {currentTask && allParticipantsVoted && (
-              <VoteReveal
-                taskId={currentTask.id}
-                taskTitle={currentTask.title}
-                votes={votes}
-                participants={participants}
-                isModerator={isModerator}
-                onEstimateFinalized={handleEstimateFinalized}
-              />
-            )}
           </div>
         </div>
       </div>
