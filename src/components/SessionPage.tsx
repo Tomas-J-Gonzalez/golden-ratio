@@ -346,9 +346,9 @@ export default function SessionPage({ sessionCode }: SessionPageProps) {
         </div>
 
         {/* Main Content - 2 Column Layout */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <div className="flex flex-col lg:grid lg:grid-cols-2 gap-6">
           {/* Left Column - Task Management & Current Voting */}
-          <div className="space-y-6">
+          <div className="space-y-6 order-2 lg:order-1">
             {/* Task Management - Moved to top */}
             <TaskManagement
               sessionId={session?.id || sessionCode}
@@ -390,16 +390,16 @@ export default function SessionPage({ sessionCode }: SessionPageProps) {
           </div>
 
           {/* Right Column - Participants & Task History */}
-          <div className="space-y-4">
+          <div className="space-y-4 order-1 lg:order-2">
             {/* Participants */}
             <Card>
-              <CardHeader className="pb-1 pt-3">
+              <CardHeader className="pb-0 pt-3">
                 <CardTitle className="flex items-center gap-2 text-sm">
                   <Users className="w-3 h-3" />
                   Participants ({participants.length})
                 </CardTitle>
               </CardHeader>
-              <CardContent className="pt-1 pb-3">
+              <CardContent className="pt-0 pb-3">
                 <div className="flex flex-wrap gap-1">
                   {participants.map((participant) => {
                     const hasVoted = currentTask ? votes.some(vote => vote.participant_id === participant.id) : false
