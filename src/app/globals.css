@@ -4,99 +4,48 @@
 
 @layer base {
   :root {
-    /* Brand Colors - Blue Theme */
-    --color-brand-blue: #1e40af;
-    --color-brand-blue-light: #3b82f6;
-    --color-brand-blue-dark: #1e3a8a;
-
-    /* Slate Colors */
-    --color-slate-50: #f8fafc;
-    --color-slate-100: #f1f5f9;
-    --color-slate-200: #e2e8f0;
-    --color-slate-300: #cbd5e1;
-    --color-slate-400: #94a3b8;
-    --color-slate-500: #64748b;
-    --color-slate-600: #475569;
-    --color-slate-700: #334155;
-    --color-slate-800: #1e293b;
-    --color-slate-900: #0f172a;
-
-    /* Status Colors */
-    --color-red-50: #fef2f2;
-    --color-red-100: #fee2e2;
-    --color-red-200: #fecaca;
-    --color-red-500: #ef4444;
-    --color-red-600: #dc2626;
-    --color-red-700: #b91c1c;
-    --color-red-800: #991b1b;
-
-    /* Component Colors */
-    --color-background: var(--color-slate-50);
-    --color-foreground: var(--color-slate-900);
-    --color-card: #ffffff;
-    --color-card-foreground: var(--color-slate-900);
-    --color-popover: #ffffff;
-    --color-popover-foreground: var(--color-slate-900);
-    --color-primary: var(--color-brand-blue);
-    --color-primary-foreground: #ffffff;
-    --color-secondary: var(--color-slate-100);
-    --color-secondary-foreground: var(--color-slate-900);
-    --color-muted: var(--color-slate-100);
-    --color-muted-foreground: var(--color-slate-600);
-    --color-accent: var(--color-slate-100);
-    --color-accent-foreground: var(--color-slate-900);
-    --color-destructive: var(--color-red-500);
-    --color-destructive-foreground: #ffffff;
-    --color-border: var(--color-slate-200);
-    --color-input: var(--color-slate-200);
-    --color-ring: var(--color-brand-blue);
+    --background: #f8fafc;
+    --foreground: #0f172a;
+    --card: #ffffff;
+    --card-foreground: #0f172a;
+    --popover: #ffffff;
+    --popover-foreground: #0f172a;
+    --primary: #1e40af;
+    --primary-foreground: #ffffff;
+    --secondary: #f1f5f9;
+    --secondary-foreground: #0f172a;
+    --muted: #f1f5f9;
+    --muted-foreground: #475569;
+    --accent: #f1f5f9;
+    --accent-foreground: #0f172a;
+    --destructive: #ef4444;
+    --destructive-foreground: #ffffff;
+    --border: #e2e8f0;
+    --input: #e2e8f0;
+    --ring: #1e40af;
     --radius: 0.5rem;
   }
 
   * {
-    @apply border-border;
+    border-color: hsl(var(--border));
   }
 
   body {
-    @apply bg-background text-foreground font-sans;
+    background-color: hsl(var(--background));
+    color: hsl(var(--foreground));
+    font-family: var(--font-geist-sans), ui-sans-serif, system-ui, sans-serif;
     font-feature-settings: "rlig" 1, "calt" 1;
   }
 
-  /* Global link styles */
   a {
-    color: var(--color-brand-blue);
+    color: #1e40af;
     text-decoration: underline;
     text-underline-offset: 2px;
     text-decoration-thickness: 1px;
   }
 
   a:hover {
-    color: var(--color-brand-blue-light);
+    color: #3b82f6;
     text-decoration-thickness: 2px;
-  }
-
-  /* Focus-visible for all interactive elements */
-  button:focus-visible,
-  input:focus-visible,
-  select:focus-visible,
-  textarea:focus-visible,
-  a:focus-visible,
-  [tabindex]:focus-visible {
-    outline: dotted 2px var(--color-brand-blue);
-    outline-offset: 3px;
-  }
-
-  /* Cursor states */
-  button,
-  [role="button"],
-  input[type="submit"],
-  input[type="button"] {
-    cursor: pointer;
-  }
-
-  button:disabled,
-  [role="button"]:disabled,
-  input:disabled {
-    cursor: not-allowed;
   }
 }
