@@ -9,9 +9,8 @@ export default function TopNavigation() {
         <div className="flex items-center justify-between h-16">
           {/* Logo */}
           <div className="flex items-center">
-            <Link href="/" className="flex items-center space-x-2">
+            <Link href="/" className="flex items-center">
               <div className="text-2xl">🌀</div>
-              <span className="text-lg font-semibold text-slate-900">Estim8r</span>
             </Link>
           </div>
 
@@ -19,21 +18,21 @@ export default function TopNavigation() {
           <div className="flex items-center space-x-8">
             <Link 
               href="/" 
-              className="text-slate-700 hover:text-blue-600 transition-colors text-sm font-medium"
+              className="text-slate-700 hover:text-blue-600 transition-colors text-sm font-medium no-underline"
             >
               Home
             </Link>
             <Link 
-              href="/about" 
-              className="text-slate-700 hover:text-blue-600 transition-colors text-sm font-medium"
+              href="/colophon" 
+              className="text-slate-700 hover:text-blue-600 transition-colors text-sm font-medium no-underline"
             >
-              About
+              Colophon
             </Link>
             <Link 
-              href="/help" 
-              className="text-slate-700 hover:text-blue-600 transition-colors text-sm font-medium"
+              href="/debug" 
+              className="text-slate-700 hover:text-blue-600 transition-colors text-sm font-medium no-underline"
             >
-              Help
+              Debug
             </Link>
           </div>
         </div>
