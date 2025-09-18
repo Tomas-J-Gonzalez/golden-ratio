@@ -4,11 +4,11 @@ import { useState } from 'react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
-import { Label } from '@/components/ui/label'
 import { useRouter } from 'next/navigation'
 import { Plus, Users } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
 import { generateSessionCode } from '@/lib/constants'
+import TopNavigation from './TopNavigation'
 
 export default function HomePage() {
   const [sessionCode, setSessionCode] = useState('')
@@ -142,45 +142,42 @@ export default function HomePage() {
   }
 
   return (
-    <div className="min-h-screen bg-slate-50 flex flex-col items-center justify-center p-8">
-      <div className="w-full max-w-2xl mx-auto">
-        {/* Header Section */}
-        <div className="text-center mb-12">
-          <div className="text-6xl mb-6">🌀</div>
-          <h1 className="text-4xl font-bold text-slate-900 mb-4">
-            Design Estimation Tool
-          </h1>
-          <p className="text-lg text-slate-600 max-w-2xl mx-auto">
-            Collaborative estimation sessions for UX/UI design teams
-          </p>
-        </div>
+    <>
+      <TopNavigation />
+      <div className="min-h-screen bg-slate-50 pt-16 flex flex-col items-center justify-center p-8">
+        <div className="w-full max-w-4xl mx-auto">
+          {/* Header Section */}
+          <div className="text-center mb-12">
+            <div className="text-6xl mb-4">🌀</div>
+            <p className="text-lg text-slate-600 max-w-2xl mx-auto">
+              Collaborative estimation sessions for UX/UI design teams
+            </p>
+          </div>
 
-        {/* Main Content */}
-        <div className="space-y-8">
+          {/* Main Content */}
+          <div className="grid md:grid-cols-2 gap-8">
           {/* Create Session */}
           <Card className="w-full bg-white rounded-lg shadow-sm border border-slate-200">
-            <CardHeader className="p-6">
-              <div className="flex items-center gap-3 mb-2">
-                <div className="p-2 bg-blue-100 rounded-full">
-                  <Plus className="h-5 w-5 text-blue-600" />
+            <CardHeader className="p-4">
+              <div className="flex items-center gap-2 mb-1">
+                <div className="p-1.5 bg-blue-100 rounded-full">
+                  <Plus className="h-4 w-4 text-blue-600" />
                 </div>
-                <CardTitle className="text-xl font-semibold text-slate-900">
-                  Create New Session
+                <CardTitle className="text-lg font-semibold text-slate-900">
+                  Create Session
                 </CardTitle>
               </div>
-              <p className="text-slate-600 text-sm">
-                Start a new estimation session as the moderator
+              <p className="text-slate-500 text-xs">
+                Start a new estimation session
               </p>
             </CardHeader>
-            <CardContent className="p-6 pt-0 space-y-4">
-              <div className="space-y-2">
-                <Label htmlFor="moderatorName" className="text-sm font-medium text-slate-700">Your Name</Label>
+            <CardContent className="p-4 pt-0 space-y-3">
+              <div>
                 <Input
-                  id="moderatorName"
-                  placeholder="Enter your name"
+                  placeholder="Your name"
                   value={moderatorName}
                   onChange={(e) => setModeratorName(e.target.value)}
-                  className="w-full"
+                  className="w-full text-sm"
                   autoComplete="off"
                   autoCorrect="off"
                   autoCapitalize="off"
@@ -190,7 +187,7 @@ export default function HomePage() {
               <Button
                 onClick={createSession}
                 disabled={isCreating || !moderatorName.trim()}
-                className="w-full bg-blue-600 hover:bg-blue-700 text-white"
+                className="w-full bg-slate-900 hover:bg-slate-800 text-white text-sm"
               >
                 {isCreating ? 'Creating...' : 'Create Session'}
               </Button>
@@ -199,43 +196,39 @@ export default function HomePage() {
 
           {/* Join Session */}
           <Card className="w-full bg-white rounded-lg shadow-sm border border-slate-200">
-            <CardHeader className="p-6">
-              <div className="flex items-center gap-3 mb-2">
-                <div className="p-2 bg-green-100 rounded-full">
-                  <Users className="h-5 w-5 text-green-600" />
+            <CardHeader className="p-4">
+              <div className="flex items-center gap-2 mb-1">
+                <div className="p-1.5 bg-green-100 rounded-full">
+                  <Users className="h-4 w-4 text-green-600" />
                 </div>
-                <CardTitle className="text-xl font-semibold text-slate-900">
-                  Join Existing Session
+                <CardTitle className="text-lg font-semibold text-slate-900">
+                  Join Session
                 </CardTitle>
               </div>
-              <p className="text-slate-600 text-sm">
-                Enter a session code to join an ongoing estimation
+              <p className="text-slate-500 text-xs">
+                Enter session code to join
               </p>
             </CardHeader>
-            <CardContent className="p-6 pt-0 space-y-4">
-              <div className="space-y-2">
-                <Label htmlFor="sessionCode" className="text-sm font-medium text-slate-700">Session Code</Label>
+            <CardContent className="p-4 pt-0 space-y-3">
+              <div>
                 <Input
-                  id="sessionCode"
-                  placeholder="Enter 6-character code"
+                  placeholder="Session code"
                   value={sessionCode}
                   onChange={(e) => setSessionCode(e.target.value.toUpperCase())}
                   maxLength={6}
-                  className="text-center text-lg font-mono w-full"
+                  className="text-center text-sm font-mono w-full"
                   autoComplete="off"
                   autoCorrect="off"
                   autoCapitalize="off"
                   spellCheck="false"
                 />
               </div>
-              <div className="space-y-2">
-                <Label htmlFor="nickname" className="text-sm font-medium text-slate-700">Your Name</Label>
+              <div>
                 <Input
-                  id="nickname"
-                  placeholder="Enter your nickname"
+                  placeholder="Your name"
                   value={nickname}
                   onChange={(e) => setNickname(e.target.value)}
-                  className="w-full"
+                  className="w-full text-sm"
                   autoComplete="off"
                   autoCorrect="off"
                   autoCapitalize="off"
@@ -245,14 +238,15 @@ export default function HomePage() {
               <Button
                 onClick={joinSession}
                 disabled={isJoining || !sessionCode.trim() || !nickname.trim()}
-                className="w-full bg-green-600 hover:bg-green-700 text-white"
+                className="w-full bg-green-600 hover:bg-green-700 text-white text-sm"
               >
                 {isJoining ? 'Joining...' : 'Join Session'}
               </Button>
             </CardContent>
           </Card>
+          </div>
         </div>
       </div>
-    </div>
+    </>
   )
 }
