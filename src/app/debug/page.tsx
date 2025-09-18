@@ -8,7 +8,12 @@ import { supabase } from '@/lib/supabase'
 
 export default function DebugPage() {
   const [connectionStatus, setConnectionStatus] = useState<'checking' | 'connected' | 'error'>('checking')
-  const [debugInfo, setDebugInfo] = useState<Record<string, unknown>>({})
+  const [debugInfo, setDebugInfo] = useState<{
+    screen?: { width: number; height: number; availWidth: number; availHeight: number }
+    window?: { innerWidth: number; innerHeight: number }
+    localStorage?: string[]
+    timestamp?: string
+  }>({})
   const [logs, setLogs] = useState<string[]>([])
 
   const addLog = (message: string) => {
