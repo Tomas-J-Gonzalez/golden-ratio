@@ -9,7 +9,7 @@ export default function TopNavigation() {
         <div className="flex items-center justify-between h-16">
           {/* Logo */}
           <div className="flex items-center">
-            <Link href="/" className="flex items-center">
+            <Link href="/" className="flex items-center no-underline">
               <div className="text-2xl">🌀</div>
             </Link>
           </div>
@@ -20,7 +20,7 @@ export default function TopNavigation() {
               href="/" 
               className="text-slate-700 hover:text-blue-600 transition-colors text-sm font-medium no-underline"
             >
-              Home
+              Estimate
             </Link>
             <Link 
               href="/colophon" 
