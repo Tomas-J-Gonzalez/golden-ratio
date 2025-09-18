@@ -142,106 +142,93 @@ export default function HomePage() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-100 p-4">
-      <div className="w-full max-w-4xl">
+    <div className="min-h-screen bg-slate-50">
+      <div className="container mx-auto px-4 py-8">
+        {/* Header Section */}
         <div className="text-center mb-8">
-          <h1 className="text-4xl font-bold text-gray-900 mb-4">
-            Design Estimation Tool
+          <h1 className="text-4xl font-bold text-slate-900 mb-4 flex items-center justify-center gap-3">
+            <span className="text-5xl">🌀</span>
           </h1>
-          <p className="text-lg text-gray-600">
-            Collaborative estimation sessions for UX/UI design teams
+          <p className="text-lg text-slate-600 max-w-2xl mx-auto">
+            Generate interactive sitemap visualisations from any website URL.
           </p>
         </div>
 
-        <div className="grid md:grid-cols-2 gap-8">
-          {/* Create Session */}
-          <Card className="w-full h-96 flex flex-col">
-            <CardHeader className="text-center flex-shrink-0">
-              <div className="mx-auto mb-4 p-3 bg-blue-100 rounded-full w-fit">
-                <Plus className="h-6 w-6 text-blue-600" />
-              </div>
-              <CardTitle className="text-xl font-bold text-gray-900">
-                Create New Session
+        {/* Main Content */}
+        <div className="space-y-6">
+          {/* URL Input Section */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-xl font-semibold text-slate-900">
+                Generate Sitemap
               </CardTitle>
-              <CardDescription>
-                Start a new estimation session as the moderator
-              </CardDescription>
+              <p className="text-sm text-slate-600">
+                Enter a website URL to crawl and generate an interactive sitemap visualisation
+              </p>
             </CardHeader>
-            <CardContent className="flex-1 flex flex-col justify-center space-y-4">
+            <CardContent className="space-y-4">
               <div className="space-y-2">
-                <Label htmlFor="moderatorName">Your Name</Label>
+                <Label htmlFor="urlInput">Website URL</Label>
                 <Input
-                  id="moderatorName"
-                  placeholder="Enter your name"
-                  value={moderatorName}
-                  onChange={(e) => setModeratorName(e.target.value)}
+                  id="urlInput"
+                  type="url"
+                  placeholder="https://example.com"
+                  value={sessionCode}
+                  onChange={(e) => setSessionCode(e.target.value)}
+                  className="w-full"
                   autoComplete="off"
                   autoCorrect="off"
                   autoCapitalize="off"
                   spellCheck="false"
                 />
               </div>
+              
               <Button
                 onClick={createSession}
-                disabled={isCreating || !moderatorName.trim()}
-                className="w-full"
+                disabled={isCreating || !sessionCode.trim()}
+                className="w-full bg-[#1e40af] hover:bg-[#3b82f6] text-white"
               >
-                {isCreating ? 'Creating...' : 'Create Session'}
+                {isCreating ? 'Generating...' : 'Generate Sitemap'}
               </Button>
             </CardContent>
           </Card>
 
-          {/* Join Session */}
-          <Card className="w-full h-96 flex flex-col">
-            <CardHeader className="text-center flex-shrink-0">
-              <div className="mx-auto mb-4 p-3 bg-green-100 rounded-full w-fit">
-                <Users className="h-6 w-6 text-green-600" />
+          {/* Example URLs */}
+          <Card>
+            <CardContent className="p-4">
+              <p className="text-sm text-slate-500 mb-3">Try:</p>
+              <div className="flex flex-wrap gap-2">
+                {['https://example.com', 'https://github.com', 'https://nextjs.org'].map((url) => (
+                  <button
+                    key={url}
+                    onClick={() => setSessionCode(url)}
+                    className="text-sm text-[#1e40af] hover:text-[#3b82f6] underline transition-colors"
+                  >
+                    {url}
+                  </button>
+                ))}
               </div>
-              <CardTitle className="text-xl font-bold text-gray-900">
-                Join Existing Session
-              </CardTitle>
-              <CardDescription>
-                Enter a session code to join an ongoing estimation
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="flex-1 flex flex-col justify-center space-y-4">
-              <div className="space-y-2">
-                <Label htmlFor="sessionCode">Session Code</Label>
-                <Input
-                  id="sessionCode"
-                  placeholder="Enter 6-character code"
-                  value={sessionCode}
-                  onChange={(e) => setSessionCode(e.target.value.toUpperCase())}
-                  maxLength={6}
-                  className="text-center text-lg font-mono"
-                  autoComplete="off"
-                  autoCorrect="off"
-                  autoCapitalize="off"
-                  spellCheck="false"
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="nickname">Your Name</Label>
-                <Input
-                  id="nickname"
-                  placeholder="Enter your nickname"
-                  value={nickname}
-                  onChange={(e) => setNickname(e.target.value)}
-                  autoComplete="off"
-                  autoCorrect="off"
-                  autoCapitalize="off"
-                  spellCheck="false"
-                />
-              </div>
-              <Button
-                onClick={joinSession}
-                disabled={isJoining || !sessionCode.trim() || !nickname.trim()}
-                className="w-full"
-              >
-                {isJoining ? 'Joining...' : 'Join Session'}
-              </Button>
             </CardContent>
           </Card>
+
+          {/* Advanced Options */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center justify-between">
+                <span className="text-lg font-medium text-slate-900">Advanced Options</span>
+                <Button variant="outline" size="sm" className="text-slate-500 hover:text-slate-700">
+                  Options
+                </Button>
+              </CardTitle>
+            </CardHeader>
+          </Card>
+        </div>
+
+        {/* Footer */}
+        <div className="mt-16 text-center">
+          <p className="text-sm text-slate-400">
+            CrawlDebugColophon
+          </p>
         </div>
       </div>
     </div>

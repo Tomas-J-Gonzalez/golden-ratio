@@ -13,25 +13,25 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Golden Ratio - Design Estimation Tool",
-  description: "Collaborative design task estimation tool for UX/UI teams. Create sessions, estimate tasks, and track design effort with real-time voting.",
-  keywords: ["design estimation", "UX", "UI", "design tools", "agile", "estimation", "collaboration", "design teams"],
-  authors: [{ name: "Golden Ratio Team" }],
-  creator: "Golden Ratio",
-  publisher: "Golden Ratio",
+  title: "🌀",
+  description: "Generate interactive sitemap visualisations from any website URL.",
+  keywords: ["sitemap", "crawler", "website analysis", "visualization", "web tools"],
+  authors: [{ name: "Sitemap Generator" }],
+  creator: "Sitemap Generator",
+  publisher: "Sitemap Generator",
   robots: "index, follow",
   openGraph: {
     type: "website",
     locale: "en_US",
-    url: "https://golden-ratio-design.vercel.app",
-    title: "Golden Ratio - Design Estimation Tool",
-    description: "Collaborative design task estimation tool for UX/UI teams. Create sessions, estimate tasks, and track design effort with real-time voting.",
-    siteName: "Golden Ratio",
+    url: "https://sitemap-gen.netlify.app",
+    title: "🌀",
+    description: "Generate interactive sitemap visualisations from any website URL.",
+    siteName: "Sitemap Generator",
   },
   twitter: {
     card: "summary_large_image",
-    title: "Golden Ratio - Design Estimation Tool",
-    description: "Collaborative design task estimation tool for UX/UI teams. Create sessions, estimate tasks, and track design effort with real-time voting.",
+    title: "🌀",
+    description: "Generate interactive sitemap visualisations from any website URL.",
   },
   icons: {
     icon: "/favicon.png",
