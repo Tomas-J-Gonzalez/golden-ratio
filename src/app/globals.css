@@ -1,71 +1,56 @@
-@import "tailwindcss";
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
 
 @layer base {
   :root {
     /* Brand Colors - Blue Theme */
-    --color-brand-blue: #1e40af;        /* Primary brand color */
-    --color-brand-blue-light: #3b82f6;  /* Hover states */
-    --color-brand-blue-dark: #1e3a8a;   /* Active states */
+    --color-brand-blue: #1e40af;
+    --color-brand-blue-light: #3b82f6;
+    --color-brand-blue-dark: #1e3a8a;
 
-    /* Slate Theme */
-    --color-slate-50: #f8fafc;   /* Background */
-    --color-slate-100: #f1f5f9;  /* Light backgrounds */
-    --color-slate-200: #e2e8f0;  /* Borders */
-    --color-slate-300: #cbd5e1;  /* Disabled states */
-    --color-slate-600: #475569;  /* Secondary text */
-    --color-slate-700: #334155;  /* Body text */
-    --color-slate-800: #1e293b;  /* Headings */
-    --color-slate-900: #0f172a;  /* Primary text */
+    /* Slate Colors */
+    --color-slate-50: #f8fafc;
+    --color-slate-100: #f1f5f9;
+    --color-slate-200: #e2e8f0;
+    --color-slate-300: #cbd5e1;
+    --color-slate-400: #94a3b8;
+    --color-slate-500: #64748b;
+    --color-slate-600: #475569;
+    --color-slate-700: #334155;
+    --color-slate-800: #1e293b;
+    --color-slate-900: #0f172a;
 
     /* Status Colors */
-    --color-red-50: #fef2f2;     /* Error backgrounds */
-    --color-red-200: #fecaca;    /* Error borders */
-    --color-red-500: #ef4444;    /* Error text */
-    --color-red-800: #991b1b;    /* Error dark text */
+    --color-red-50: #fef2f2;
+    --color-red-100: #fee2e2;
+    --color-red-200: #fecaca;
+    --color-red-500: #ef4444;
+    --color-red-600: #dc2626;
+    --color-red-700: #b91c1c;
+    --color-red-800: #991b1b;
 
     /* Component Colors */
-    --background: var(--color-slate-50);
-    --foreground: var(--color-slate-900);
-    --card: #ffffff;
-    --card-foreground: var(--color-slate-900);
-    --popover: #ffffff;
-    --popover-foreground: var(--color-slate-900);
-    --primary: var(--color-brand-blue);
-    --primary-foreground: #ffffff;
-    --secondary: var(--color-slate-100);
-    --secondary-foreground: var(--color-slate-900);
-    --muted: var(--color-slate-100);
-    --muted-foreground: var(--color-slate-600);
-    --accent: var(--color-slate-100);
-    --accent-foreground: var(--color-slate-900);
-    --destructive: var(--color-red-500);
-    --destructive-foreground: #ffffff;
-    --border: var(--color-slate-200);
-    --input: var(--color-slate-200);
-    --ring: var(--color-brand-blue);
+    --color-background: var(--color-slate-50);
+    --color-foreground: var(--color-slate-900);
+    --color-card: #ffffff;
+    --color-card-foreground: var(--color-slate-900);
+    --color-popover: #ffffff;
+    --color-popover-foreground: var(--color-slate-900);
+    --color-primary: var(--color-brand-blue);
+    --color-primary-foreground: #ffffff;
+    --color-secondary: var(--color-slate-100);
+    --color-secondary-foreground: var(--color-slate-900);
+    --color-muted: var(--color-slate-100);
+    --color-muted-foreground: var(--color-slate-600);
+    --color-accent: var(--color-slate-100);
+    --color-accent-foreground: var(--color-slate-900);
+    --color-destructive: var(--color-red-500);
+    --color-destructive-foreground: #ffffff;
+    --color-border: var(--color-slate-200);
+    --color-input: var(--color-slate-200);
+    --color-ring: var(--color-brand-blue);
     --radius: 0.5rem;
-  }
-
-  .dark {
-    --background: var(--color-slate-900);
-    --foreground: var(--color-slate-50);
-    --card: var(--color-slate-800);
-    --card-foreground: var(--color-slate-50);
-    --popover: var(--color-slate-800);
-    --popover-foreground: var(--color-slate-50);
-    --primary: var(--color-brand-blue-light);
-    --primary-foreground: var(--color-slate-900);
-    --secondary: var(--color-slate-700);
-    --secondary-foreground: var(--color-slate-50);
-    --muted: var(--color-slate-700);
-    --muted-foreground: var(--color-slate-300);
-    --accent: var(--color-slate-700);
-    --accent-foreground: var(--color-slate-50);
-    --destructive: var(--color-red-500);
-    --destructive-foreground: #ffffff;
-    --border: var(--color-slate-700);
-    --input: var(--color-slate-700);
-    --ring: var(--color-brand-blue-light);
   }
 
   * {
