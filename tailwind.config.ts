@@ -9,67 +9,63 @@ const config: Config = {
   theme: {
     extend: {
       colors: {
-        background: "var(--color-background)",
-        foreground: "var(--color-foreground)",
+        background: "hsl(var(--background))",
+        foreground: "hsl(var(--foreground))",
         card: {
-          DEFAULT: "var(--color-card)",
-          foreground: "var(--color-card-foreground)",
+          DEFAULT: "hsl(var(--card))",
+          foreground: "hsl(var(--card-foreground))",
         },
         popover: {
-          DEFAULT: "var(--color-popover)",
-          foreground: "var(--color-popover-foreground)",
+          DEFAULT: "hsl(var(--popover))",
+          foreground: "hsl(var(--popover-foreground))",
         },
         primary: {
-          DEFAULT: "var(--color-primary)",
-          foreground: "var(--color-primary-foreground)",
+          DEFAULT: "hsl(var(--primary))",
+          foreground: "hsl(var(--primary-foreground))",
         },
         secondary: {
-          DEFAULT: "var(--color-secondary)",
-          foreground: "var(--color-secondary-foreground)",
+          DEFAULT: "hsl(var(--secondary))",
+          foreground: "hsl(var(--secondary-foreground))",
         },
         muted: {
-          DEFAULT: "var(--color-muted)",
-          foreground: "var(--color-muted-foreground)",
+          DEFAULT: "hsl(var(--muted))",
+          foreground: "hsl(var(--muted-foreground))",
         },
         accent: {
-          DEFAULT: "var(--color-accent)",
-          foreground: "var(--color-accent-foreground)",
+          DEFAULT: "hsl(var(--accent))",
+          foreground: "hsl(var(--accent-foreground))",
         },
         destructive: {
-          DEFAULT: "var(--color-destructive)",
-          foreground: "var(--color-destructive-foreground)",
+          DEFAULT: "hsl(var(--destructive))",
+          foreground: "hsl(var(--destructive-foreground))",
         },
-        border: "var(--color-border)",
-        input: "var(--color-input)",
-        ring: "var(--color-ring)",
-        // Brand colors
-        "brand-blue": {
-          DEFAULT: "var(--color-brand-blue)",
-          light: "var(--color-brand-blue-light)",
-          dark: "var(--color-brand-blue-dark)",
-        },
-        // Slate colors
+        border: "hsl(var(--border))",
+        input: "hsl(var(--input))",
+        ring: "hsl(var(--ring))",
+        // Slate colors for the design system
         slate: {
-          50: "var(--color-slate-50)",
-          100: "var(--color-slate-100)",
-          200: "var(--color-slate-200)",
-          300: "var(--color-slate-300)",
-          400: "var(--color-slate-400)",
-          500: "var(--color-slate-500)",
-          600: "var(--color-slate-600)",
-          700: "var(--color-slate-700)",
-          800: "var(--color-slate-800)",
-          900: "var(--color-slate-900)",
+          50: "#f8fafc",
+          100: "#f1f5f9",
+          200: "#e2e8f0",
+          300: "#cbd5e1",
+          400: "#94a3b8",
+          500: "#64748b",
+          600: "#475569",
+          700: "#334155",
+          800: "#1e293b",
+          900: "#0f172a",
         },
-        // Red colors
-        red: {
-          50: "var(--color-red-50)",
-          100: "var(--color-red-100)",
-          200: "var(--color-red-200)",
-          500: "var(--color-red-500)",
-          600: "var(--color-red-600)",
-          700: "var(--color-red-700)",
-          800: "var(--color-red-800)",
+        // Blue colors for brand
+        blue: {
+          50: "#eff6ff",
+          100: "#dbeafe",
+          600: "#2563eb",
+          700: "#1d4ed8",
+        },
+        // Green colors for success states
+        green: {
+          100: "#dcfce7",
+          600: "#16a34a",
         },
       },
       borderRadius: {
