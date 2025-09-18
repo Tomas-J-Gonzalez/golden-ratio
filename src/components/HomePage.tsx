@@ -142,10 +142,10 @@ export default function HomePage() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-100 p-4">
+    <div className="min-h-screen flex items-center justify-center bg-white p-4">
       <div className="w-full max-w-4xl">
         <div className="text-center mb-8">
-          <h1 className="text-4xl font-bold text-gray-900 mb-4">
+          <h1 className="text-4xl font-bold text-black mb-4">
             Design Estimation Tool
           </h1>
           <p className="text-lg text-gray-600">
@@ -157,10 +157,10 @@ export default function HomePage() {
           {/* Create Session */}
           <Card className="w-full h-96 flex flex-col">
             <CardHeader className="text-center flex-shrink-0">
-              <div className="mx-auto mb-4 p-3 bg-blue-100 rounded-full w-fit">
-                <Plus className="h-6 w-6 text-blue-600" />
+              <div className="mx-auto mb-4 p-3 bg-gray-100 rounded-full w-fit">
+                <Plus className="h-6 w-6 text-black" />
               </div>
-              <CardTitle className="text-xl font-bold text-gray-900">
+              <CardTitle className="text-xl font-bold text-black">
                 Create New Session
               </CardTitle>
               <CardDescription>
@@ -194,10 +194,10 @@ export default function HomePage() {
           {/* Join Session */}
           <Card className="w-full h-96 flex flex-col">
             <CardHeader className="text-center flex-shrink-0">
-              <div className="mx-auto mb-4 p-3 bg-green-100 rounded-full w-fit">
-                <Users className="h-6 w-6 text-green-600" />
+              <div className="mx-auto mb-4 p-3 bg-gray-100 rounded-full w-fit">
+                <Users className="h-6 w-6 text-black" />
               </div>
-              <CardTitle className="text-xl font-bold text-gray-900">
+              <CardTitle className="text-xl font-bold text-black">
                 Join Existing Session
               </CardTitle>
               <CardDescription>
