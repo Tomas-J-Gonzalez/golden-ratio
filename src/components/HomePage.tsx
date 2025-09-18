@@ -142,10 +142,11 @@ export default function HomePage() {
   }
 
   return (
-    <div className="min-h-screen bg-slate-50">
-      <div className="container mx-auto px-4 py-8">
+    <div className="min-h-screen bg-slate-50 flex flex-col items-center justify-center p-8">
+      <div className="w-full max-w-2xl mx-auto">
         {/* Header Section */}
-        <div className="text-center mb-8">
+        <div className="text-center mb-12">
+          <div className="text-6xl mb-6">🌀</div>
           <h1 className="text-4xl font-bold text-slate-900 mb-4">
             Design Estimation Tool
           </h1>
@@ -155,28 +156,31 @@ export default function HomePage() {
         </div>
 
         {/* Main Content */}
-        <div className="grid md:grid-cols-2 gap-8 max-w-4xl mx-auto">
+        <div className="space-y-8">
           {/* Create Session */}
-          <Card className="w-full h-96 flex flex-col">
-            <CardHeader className="text-center flex-shrink-0">
-              <div className="mx-auto mb-4 p-3 bg-blue-100 rounded-full w-fit">
-                <Plus className="h-6 w-6 text-blue-600" />
+          <Card className="w-full bg-white rounded-lg shadow-sm border border-slate-200">
+            <CardHeader className="p-6">
+              <div className="flex items-center gap-3 mb-2">
+                <div className="p-2 bg-blue-100 rounded-full">
+                  <Plus className="h-5 w-5 text-blue-600" />
+                </div>
+                <CardTitle className="text-xl font-semibold text-slate-900">
+                  Create New Session
+                </CardTitle>
               </div>
-              <CardTitle className="text-xl font-bold text-slate-900">
-                Create New Session
-              </CardTitle>
-              <p className="text-sm text-slate-600">
+              <p className="text-slate-600 text-sm">
                 Start a new estimation session as the moderator
               </p>
             </CardHeader>
-            <CardContent className="flex-1 flex flex-col justify-center space-y-4">
+            <CardContent className="p-6 pt-0 space-y-4">
               <div className="space-y-2">
-                <Label htmlFor="moderatorName">Your Name</Label>
+                <Label htmlFor="moderatorName" className="text-sm font-medium text-slate-700">Your Name</Label>
                 <Input
                   id="moderatorName"
                   placeholder="Enter your name"
                   value={moderatorName}
                   onChange={(e) => setModeratorName(e.target.value)}
+                  className="w-full"
                   autoComplete="off"
                   autoCorrect="off"
                   autoCapitalize="off"
@@ -186,7 +190,7 @@ export default function HomePage() {
               <Button
                 onClick={createSession}
                 disabled={isCreating || !moderatorName.trim()}
-                className="w-full"
+                className="w-full bg-blue-600 hover:bg-blue-700 text-white"
               >
                 {isCreating ? 'Creating...' : 'Create Session'}
               </Button>
@@ -194,28 +198,30 @@ export default function HomePage() {
           </Card>
 
           {/* Join Session */}
-          <Card className="w-full h-96 flex flex-col">
-            <CardHeader className="text-center flex-shrink-0">
-              <div className="mx-auto mb-4 p-3 bg-green-100 rounded-full w-fit">
-                <Users className="h-6 w-6 text-green-600" />
+          <Card className="w-full bg-white rounded-lg shadow-sm border border-slate-200">
+            <CardHeader className="p-6">
+              <div className="flex items-center gap-3 mb-2">
+                <div className="p-2 bg-green-100 rounded-full">
+                  <Users className="h-5 w-5 text-green-600" />
+                </div>
+                <CardTitle className="text-xl font-semibold text-slate-900">
+                  Join Existing Session
+                </CardTitle>
               </div>
-              <CardTitle className="text-xl font-bold text-slate-900">
-                Join Existing Session
-              </CardTitle>
-              <p className="text-sm text-slate-600">
+              <p className="text-slate-600 text-sm">
                 Enter a session code to join an ongoing estimation
               </p>
             </CardHeader>
-            <CardContent className="flex-1 flex flex-col justify-center space-y-4">
+            <CardContent className="p-6 pt-0 space-y-4">
               <div className="space-y-2">
-                <Label htmlFor="sessionCode">Session Code</Label>
+                <Label htmlFor="sessionCode" className="text-sm font-medium text-slate-700">Session Code</Label>
                 <Input
                   id="sessionCode"
                   placeholder="Enter 6-character code"
                   value={sessionCode}
                   onChange={(e) => setSessionCode(e.target.value.toUpperCase())}
                   maxLength={6}
-                  className="text-center text-lg font-mono"
+                  className="text-center text-lg font-mono w-full"
                   autoComplete="off"
                   autoCorrect="off"
                   autoCapitalize="off"
@@ -223,12 +229,13 @@ export default function HomePage() {
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="nickname">Your Name</Label>
+                <Label htmlFor="nickname" className="text-sm font-medium text-slate-700">Your Name</Label>
                 <Input
                   id="nickname"
                   placeholder="Enter your nickname"
                   value={nickname}
                   onChange={(e) => setNickname(e.target.value)}
+                  className="w-full"
                   autoComplete="off"
                   autoCorrect="off"
                   autoCapitalize="off"
@@ -238,7 +245,7 @@ export default function HomePage() {
               <Button
                 onClick={joinSession}
                 disabled={isJoining || !sessionCode.trim() || !nickname.trim()}
-                className="w-full"
+                className="w-full bg-green-600 hover:bg-green-700 text-white"
               >
                 {isJoining ? 'Joining...' : 'Join Session'}
               </Button>
