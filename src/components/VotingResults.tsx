@@ -263,18 +263,18 @@ export default function VotingResults({ taskTitle, taskId, votes, participants, 
           <h3 className="text-sm font-medium text-blue-900 mb-4 uppercase tracking-wide">Final Estimate</h3>
           <div className="grid grid-cols-3 gap-6">
             <div className="text-center">
-              <div className="text-sm text-gray-600 mb-1">Minimum</div>
-              <div className="text-3xl font-bold text-green-600">{estimateToTShirtSize(minEstimate)}</div>
+              <div className="text-xs text-gray-600 mb-1">Minimum</div>
+              <div className="text-2xl font-bold text-blue-500">{estimateToTShirtSize(minEstimate)}</div>
               <div className="text-xs text-gray-500 mt-1">{minEstimate} pts</div>
             </div>
             <div className="text-center border-x border-blue-200">
-              <div className="text-sm text-gray-600 mb-1">Average</div>
-              <div className="text-4xl font-bold text-blue-600">{estimateToTShirtSize(averageEstimate)}</div>
+              <div className="text-xs text-gray-600 mb-1">Average</div>
+              <div className="text-3xl font-bold text-blue-600">{estimateToTShirtSize(averageEstimate)}</div>
               <div className="text-xs text-gray-500 mt-1">{averageEstimate} pts</div>
             </div>
             <div className="text-center">
-              <div className="text-sm text-gray-600 mb-1">Maximum</div>
-              <div className="text-3xl font-bold text-orange-600">{estimateToTShirtSize(maxEstimate)}</div>
+              <div className="text-xs text-gray-600 mb-1">Maximum</div>
+              <div className="text-2xl font-bold text-blue-700">{estimateToTShirtSize(maxEstimate)}</div>
               <div className="text-xs text-gray-500 mt-1">{maxEstimate} pts</div>
             </div>
           </div>

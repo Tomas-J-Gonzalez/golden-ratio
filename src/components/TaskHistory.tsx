@@ -215,12 +215,7 @@ export default function TaskHistory({ tasks, sessionId }: TaskHistoryProps) {
                 return (
                   <TableRow key={task.id}>
                     <TableCell>
-                      <div>
-                        <div className="font-medium">{task.title}</div>
-                        {task.description && (
-                          <div className="text-sm text-gray-600 mt-1">{task.description}</div>
-                        )}
-                      </div>
+                      <div className="font-medium">{task.title}</div>
                     </TableCell>
                     <TableCell>
                       <Badge variant="outline">{baseEstimate} pts</Badge>

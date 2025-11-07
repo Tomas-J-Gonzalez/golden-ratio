@@ -93,6 +93,68 @@ export default function VotingArea({
     setPortalContainer(container)
   }, [])
 
+  // Auto-suggest effort level based on other factors
+  useEffect(() => {
+    // Only suggest if effort is not already set and other factors are selected
+    if (factors.effort !== null) return
+    
+    const { sprints, designerCount, breakpoints, fidelity, iterationMultiplier } = factors
+    
+    // Need at least 3 factors selected to make a suggestion
+    const selectedFactorsCount = [sprints, designerCount, breakpoints, fidelity, iterationMultiplier]
+      .filter(f => f !== null).length
+    
+    if (selectedFactorsCount < 3) return
+
+    // Calculate suggested effort based on other factors
+    let effortScore = 0
+    
+    // Sprint contribution (more sprints = higher effort)
+    if (sprints !== null) {
+      if (sprints <= 0.2) effortScore += 1      // Very Low
+      else if (sprints <= 0.5) effortScore += 2 // Low
+      else if (sprints <= 1) effortScore += 4   // Medium
+      else if (sprints <= 2) effortScore += 8   // High
+      else effortScore += 16                    // Very High
+    }
+    
+    // Designer count contribution (more designers = higher complexity)
+    if (designerCount !== null) {
+      if (designerCount === 1) effortScore += 1
+      else if (designerCount === 2) effortScore += 2
+      else if (designerCount === 3) effortScore += 4
+      else if (designerCount === 4) effortScore += 8
+      else effortScore += 16
+    }
+    
+    // Breakpoints contribution (more breakpoints = more effort)
+    if (breakpoints !== null) {
+      effortScore += breakpoints
+    }
+    
+    // Fidelity contribution (higher fidelity = more effort)
+    if (fidelity !== null) {
+      effortScore += fidelity
+    }
+    
+    // Iteration multiplier (more iterations = more effort)
+    if (iterationMultiplier !== null && iterationMultiplier > 1) {
+      effortScore += iterationMultiplier * 2
+    }
+    
+    // Map the score to effort level (1, 2, 4, 8, 16)
+    let suggestedEffort = 1 // Default to Very Low
+    if (effortScore <= 5) suggestedEffort = 1      // Very Low
+    else if (effortScore <= 10) suggestedEffort = 2  // Low
+    else if (effortScore <= 20) suggestedEffort = 4  // Medium
+    else if (effortScore <= 35) suggestedEffort = 8  // High
+    else suggestedEffort = 16                        // Very High
+    
+    // Set the suggested effort
+    setFactors(prev => ({ ...prev, effort: suggestedEffort }))
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [factors.sprints, factors.designerCount, factors.breakpoints, factors.fidelity, factors.iterationMultiplier])
+
   const updateFactor = (factorType: keyof EstimationFactors, value: number) => {
     setFactors(prev => ({
       ...prev,
@@ -183,11 +245,18 @@ export default function VotingArea({
     options: Array<{ value: number; label: string; description: string }>
   ) => {
     const selectedValue = factors[factorType]
+    const isEffortSelector = factorType === 'effort'
+    const isSuggested = isEffortSelector && selectedValue !== null
     
     return (
       <div className="space-y-3">
-        <h4 className="font-medium text-sm">
+        <h4 className="font-medium text-sm flex items-center gap-2">
           {title} <span className="text-red-500">*</span>
+          {isEffortSelector && isSuggested && (
+            <span className="text-xs text-blue-600 font-normal">
+              (Suggested based on your selections)
+            </span>
+          )}
         </h4>
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2">
           {options.map((option) => (
@@ -391,13 +460,13 @@ export default function VotingArea({
 
         {/* Factor Selectors */}
         <div className="space-y-6">
-          {renderFactorSelector('Effort Level', 'effort', EFFORT_OPTIONS)}
           {renderFactorSelector('Sprint Allocation', 'sprints', SPRINT_OPTIONS)}
           {renderDesignerSelector()}
           {renderFactorSelector('Breakpoints', 'breakpoints', BREAKPOINT_OPTIONS)}
           {renderFactorSelector('Fidelity Level', 'fidelity', FIDELITY_OPTIONS)}
           {renderFactorSelector('Meeting Buffer', 'meetingBuffer', MEETING_BUFFER_OPTIONS)}
           {renderFactorSelector('Design Iterations', 'iterationMultiplier', ITERATION_MULTIPLIER_OPTIONS)}
+          {renderFactorSelector('Effort Level', 'effort', EFFORT_OPTIONS)}
         </div>
       </CardContent>
     </Card>

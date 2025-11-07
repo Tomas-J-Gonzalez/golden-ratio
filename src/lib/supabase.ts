@@ -38,6 +38,7 @@ export interface Task {
   final_estimate?: number
   meeting_buffer?: number
   iteration_multiplier?: number
+  votes_revealed?: boolean
 }
 
 export interface Vote {

@@ -9,7 +9,7 @@ import { Textarea } from '@/components/ui/textarea'
 import { Badge } from '@/components/ui/badge'
 import { ConfirmDialog } from './ui/confirm-dialog'
 import { supabase, Task } from '@/lib/supabase'
-import { Plus, Trash2, Play, GripVertical, Square } from 'lucide-react'
+import { Plus, Trash2, Play, GripVertical, Square, ChevronDown } from 'lucide-react'
 import { toast } from 'sonner'
 import {
   DndContext,
@@ -75,21 +75,21 @@ function SortableTaskItem({
     opacity: isDragging ? 0.5 : 1,
   }
 
-  // Check if description is long (more than ~100 characters as a rough estimate for 2 lines)
-  const isLongDescription = task.description && task.description.length > 100
+  // Check if description is long (more than ~60 characters as a rough estimate for 1 line)
+  const isLongDescription = task.description && task.description.length > 60
 
   return (
     <div
       ref={setNodeRef}
       style={style}
-      className={`flex items-center gap-3 p-4 border rounded-lg bg-white ${
+      className={`flex items-start gap-3 p-4 border rounded-lg bg-white ${
         isDragging ? 'shadow-lg ring-2 ring-blue-500' : ''
       }`}
     >
       {/* Drag Handle */}
       {isModerator && (
         <button
-          className="cursor-grab active:cursor-grabbing text-gray-400 hover:text-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-500 rounded p-1"
+          className="cursor-grab active:cursor-grabbing text-gray-400 hover:text-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-500 rounded p-1 mt-0.5"
           {...attributes}
           {...listeners}
           aria-label="Drag to reorder task"
@@ -105,17 +105,20 @@ function SortableTaskItem({
           <div className="mt-1">
             <p 
               className={`text-sm text-gray-600 ${
-                !isExpanded && isLongDescription ? 'line-clamp-2' : ''
+                !isExpanded && isLongDescription ? 'line-clamp-1' : ''
               }`}
             >
               {task.description}
             </p>
             {isLongDescription && (
               <button
-                onClick={() => setIsExpanded(!isExpanded)}
-                className="text-xs text-blue-600 hover:text-blue-800 mt-1 focus:outline-none focus:underline"
+                onClick={(e) => {
+                  e.stopPropagation()
+                  setIsExpanded(!isExpanded)
+                }}
+                className="text-xs text-gray-400 hover:text-gray-600 mt-0.5 focus:outline-none"
               >
-                {isExpanded ? 'Show less' : 'Show more'}
+                {isExpanded ? '- less' : '+ more'}
               </button>
             )}
           </div>
@@ -132,7 +135,7 @@ function SortableTaskItem({
 
       {/* Action Buttons */}
       {isModerator && (
-        <div className="flex flex-col gap-2">
+        <div className="flex flex-col gap-2 flex-shrink-0">
           <div className="flex gap-2">
             {task.status === 'pending' && (
               <Button
@@ -187,6 +190,7 @@ export default function TaskManagement({ sessionId, tasks, onTaskUpdate, isModer
   const [taskToDelete, setTaskToDelete] = useState<string | null>(null)
   const [stopVotingDialogOpen, setStopVotingDialogOpen] = useState(false)
   const [taskToStopVoting, setTaskToStopVoting] = useState<string | null>(null)
+  const [isAddFormExpanded, setIsAddFormExpanded] = useState(false)
   // State to hold the draggable tasks
   const [activeTasks, setActiveTasks] = useState<Task[]>([])
   // Check if there's a voting_completed task
@@ -361,46 +365,69 @@ export default function TaskManagement({ sessionId, tasks, onTaskUpdate, isModer
       </CardHeader>
       <CardContent className="space-y-4">
         {isModerator && (
-          <div className="space-y-4 p-4 border rounded-lg bg-gray-50">
-            <div className="space-y-2">
-              <Label htmlFor="task-title">Task Title</Label>
-              <Input
-                id="task-title"
-                placeholder="e.g., Redesign navigation bar"
-                value={newTaskTitle}
-                onChange={(e) => setNewTaskTitle(e.target.value)}
-                autoComplete="off"
-                autoCorrect="off"
-                autoCapitalize="off"
-                spellCheck="false"
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="task-description">Description (Optional)</Label>
-              <Textarea
-                id="task-description"
-                placeholder="Add more details about the task..."
-                value={newTaskDescription}
-                onChange={(e) => setNewTaskDescription(e.target.value)}
-                rows={3}
-                autoComplete="off"
-                autoCorrect="off"
-                autoCapitalize="off"
-                spellCheck="false"
-              />
-            </div>
-            <Button 
-              onClick={addTask} 
-              disabled={!newTaskTitle.trim() || isAdding || hasActiveVoting}
-              className="w-full"
+          <div className="border rounded-lg bg-gray-50">
+            {/* Collapsible Header */}
+            <button
+              onClick={() => setIsAddFormExpanded(!isAddFormExpanded)}
+              className="w-full px-4 py-3 flex items-center justify-between hover:bg-gray-100 rounded-t-lg transition-colors"
             >
-              <Plus className="w-4 h-4 mr-2" />
-              {isAdding ? 'Adding...' : hasActiveVoting ? 'Complete active voting first' : 'Add Task'}
-            </Button>
-            {hasActiveVoting && (
-              <p className="text-xs text-gray-600 text-center">
-                Complete the current task voting before adding a new task
-              </p>
+              <div className="flex items-center gap-2">
+                <Plus className="w-4 h-4 text-gray-600" />
+                <span className="font-medium text-sm text-gray-700">
+                  {isAddFormExpanded ? 'Hide Form' : 'Add New Task'}
+                </span>
+              </div>
+              <ChevronDown 
+                className={`w-4 h-4 text-gray-500 transition-transform ${
+                  isAddFormExpanded ? 'rotate-180' : ''
+                }`}
+              />
+            </button>
+
+            {/* Collapsible Form */}
+            {isAddFormExpanded && (
+              <div className="p-4 space-y-4 border-t border-gray-200">
+                <div className="space-y-2">
+                  <Label htmlFor="task-title">Task Title</Label>
+                  <Input
+                    id="task-title"
+                    placeholder="e.g., Redesign navigation bar"
+                    value={newTaskTitle}
+                    onChange={(e) => setNewTaskTitle(e.target.value)}
+                    autoComplete="off"
+                    autoCorrect="off"
+                    autoCapitalize="off"
+                    spellCheck="false"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="task-description">Description (Optional)</Label>
+                  <Textarea
+                    id="task-description"
+                    placeholder="Add more details about the task..."
+                    value={newTaskDescription}
+                    onChange={(e) => setNewTaskDescription(e.target.value)}
+                    rows={3}
+                    autoComplete="off"
+                    autoCorrect="off"
+                    autoCapitalize="off"
+                    spellCheck="false"
+                  />
+                </div>
+                <Button 
+                  onClick={addTask} 
+                  disabled={!newTaskTitle.trim() || isAdding || hasActiveVoting}
+                  className="w-full"
+                >
+                  <Plus className="w-4 h-4 mr-2" />
+                  {isAdding ? 'Adding...' : hasActiveVoting ? 'Complete active voting first' : 'Add Task'}
+                </Button>
+                {hasActiveVoting && (
+                  <p className="text-xs text-gray-600 text-center">
+                    Complete the current task voting before adding a new task
+                  </p>
+                )}
+              </div>
             )}
           </div>
         )}

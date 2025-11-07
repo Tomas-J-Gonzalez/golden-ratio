@@ -8,6 +8,7 @@ import { supabase, Session, Task, Participant, Vote } from '@/lib/supabase'
 import TaskManagement from './TaskManagement'
 import VotingArea from './VotingArea'
 import VotingResults from './VotingResults'
+import VotesHidden from './VotesHidden'
 import TaskHistory from './TaskHistory'
 import { ConfirmDialog } from './ui/confirm-dialog'
 import { Users, Copy, Check, LogOut } from 'lucide-react'
@@ -272,6 +273,25 @@ export default function SessionPage({ sessionCode }: SessionPageProps) {
     loadSessionData()
   }
 
+  const revealVotes = async () => {
+    if (!currentTask || !isModerator) return
+
+    try {
+      const { error } = await supabase
+        .from('tasks')
+        .update({ votes_revealed: true })
+        .eq('id', currentTask.id)
+
+      if (error) throw error
+      
+      toast.success('Votes revealed!')
+      loadSessionData()
+    } catch (error) {
+      console.error('Error revealing votes:', error)
+      toast.error('Failed to reveal votes. Please try again.')
+    }
+  }
+
   const updateTaskStatusToVotingCompleted = useCallback(async (taskId: string) => {
     try {
       const { error } = await supabase
@@ -379,14 +399,24 @@ export default function SessionPage({ sessionCode }: SessionPageProps) {
             {currentTask && (
               <div>
                 {allParticipantsVoted ? (
-                  <VotingResults
-                    taskTitle={currentTask.title}
-                    taskId={currentTask.id}
-                    votes={votes}
-                    participants={participants}
-                    isModerator={isModerator}
-                    onTaskCompleted={handleTaskUpdate}
-                  />
+                  currentTask.votes_revealed ? (
+                    <VotingResults
+                      taskTitle={currentTask.title}
+                      taskId={currentTask.id}
+                      votes={votes}
+                      participants={participants}
+                      isModerator={isModerator}
+                      onTaskCompleted={handleTaskUpdate}
+                    />
+                  ) : (
+                    <VotesHidden
+                      taskTitle={currentTask.title}
+                      votes={votes}
+                      participants={participants}
+                      isModerator={isModerator}
+                      onRevealVotes={revealVotes}
+                    />
+                  )
                 ) : currentParticipant ? (
                   <VotingArea
                     taskId={currentTask.id}
