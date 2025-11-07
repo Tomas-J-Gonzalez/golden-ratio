@@ -6,7 +6,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Badge } from '@/components/ui/badge'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 import { Task } from '@/lib/supabase'
-import { Download, FileText } from 'lucide-react'
+import { Download, FileText, ChevronDown, Copy, Check } from 'lucide-react'
 import { toast } from 'sonner'
 
 interface TaskHistoryProps {
@@ -16,6 +16,8 @@ interface TaskHistoryProps {
 
 export default function TaskHistory({ tasks, sessionId }: TaskHistoryProps) {
   const [isExporting, setIsExporting] = useState(false)
+  const [isCollapsed, setIsCollapsed] = useState(false)
+  const [jiraCopied, setJiraCopied] = useState(false)
 
   const completedTasks = tasks.filter(task => task.status === 'completed' || task.status === 'voting_completed')
 
@@ -69,6 +71,58 @@ export default function TaskHistory({ tasks, sessionId }: TaskHistoryProps) {
     }, 0)
   }
 
+  const copyForJira = () => {
+    // Generate Jira-formatted text
+    let jiraText = `h2. Design Estimation Summary\n\n`
+    jiraText += `*Total Completed Tasks:* ${completedTasks.length}\n`
+    jiraText += `*Total Effort Points:* ${getTotalPoints()}\n`
+    jiraText += `*Session Date:* ${new Date().toLocaleDateString()}\n\n`
+    jiraText += `----\n\n`
+    
+    jiraText += `h3. Task Breakdown\n\n`
+    jiraText += `||Task||Base Estimate||Buffer||Iterations||Total Points||Date||\n`
+    
+    completedTasks.forEach((task) => {
+      const baseEstimate = task.final_estimate || 0
+      const bufferAmount = baseEstimate * (task.meeting_buffer || 0)
+      const totalWithBuffer = baseEstimate + bufferAmount
+      const finalTotal = Math.round(totalWithBuffer * (task.iteration_multiplier || 1))
+      const bufferPercent = task.meeting_buffer ? `+${Math.round(task.meeting_buffer * 100)}%` : 'None'
+      const iterations = `${task.iteration_multiplier || 1}x`
+      const date = new Date(task.created_at).toLocaleDateString()
+      
+      jiraText += `|${task.title}|${baseEstimate} pts|${bufferPercent}|${iterations}|*${finalTotal} pts*|${date}|\n`
+    })
+    
+    jiraText += `\n----\n\n`
+    jiraText += `h3. Individual Tasks\n\n`
+    
+    completedTasks.forEach((task) => {
+      const baseEstimate = task.final_estimate || 0
+      const bufferAmount = baseEstimate * (task.meeting_buffer || 0)
+      const totalWithBuffer = baseEstimate + bufferAmount
+      const finalTotal = Math.round(totalWithBuffer * (task.iteration_multiplier || 1))
+      
+      jiraText += `h4. ${task.title}\n`
+      if (task.description) {
+        jiraText += `${task.description}\n\n`
+      }
+      jiraText += `* *Base Estimate:* ${baseEstimate} points\n`
+      if (task.meeting_buffer) {
+        jiraText += `* *Meeting Buffer:* +${Math.round(task.meeting_buffer * 100)}% (+${Math.round(bufferAmount)} pts)\n`
+      }
+      if (task.iteration_multiplier && task.iteration_multiplier > 1) {
+        jiraText += `* *Design Iterations:* ${task.iteration_multiplier}x multiplier\n`
+      }
+      jiraText += `* *Total Effort:* *${finalTotal} points*\n\n`
+    })
+    
+    navigator.clipboard.writeText(jiraText)
+    setJiraCopied(true)
+    setTimeout(() => setJiraCopied(false), 2000)
+    toast.success('Copied for Jira!')
+  }
+
   if (completedTasks.length === 0) {
     return (
       <Card>
@@ -88,24 +142,59 @@ export default function TaskHistory({ tasks, sessionId }: TaskHistoryProps) {
 
   return (
     <Card>
-      <CardHeader>
+      <CardHeader className="cursor-pointer" onClick={() => setIsCollapsed(!isCollapsed)}>
         <div className="flex items-center justify-between">
-          <div>
-            <CardTitle>Task History</CardTitle>
-            <CardDescription>
-              {completedTasks.length} completed task{completedTasks.length !== 1 ? 's' : ''} • 
-              Total: {getTotalPoints()} points
-            </CardDescription>
+          <div className="flex items-center gap-2 flex-1">
+            <ChevronDown 
+              className={`w-4 h-4 text-gray-500 transition-transform ${
+                isCollapsed ? '-rotate-90' : ''
+              }`}
+            />
+            <div>
+              <CardTitle className="text-sm">Task History</CardTitle>
+              <CardDescription className="text-xs">
+                {completedTasks.length} completed task{completedTasks.length !== 1 ? 's' : ''} • 
+                Total: {getTotalPoints()} points
+              </CardDescription>
+            </div>
           </div>
-          <Button onClick={exportToCSV} disabled={isExporting} variant="outline">
-            <Download className="w-4 h-4 mr-2" />
-            {isExporting ? 'Exporting...' : 'Export CSV'}
-          </Button>
+          {!isCollapsed && (
+            <div className="flex items-center gap-2" onClick={(e) => e.stopPropagation()}>
+              <Button 
+                onClick={copyForJira}
+                variant="outline"
+                size="sm"
+                className="flex items-center gap-1"
+              >
+                {jiraCopied ? (
+                  <>
+                    <Check className="w-3 h-3" />
+                    Copied!
+                  </>
+                ) : (
+                  <>
+                    <Copy className="w-3 h-3" />
+                    Jira
+                  </>
+                )}
+              </Button>
+              <Button 
+                onClick={exportToCSV}
+                disabled={isExporting} 
+                variant="outline"
+                size="sm"
+              >
+                <Download className="w-3 h-3 mr-1" />
+                {isExporting ? 'Exporting...' : 'CSV'}
+              </Button>
+            </div>
+          )}
         </div>
       </CardHeader>
-      <CardContent>
-        <div className="rounded-md border">
-          <Table>
+      {!isCollapsed && (
+        <CardContent>
+          <div className="rounded-md border">
+            <Table>
             <TableHeader>
               <TableRow>
                 <TableHead>Task</TableHead>
@@ -167,6 +256,7 @@ export default function TaskHistory({ tasks, sessionId }: TaskHistoryProps) {
           </Table>
         </div>
       </CardContent>
+      )}
     </Card>
   )
 }

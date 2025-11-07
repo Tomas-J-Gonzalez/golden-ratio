@@ -258,58 +258,120 @@ export default function VotingResults({ taskTitle, taskId, votes, participants, 
         </div>
       </CardHeader>
       <CardContent className="space-y-6">
-        {/* Summary Statistics */}
-        <div className="grid grid-cols-3 gap-4 p-4 bg-blue-50 rounded-lg">
-          <div className="text-center">
-            <div className="text-2xl font-bold text-blue-600">{estimateToTShirtSize(averageEstimate)}</div>
-            <div className="text-sm text-blue-700">Average</div>
-          </div>
-          <div className="text-center">
-            <div className="text-2xl font-bold text-green-600">{estimateToTShirtSize(minEstimate)}</div>
-            <div className="text-sm text-green-700">Minimum</div>
-          </div>
-          <div className="text-center">
-            <div className="text-2xl font-bold text-orange-600">{estimateToTShirtSize(maxEstimate)}</div>
-            <div className="text-sm text-orange-700">Maximum</div>
+        {/* Summary Statistics - Prominent and Clean */}
+        <div className="bg-gradient-to-br from-blue-50 to-blue-100 rounded-xl p-6 border border-blue-200">
+          <h3 className="text-sm font-medium text-blue-900 mb-4 uppercase tracking-wide">Final Estimate</h3>
+          <div className="grid grid-cols-3 gap-6">
+            <div className="text-center">
+              <div className="text-sm text-gray-600 mb-1">Minimum</div>
+              <div className="text-3xl font-bold text-green-600">{estimateToTShirtSize(minEstimate)}</div>
+              <div className="text-xs text-gray-500 mt-1">{minEstimate} pts</div>
+            </div>
+            <div className="text-center border-x border-blue-200">
+              <div className="text-sm text-gray-600 mb-1">Average</div>
+              <div className="text-4xl font-bold text-blue-600">{estimateToTShirtSize(averageEstimate)}</div>
+              <div className="text-xs text-gray-500 mt-1">{averageEstimate} pts</div>
+            </div>
+            <div className="text-center">
+              <div className="text-sm text-gray-600 mb-1">Maximum</div>
+              <div className="text-3xl font-bold text-orange-600">{estimateToTShirtSize(maxEstimate)}</div>
+              <div className="text-xs text-gray-500 mt-1">{maxEstimate} pts</div>
+            </div>
           </div>
         </div>
 
-        {/* Individual Votes */}
-        <div className="space-y-4">
-          <h4 className="font-medium text-sm">Individual Estimates</h4>
-          {votes.map((vote) => {
-            const factors = vote.factors as VoteFactors
-            const estimate = estimates[votes.indexOf(vote)]
-            
-            return (
-              <div key={vote.id} className="p-4 border rounded-lg">
-                <div className="flex items-center justify-between mb-3">
-                  <div className="font-medium">{getParticipantName(vote.participant_id)}</div>
-                  <Badge className="bg-green-100 text-green-800">
-                    {estimateToTShirtSize(estimate)}
-                  </Badge>
-                </div>
-                
-                <div className="grid grid-cols-2 gap-3 text-sm">
-                  <div><strong>Effort:</strong> {getFactorLabel('effort', factors.effort)}</div>
-                  {factors.time && <div><strong>Time:</strong> {getFactorLabel('time', factors.time)}</div>}
-                  <div><strong>Sprints:</strong> {getFactorLabel('sprints', factors.sprints)}</div>
-                  {(factors.designerCount || factors.designers) && <div><strong>Designers:</strong> {getFactorLabel('designerCount', factors.designerCount || factors.designers || 0)}</div>}
-                  {factors.designerLevels && factors.designerLevels.length > 0 && (
-                    <div className="col-span-2 text-xs text-gray-600">
-                      {getDesignerLevels(factors.designerLevels)}
+        {/* Individual Estimates - Collapsible/Cleaner */}
+        <details open className="group">
+          <summary className="cursor-pointer list-none">
+            <div className="flex items-center justify-between py-2 px-1 hover:bg-gray-50 rounded">
+              <h3 className="text-sm font-semibold text-gray-700 flex items-center gap-2">
+                Individual Estimates ({votes.length})
+                <span className="text-xs text-gray-400">Click to toggle</span>
+              </h3>
+              <svg 
+                className="w-5 h-5 text-gray-400 transition-transform group-open:rotate-180" 
+                fill="none" 
+                stroke="currentColor" 
+                viewBox="0 0 24 24"
+              >
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+              </svg>
+            </div>
+          </summary>
+          
+          <div className="space-y-3 mt-4">
+            {votes.map((vote) => {
+              const factors = vote.factors as VoteFactors
+              const estimate = estimates[votes.indexOf(vote)]
+              
+              return (
+                <div key={vote.id} className="border border-gray-200 rounded-lg overflow-hidden hover:border-gray-300 transition-colors">
+                  {/* Header */}
+                  <div className="bg-gray-50 px-4 py-3 flex items-center justify-between border-b border-gray-200">
+                    <div className="font-medium text-gray-900">{getParticipantName(vote.participant_id)}</div>
+                    <Badge className="bg-green-600 text-white text-sm px-3 py-1">
+                      {estimateToTShirtSize(estimate)}
+                    </Badge>
+                  </div>
+                  
+                  {/* Factor Details */}
+                  <div className="p-4 bg-white">
+                    <div className="grid grid-cols-2 gap-x-6 gap-y-3 text-sm">
+                      <div className="flex justify-between">
+                        <span className="text-gray-500">Effort:</span>
+                        <span className="font-medium text-gray-900">{getFactorLabel('effort', factors.effort)}</span>
+                      </div>
+                      {factors.time && (
+                        <div className="flex justify-between">
+                          <span className="text-gray-500">Time:</span>
+                          <span className="font-medium text-gray-900">{getFactorLabel('time', factors.time)}</span>
+                        </div>
+                      )}
+                      <div className="flex justify-between">
+                        <span className="text-gray-500">Sprints:</span>
+                        <span className="font-medium text-gray-900">{getFactorLabel('sprints', factors.sprints)}</span>
+                      </div>
+                      {(factors.designerCount || factors.designers) && (
+                        <div className="flex justify-between">
+                          <span className="text-gray-500">Designers:</span>
+                          <span className="font-medium text-gray-900">{getFactorLabel('designerCount', factors.designerCount || factors.designers || 0)}</span>
+                        </div>
+                      )}
+                      <div className="flex justify-between">
+                        <span className="text-gray-500">Breakpoints:</span>
+                        <span className="font-medium text-gray-900">{getFactorLabel('breakpoints', factors.breakpoints)}</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-gray-500">Fidelity:</span>
+                        <span className="font-medium text-gray-900">{getFactorLabel('fidelity', factors.fidelity)}</span>
+                      </div>
+                      {factors.meetingBuffer && (
+                        <div className="flex justify-between">
+                          <span className="text-gray-500">Buffer:</span>
+                          <span className="font-medium text-gray-900">{getFactorLabel('meetingBuffer', factors.meetingBuffer)}</span>
+                        </div>
+                      )}
+                      {factors.iterationMultiplier && (
+                        <div className="flex justify-between">
+                          <span className="text-gray-500">Iterations:</span>
+                          <span className="font-medium text-gray-900">{getFactorLabel('iterationMultiplier', factors.iterationMultiplier)}</span>
+                        </div>
+                      )}
                     </div>
-                  )}
-                  <div><strong>Breakpoints:</strong> {getFactorLabel('breakpoints', factors.breakpoints)}</div>
-                  <div><strong>Fidelity:</strong> {getFactorLabel('fidelity', factors.fidelity)}</div>
-                  {factors.prototypes && <div><strong>Prototypes:</strong> {getFactorLabel('prototypes', factors.prototypes)}</div>}
-                  {factors.meetingBuffer && <div><strong>Meeting Buffer:</strong> {getFactorLabel('meetingBuffer', factors.meetingBuffer)}</div>}
-                  {factors.iterationMultiplier && <div><strong>Iterations:</strong> {getFactorLabel('iterationMultiplier', factors.iterationMultiplier)}</div>}
+                    
+                    {/* Designer Levels - Full Width */}
+                    {factors.designerLevels && factors.designerLevels.length > 0 && (
+                      <div className="mt-3 pt-3 border-t border-gray-100">
+                        <span className="text-xs text-gray-500 block mb-1">Designer Levels:</span>
+                        <span className="text-xs text-gray-700">{getDesignerLevels(factors.designerLevels)}</span>
+                      </div>
+                    )}
+                  </div>
                 </div>
-              </div>
-            )
-          })}
-        </div>
+              )
+            })}
+          </div>
+        </details>
       </CardContent>
     </Card>
   )

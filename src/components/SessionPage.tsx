@@ -410,7 +410,7 @@ export default function SessionPage({ sessionCode }: SessionPageProps) {
 
           {/* Right Column - Participants & Task History */}
           <div className="space-y-4 order-1 lg:order-2">
-            {/* Sticky container for participants and current estimate */}
+            {/* Sticky container for participants, task history, and current estimate */}
             <div className="lg:sticky lg:top-6 space-y-4">
               {/* Participants */}
               <Card>
@@ -440,16 +440,16 @@ export default function SessionPage({ sessionCode }: SessionPageProps) {
                 </CardContent>
               </Card>
 
+              {/* Task History - Show if there are completed tasks */}
+              {tasks.some(task => task.status === 'completed' || task.status === 'voting_completed') && (
+                <TaskHistory tasks={tasks} sessionId={session?.id || sessionCode} />
+              )}
+
               {/* Current Estimate Display - Only show when there's an active vote and user hasn't voted */}
               {currentTask && currentParticipant && !votes.some(v => v.participant_id === currentParticipant.id) && (
                 <div id="current-estimate-box" />
               )}
             </div>
-
-            {/* Task History - Only show if there are completed tasks */}
-            {tasks.some(task => task.status === 'completed' || task.status === 'voting_completed') && (
-              <TaskHistory tasks={tasks} sessionId={session?.id || sessionCode} />
-            )}
           </div>
         </div>
       </div>

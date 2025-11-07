@@ -78,14 +78,15 @@ export const FIDELITY_OPTIONS = [
 // Calculate total estimate based on individual factors
 export const calculateEstimate = (factors: {
   effort: number;
-  time: number;
+  time?: number;
   sprints: number;
   designerCount: number;
   designerLevels: number[]; // Array of designer levels
   breakpoints: number;
   fidelity: number;
 }) => {
-  const baseEstimate = factors.time; // Use time as base
+  // Calculate base estimate from all factors if time is not provided
+  const baseEstimate = factors.time || (factors.effort + factors.sprints + factors.fidelity) / 3;
   const averageDesignerLevel = factors.designerLevels.length > 0 
     ? factors.designerLevels.reduce((sum, level) => sum + level, 0) / factors.designerLevels.length
     : 1;

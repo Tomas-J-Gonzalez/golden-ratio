@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
@@ -21,6 +21,7 @@ import {
   DragEndEvent,
 } from '@dnd-kit/core'
 import {
+  arrayMove,
   SortableContext,
   sortableKeyboardCoordinates,
   useSortable,
@@ -57,6 +58,8 @@ function SortableTaskItem({
   hasActiveVoting: boolean
   hasVotingCompleted: boolean
 }) {
+  const [isExpanded, setIsExpanded] = useState(false)
+  
   const {
     attributes,
     listeners,
@@ -71,6 +74,9 @@ function SortableTaskItem({
     transition,
     opacity: isDragging ? 0.5 : 1,
   }
+
+  // Check if description is long (more than ~100 characters as a rough estimate for 2 lines)
+  const isLongDescription = task.description && task.description.length > 100
 
   return (
     <div
@@ -96,7 +102,23 @@ function SortableTaskItem({
       <div className="flex-1">
         <h3 className="font-medium">{task.title}</h3>
         {task.description && (
-          <p className="text-sm text-gray-600 mt-1">{task.description}</p>
+          <div className="mt-1">
+            <p 
+              className={`text-sm text-gray-600 ${
+                !isExpanded && isLongDescription ? 'line-clamp-2' : ''
+              }`}
+            >
+              {task.description}
+            </p>
+            {isLongDescription && (
+              <button
+                onClick={() => setIsExpanded(!isExpanded)}
+                className="text-xs text-blue-600 hover:text-blue-800 mt-1 focus:outline-none focus:underline"
+              >
+                {isExpanded ? 'Show less' : 'Show more'}
+              </button>
+            )}
+          </div>
         )}
         <div className="flex items-center gap-2 mt-2">
           {getStatusBadge(task.status)}
@@ -165,10 +187,16 @@ export default function TaskManagement({ sessionId, tasks, onTaskUpdate, isModer
   const [taskToDelete, setTaskToDelete] = useState<string | null>(null)
   const [stopVotingDialogOpen, setStopVotingDialogOpen] = useState(false)
   const [taskToStopVoting, setTaskToStopVoting] = useState<string | null>(null)
-  // Filter to only show pending/voting tasks
-  const activeTasks = tasks.filter(task => task.status === 'pending' || task.status === 'voting')
+  // State to hold the draggable tasks
+  const [activeTasks, setActiveTasks] = useState<Task[]>([])
   // Check if there's a voting_completed task
   const hasVotingCompleted = tasks.some(task => task.status === 'voting_completed')
+
+  // Update active tasks when tasks prop changes
+  useEffect(() => {
+    const baseActiveTasks = tasks.filter(task => task.status === 'pending' || task.status === 'voting')
+    setActiveTasks(baseActiveTasks)
+  }, [tasks])
 
   // Configure sensors for drag and drop
   const sensors = useSensors(
@@ -187,9 +215,15 @@ export default function TaskManagement({ sessionId, tasks, onTaskUpdate, isModer
     const { active, over } = event
 
     if (over && active.id !== over.id) {
-      // We could update the order in the database here if needed
-      // For now, just show visual feedback
-      toast.success('Task order updated')
+      setActiveTasks((items) => {
+        const oldIndex = items.findIndex(task => task.id === active.id)
+        const newIndex = items.findIndex(task => task.id === over.id)
+        
+        return arrayMove(items, oldIndex, newIndex)
+      })
+      
+      // Optional: You could persist this order to the database here
+      // by adding an 'order' or 'position' field to the tasks table
     }
   }
 
