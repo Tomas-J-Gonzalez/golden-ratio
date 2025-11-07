@@ -283,12 +283,11 @@ export default function VotingResults({ taskTitle, taskId, votes, participants, 
         </div>
 
         {/* Individual Estimates - Collapsible/Cleaner */}
-        <details open className="group">
+        <details className="group">
           <summary className="cursor-pointer list-none">
             <div className="flex items-center justify-between py-2 px-1 hover:bg-gray-50 rounded">
               <h3 className="text-sm font-semibold text-gray-700 flex items-center gap-2">
                 Individual Estimates ({votes.length})
-                <span className="text-xs text-gray-400">Click to toggle</span>
               </h3>
               <svg 
                 className="w-5 h-5 text-gray-400 transition-transform group-open:rotate-180" 

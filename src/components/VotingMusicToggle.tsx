@@ -15,6 +15,7 @@ export function VotingMusicToggle({ isVotingActive }: VotingMusicToggleProps) {
   const [isEnabled, setIsEnabled] = useState(false)
   const [volume, setVolume] = useState(DEFAULT_VOLUME)
   const [isLoadingAudio, setIsLoadingAudio] = useState(true)
+  const [showVolumeControl, setShowVolumeControl] = useState(false)
 
   useEffect(() => {
     const audioElement = new Audio('/jazz.mp3')
@@ -64,10 +65,15 @@ export function VotingMusicToggle({ isVotingActive }: VotingMusicToggleProps) {
   }, [isEnabled, isVotingActive, volume])
 
   useEffect(() => {
-    if (!isVotingActive && isEnabled) {
-      setIsEnabled(false)
+    if (!isVotingActive) {
+      if (isEnabled) {
+        setIsEnabled(false)
+      }
+      if (showVolumeControl) {
+        setShowVolumeControl(false)
+      }
     }
-  }, [isVotingActive, isEnabled])
+  }, [isVotingActive, isEnabled, showVolumeControl])
 
   const toggleLabel = useMemo(() => {
     if (!isVotingActive) return 'Music available when voting starts'
@@ -78,49 +84,73 @@ export function VotingMusicToggle({ isVotingActive }: VotingMusicToggleProps) {
   const volumeIcon = volume <= 0.01 ? <VolumeX className="w-4 h-4" /> : <Volume2 className="w-4 h-4" />
 
   return (
-    <div className="flex items-center gap-3 rounded-md border border-gray-200 bg-white px-3 py-2 shadow-sm">
+    <div className="flex items-center gap-2 rounded-full border border-transparent bg-white/70 px-2 py-1 shadow-sm ring-1 ring-gray-200 backdrop-blur">
       <Button
         type="button"
-        size="sm"
-        variant={isEnabled ? 'default' : 'outline'}
+        size="icon"
+        variant="ghost"
         onClick={() => {
           if (!isVotingActive || isLoadingAudio) return
           setIsEnabled((prev) => !prev)
         }}
         aria-pressed={isEnabled}
         disabled={!isVotingActive || isLoadingAudio}
-        className={`flex items-center gap-2 transition ${
-          isEnabled ? 'bg-blue-600 hover:bg-blue-700 text-white' : ''
+        className={`h-8 w-8 rounded-full border ${
+          isEnabled
+            ? 'border-blue-200 bg-blue-50 text-blue-600'
+            : 'border-transparent text-gray-500'
         }`}
         title={toggleLabel}
       >
         <Music
-          className={`w-4 h-4 ${
+          className={`w-4 h-4 transition ${
             isEnabled
-              ? 'text-white animate-[spin_4s_linear_infinite]'
-              : 'text-blue-600'
+              ? 'animate-[spin_6s_linear_infinite] text-blue-600'
+              : 'text-gray-500'
           }`}
         />
-        <span className="text-xs font-medium">Music</span>
       </Button>
 
-      <div className="flex items-center gap-2">
-        <span className="text-gray-400">{volumeIcon}</span>
-        <input
-          type="range"
-          min={0}
-          max={1}
-          step={0.05}
-          value={volume}
-          onChange={(event) => {
-            const newVolume = Number(event.target.value)
-            setVolume(newVolume)
-          }}
-          disabled={!isVotingActive}
-          className="h-1 w-24 cursor-pointer accent-blue-600 disabled:opacity-40"
-          aria-label="Adjust session music volume"
-        />
-      </div>
+      <span className="text-xs font-medium text-gray-600">Music</span>
+
+      <button
+        type="button"
+        onClick={() => {
+          if (!isVotingActive) return
+          setShowVolumeControl((prev) => !prev)
+        }}
+        disabled={!isVotingActive}
+        className={`flex h-8 w-8 items-center justify-center rounded-full border transition ${
+          showVolumeControl
+            ? 'border-blue-200 bg-blue-50 text-blue-600'
+            : 'border-transparent text-gray-500'
+        } disabled:text-gray-400`}
+        aria-label="Toggle volume control"
+        aria-expanded={showVolumeControl}
+      >
+        {volumeIcon}
+      </button>
+
+      {showVolumeControl && (
+        <div className="flex items-center gap-2 rounded-full border border-blue-100 bg-white px-3 py-1 text-xs text-blue-700 shadow-sm">
+          <input
+            type="range"
+            min={0}
+            max={1}
+            step={0.05}
+            value={volume}
+            onChange={(event) => {
+              const newVolume = Number(event.target.value)
+              setVolume(newVolume)
+            }}
+            className="h-1 w-24 cursor-pointer accent-blue-500"
+            aria-label="Adjust session music volume"
+          />
+          <span className="w-8 text-right text-[11px] font-medium">
+            {Math.round(volume * 100)}%
+          </span>
+        </div>
+      )}
     </div>
   )
 }

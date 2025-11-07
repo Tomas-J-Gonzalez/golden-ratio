@@ -389,6 +389,9 @@ export default function VotingArea({
           <Calculator className="w-4 h-4 text-blue-600" />
           <span className="text-blue-900">Current Estimate</span>
         </CardTitle>
+        <CardDescription className="text-xs text-blue-700/80 truncate">
+          Estimating: {taskTitle}
+        </CardDescription>
       </CardHeader>
       <CardContent className="pb-4 space-y-4">
         <div className="text-center">
@@ -401,41 +404,43 @@ export default function VotingArea({
           <div className="text-sm font-medium text-blue-800 mt-2">{hoursEstimate}</div>
         </div>
 
-        {/* Final Estimate Input */}
-        <div className="space-y-2">
-          <Label htmlFor="final-estimate-sidebar" className="text-xs text-blue-900">
-            Final Estimate (t-shirt size)
-          </Label>
-          <Input
-            id="final-estimate-sidebar"
-            type="number"
-            min="1"
-            value={factors.finalEstimate || ''}
-            onChange={(e) => setFactors(prev => ({ ...prev, finalEstimate: Number(e.target.value) || null }))}
-            placeholder="Enter final estimate"
-            className="bg-white border-blue-300 text-center"
-            autoComplete="off"
-            autoCorrect="off"
-            autoCapitalize="off"
-            spellCheck="false"
-          />
-          {factors.finalEstimate && factors.finalEstimate > 0 && (
-            <div className="text-center text-xs text-blue-800">
-              <strong>{estimateToTShirtSize(factors.finalEstimate)}</strong> ({factors.finalEstimate} points)
-            </div>
-          )}
-        </div>
-
-        {/* Submit Button */}
+        {/* Final Estimate Input - Only show when estimation is complete */}
         {isEstimationComplete() && (
-          <Button 
-            onClick={submitVote} 
-            disabled={isSubmitting}
-            className="w-full bg-blue-600 hover:bg-blue-700"
-            size="sm"
-          >
-            {isSubmitting ? 'Submitting...' : 'Submit Estimate'}
-          </Button>
+          <>
+            <div className="space-y-2">
+              <Label htmlFor="final-estimate-sidebar" className="text-xs text-blue-900">
+                Manual Final Estimate (t-shirt size)
+              </Label>
+              <Input
+                id="final-estimate-sidebar"
+                type="number"
+                min="1"
+                value={factors.finalEstimate || ''}
+                onChange={(e) => setFactors(prev => ({ ...prev, finalEstimate: Number(e.target.value) || null }))}
+                placeholder="Enter final estimate"
+                className="bg-white border-blue-300 text-center"
+                autoComplete="off"
+                autoCorrect="off"
+                autoCapitalize="off"
+                spellCheck="false"
+              />
+              {factors.finalEstimate && factors.finalEstimate > 0 && (
+                <div className="text-center text-xs text-blue-800">
+                  <strong>{estimateToTShirtSize(factors.finalEstimate)}</strong> ({factors.finalEstimate} points)
+                </div>
+              )}
+            </div>
+
+            {/* Submit Button */}
+            <Button 
+              onClick={submitVote} 
+              disabled={isSubmitting}
+              className="w-full bg-blue-600 hover:bg-blue-700"
+              size="sm"
+            >
+              {isSubmitting ? 'Submitting...' : 'Submit Estimate'}
+            </Button>
+          </>
         )}
       </CardContent>
     </Card>

@@ -204,6 +204,13 @@ export default function TaskManagement({ sessionId, tasks, onTaskUpdate, isModer
     setActiveTasks(baseActiveTasks)
   }, [tasks])
 
+  // Auto-collapse when voting starts
+  useEffect(() => {
+    if (hasActiveVoting) {
+      setIsCardCollapsed(true)
+    }
+  }, [hasActiveVoting])
+
   // Configure sensors for drag and drop
   const sensors = useSensors(
     useSensor(PointerSensor, {
