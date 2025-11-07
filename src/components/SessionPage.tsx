@@ -23,7 +23,6 @@ export default function SessionPage({ sessionCode }: SessionPageProps) {
   const [currentParticipant, setCurrentParticipant] = useState<Participant | null>(null)
   const [currentTask, setCurrentTask] = useState<Task | null>(null)
   const [isLoading, setIsLoading] = useState(true)
-  const [copied, setCopied] = useState(false)
   const [codeCopied, setCodeCopied] = useState(false)
 
   const loadSessionData = useCallback(async () => {
@@ -212,13 +211,6 @@ export default function SessionPage({ sessionCode }: SessionPageProps) {
     return cleanup
   }, [setupRealtimeSubscriptions])
 
-  const copySessionLink = () => {
-    const link = `${window.location.origin}/join/${sessionCode}`
-    navigator.clipboard.writeText(link)
-    setCopied(true)
-    setTimeout(() => setCopied(false), 2000)
-  }
-
   const copySessionCode = () => {
     const joinUrl = `${window.location.origin}/join/${sessionCode}`
     navigator.clipboard.writeText(joinUrl)
@@ -356,10 +348,6 @@ export default function SessionPage({ sessionCode }: SessionPageProps) {
               </div>
             </div>
             <div className="flex items-center gap-3">
-              <Button onClick={copySessionLink} variant="outline" size="sm">
-                {copied ? <Check className="w-4 h-4 mr-2" /> : <Copy className="w-4 h-4 mr-2" />}
-                {copied ? 'Copied!' : 'Copy Link'}
-              </Button>
               {currentParticipant && (
                 <Button onClick={leaveSession} variant="outline" size="sm" className="border-black text-black hover:bg-black hover:text-white">
                   <LogOut className="w-4 h-4 mr-2" />
