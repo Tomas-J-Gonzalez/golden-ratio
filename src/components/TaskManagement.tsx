@@ -151,13 +151,6 @@ function SortableTaskItem({
               Delete task
             </Button>
           </div>
-          {task.status === 'pending' && (hasActiveVoting || hasVotingCompleted) && (
-            <p className="text-xs text-amber-600">
-              {hasVotingCompleted 
-                ? "⚠️ Complete the finished voting task before starting this one"
-                : "⚠️ Another task is currently being voted on"}
-            </p>
-          )}
         </div>
       )}
     </div>

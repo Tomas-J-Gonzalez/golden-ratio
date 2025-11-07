@@ -404,13 +404,6 @@ export default function VotingArea({
           {renderFactorSelector('Meeting Buffer', 'meetingBuffer', MEETING_BUFFER_OPTIONS)}
           {renderFactorSelector('Design Iterations', 'iterationMultiplier', ITERATION_MULTIPLIER_OPTIONS)}
         </div>
-
-        {/* Instruction to use sidebar */}
-        <div className="p-4 bg-blue-50 border border-blue-200 rounded-lg text-center">
-          <p className="text-sm text-blue-900">
-            Enter your final estimate and submit in the <strong>Current Estimate</strong> box on the right →
-          </p>
-        </div>
       </CardContent>
     </Card>
     </>
