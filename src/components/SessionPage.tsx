@@ -248,6 +248,7 @@ export default function SessionPage({ sessionCode }: SessionPageProps) {
       // Clear participant data from localStorage
       localStorage.removeItem(`participant_${sessionCode}`)
 
+      setLeaveDialogOpen(false)
       toast.success('Left session successfully')
       
       // Redirect to home page
@@ -256,6 +257,7 @@ export default function SessionPage({ sessionCode }: SessionPageProps) {
       }, 500)
     } catch (error) {
       console.error('Error leaving session:', error)
+      setLeaveDialogOpen(false)
       toast.error('Failed to leave session. Please try again.')
     }
   }
