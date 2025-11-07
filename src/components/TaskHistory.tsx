@@ -16,7 +16,7 @@ interface TaskHistoryProps {
 export default function TaskHistory({ tasks, sessionId }: TaskHistoryProps) {
   const [isExporting, setIsExporting] = useState(false)
 
-  const completedTasks = tasks.filter(task => task.status === 'completed')
+  const completedTasks = tasks.filter(task => task.status === 'completed' || task.status === 'voting_completed')
 
   const exportToCSV = async () => {
     setIsExporting(true)

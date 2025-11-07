@@ -377,8 +377,11 @@ export default function SessionPage({ sessionCode }: SessionPageProps) {
                 {allParticipantsVoted ? (
                   <VotingResults
                     taskTitle={currentTask.title}
+                    taskId={currentTask.id}
                     votes={votes}
                     participants={participants}
+                    isModerator={isModerator}
+                    onTaskCompleted={handleTaskUpdate}
                   />
                 ) : currentParticipant ? (
                   <VotingArea
@@ -440,7 +443,7 @@ export default function SessionPage({ sessionCode }: SessionPageProps) {
             </div>
 
             {/* Task History - Only show if there are completed tasks */}
-            {tasks.some(task => task.status === 'completed') && (
+            {tasks.some(task => task.status === 'completed' || task.status === 'voting_completed') && (
               <TaskHistory tasks={tasks} sessionId={session?.id || sessionCode} />
             )}
           </div>

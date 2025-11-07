@@ -109,7 +109,7 @@ export default function TaskManagement({ sessionId, tasks, onTaskUpdate, isModer
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
-        {isModerator && !hasActiveVoting && (
+        {isModerator && (
           <div className="space-y-4 p-4 border rounded-lg bg-gray-50">
             <div className="space-y-2">
               <Label htmlFor="task-title">Task Title</Label>
@@ -140,18 +140,23 @@ export default function TaskManagement({ sessionId, tasks, onTaskUpdate, isModer
             </div>
             <Button 
               onClick={addTask} 
-              disabled={!newTaskTitle.trim() || isAdding}
+              disabled={!newTaskTitle.trim() || isAdding || hasActiveVoting}
               className="w-full"
             >
               <Plus className="w-4 h-4 mr-2" />
-              {isAdding ? 'Adding...' : 'Add Task'}
+              {isAdding ? 'Adding...' : hasActiveVoting ? 'Complete active voting first' : 'Add Task'}
             </Button>
+            {hasActiveVoting && (
+              <p className="text-xs text-gray-600 text-center">
+                Complete the current task voting before adding a new task
+              </p>
+            )}
           </div>
         )}
 
         <div className="space-y-3">
-          {tasks.length > 0 && (
-            tasks.map((task) => (
+          {tasks.filter(task => task.status === 'pending' || task.status === 'voting').length > 0 && (
+            tasks.filter(task => task.status === 'pending' || task.status === 'voting').map((task) => (
               <div key={task.id} className="flex items-center justify-between p-4 border rounded-lg">
                 <div className="flex-1">
                   <h3 className="font-medium">{task.title}</h3>

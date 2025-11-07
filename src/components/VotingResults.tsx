@@ -4,8 +4,8 @@ import { useState } from 'react'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
-import { Copy, Check } from 'lucide-react'
-import { Vote, Participant } from '@/lib/supabase'
+import { Copy, Check, CheckCircle } from 'lucide-react'
+import { Vote, Participant, supabase } from '@/lib/supabase'
 import { 
   EFFORT_OPTIONS, 
   TIME_OPTIONS,
@@ -37,12 +37,16 @@ interface VoteFactors {
 
 interface VotingResultsProps {
   taskTitle: string
+  taskId: string
   votes: Vote[]
   participants: Participant[]
+  isModerator: boolean
+  onTaskCompleted?: () => void
 }
 
-export default function VotingResults({ taskTitle, votes, participants }: VotingResultsProps) {
+export default function VotingResults({ taskTitle, taskId, votes, participants, isModerator, onTaskCompleted }: VotingResultsProps) {
   const [copied, setCopied] = useState(false)
+  const [isCompleting, setIsCompleting] = useState(false)
 
   const getParticipantName = (participantId: string) => {
     const participant = participants.find(p => p.id === participantId)
@@ -149,6 +153,45 @@ export default function VotingResults({ taskTitle, votes, participants }: Voting
     setTimeout(() => setCopied(false), 2000)
   }
 
+  const completeTask = async () => {
+    if (!isModerator) return
+    
+    setIsCompleting(true)
+    try {
+      // Calculate the average estimate to store as final estimate
+      const estimates = votes.map(vote => {
+        if (vote.factors && typeof vote.factors === 'object') {
+          const factors = vote.factors as Record<string, number>
+          const baseEstimate = factors.time || 1
+          const complexityMultiplier = (factors.effort + factors.sprints + (factors.designerCount || 1) + factors.breakpoints + factors.fidelity) / 5
+          return Math.round(baseEstimate * complexityMultiplier)
+        }
+        return 0
+      })
+      const averageEstimate = estimates.length > 0 ? Math.round(estimates.reduce((sum, est) => sum + est, 0) / estimates.length) : 0
+
+      // Update task status to completed in Supabase
+      const { error } = await supabase
+        .from('tasks')
+        .update({ 
+          status: 'completed',
+          final_estimate: averageEstimate
+        })
+        .eq('id', taskId)
+
+      if (error) throw error
+      
+      if (onTaskCompleted) {
+        onTaskCompleted()
+      }
+    } catch (error) {
+      console.error('Error completing task:', error)
+      alert('Failed to complete task. Please try again.')
+    } finally {
+      setIsCompleting(false)
+    }
+  }
+
   // Calculate statistics
   const estimates = votes.map(vote => {
     if (vote.factors && typeof vote.factors === 'object') {
@@ -178,24 +221,37 @@ export default function VotingResults({ taskTitle, votes, participants }: Voting
               All {votes.length} participants have completed their estimates
             </CardDescription>
           </div>
-          <Button 
-            onClick={copyToClipboard}
-            variant="outline"
-            size="sm"
-            className="flex items-center gap-2"
-          >
-            {copied ? (
-              <>
-                <Check className="w-4 h-4" />
-                Copied!
-              </>
-            ) : (
-              <>
-                <Copy className="w-4 h-4" />
-                Copy Results
-              </>
+          <div className="flex items-center gap-2">
+            <Button 
+              onClick={copyToClipboard}
+              variant="outline"
+              size="sm"
+              className="flex items-center gap-2"
+            >
+              {copied ? (
+                <>
+                  <Check className="w-4 h-4" />
+                  Copied!
+                </>
+              ) : (
+                <>
+                  <Copy className="w-4 h-4" />
+                  Copy Results
+                </>
+              )}
+            </Button>
+            {isModerator && (
+              <Button 
+                onClick={completeTask}
+                disabled={isCompleting}
+                size="sm"
+                className="flex items-center gap-2 bg-green-600 hover:bg-green-700"
+              >
+                <CheckCircle className="w-4 h-4" />
+                {isCompleting ? 'Completing...' : 'Complete Task'}
+              </Button>
             )}
-          </Button>
+          </div>
         </div>
       </CardHeader>
       <CardContent className="space-y-6">

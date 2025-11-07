@@ -34,7 +34,7 @@ export interface Task {
   title: string
   description?: string
   created_at: string
-  status: 'pending' | 'voting' | 'completed'
+  status: 'pending' | 'voting' | 'voting_completed' | 'completed'
   final_estimate?: number
   meeting_buffer?: number
   iteration_multiplier?: number
