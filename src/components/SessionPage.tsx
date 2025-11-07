@@ -12,6 +12,7 @@ import VotesHidden from './VotesHidden'
 import TaskHistory from './TaskHistory'
 import { EmojiPicker } from './EmojiPicker'
 import { ConfirmDialog } from './ui/confirm-dialog'
+import { VotingMusicToggle } from './VotingMusicToggle'
 import { Users, Copy, Check, LogOut } from 'lucide-react'
 import { toast } from 'sonner'
 
@@ -374,6 +375,7 @@ export default function SessionPage({ sessionCode }: SessionPageProps) {
   // Calculate derived values
   const isModerator = currentParticipant?.is_moderator || false
   const allParticipantsVoted = currentTask && votes.length >= participants.length
+  const isVotingInProgress = currentTask?.status === 'voting'
 
   // Update task status to voting_completed when all participants have voted
   useEffect(() => {
@@ -437,6 +439,9 @@ export default function SessionPage({ sessionCode }: SessionPageProps) {
               </div>
             </div>
             <div className="flex items-center gap-3">
+              {isVotingInProgress && (
+                <VotingMusicToggle isVotingActive={isVotingInProgress} />
+              )}
               {currentParticipant && (
                 <Button onClick={() => setLeaveDialogOpen(true)} variant="outline" size="sm" className="border-black text-black hover:bg-black hover:text-white">
                   <LogOut className="w-4 h-4 mr-2" />
