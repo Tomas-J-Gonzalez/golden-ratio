@@ -54,8 +54,7 @@ export const INDIVIDUAL_DESIGNER_LEVELS = [
 export const BREAKPOINT_OPTIONS = [
   { value: 1, label: 'Desktop only', description: 'Single breakpoint design' },
   { value: 2, label: 'Desktop + Mobile', description: 'Two main breakpoints' },
-  { value: 3, label: 'Desktop + Tablet + Mobile', description: 'Three standard breakpoints' },
-  { value: 4, label: 'All breakpoints', description: 'Full responsive design' }
+  { value: 3, label: 'Desktop + Tablet + Mobile', description: 'Three standard breakpoints' }
 ]
 
 export const PROTOTYPE_OPTIONS = [
@@ -72,7 +71,7 @@ export const FIDELITY_OPTIONS = [
   { value: 2, label: 'Mid-fi', description: 'Medium fidelity, detailed wireframes' },
   { value: 3, label: 'Hi-fi', description: 'High fidelity, pixel-perfect designs' },
   { value: 4, label: 'Interactive prototype', description: 'Interactive prototype with animations' },
-  { value: 5, label: 'Production-ready', description: 'Production-ready designs with specifications' }
+  { value: 8, label: 'Production-ready', description: 'All designs dev-ready with final specifications' }
 ]
 
 // Calculate total estimate based on individual factors
@@ -114,8 +113,7 @@ export const MEETING_BUFFER_OPTIONS = [
   { value: 0, label: 'No buffer', description: 'No additional time for meetings' },
   { value: 0.1, label: '+10%', description: '10% additional time for meetings' },
   { value: 0.2, label: '+20%', description: '20% additional time for meetings' },
-  { value: 0.3, label: '+30%', description: '30% additional time for meetings' },
-  { value: 0.5, label: '+50%', description: '50% additional time for meetings' },
+  { value: 0.3, label: '+30%', description: '30% additional time for meetings' }
 ]
 
 // Iteration multiplier options

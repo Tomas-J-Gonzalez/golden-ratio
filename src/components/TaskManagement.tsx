@@ -192,6 +192,7 @@ export default function TaskManagement({ sessionId, tasks, onTaskUpdate, isModer
   const [taskToStopVoting, setTaskToStopVoting] = useState<string | null>(null)
   const [isAddFormExpanded, setIsAddFormExpanded] = useState(false)
   const [showDescription, setShowDescription] = useState(false)
+  const [isCardCollapsed, setIsCardCollapsed] = useState(false)
   // State to hold the draggable tasks
   const [activeTasks, setActiveTasks] = useState<Task[]>([])
   // Check if there's a voting_completed task
@@ -375,12 +376,29 @@ export default function TaskManagement({ sessionId, tasks, onTaskUpdate, isModer
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Task Management</CardTitle>
-        <CardDescription>
-          {isModerator ? 'Create and manage tasks for estimation' : 'View current tasks'}
-        </CardDescription>
+        <div className="flex items-start justify-between">
+          <div className="flex-1">
+            <CardTitle>Task Management</CardTitle>
+            <CardDescription>
+              {isModerator ? 'Create and manage tasks for estimation' : 'View current tasks'}
+            </CardDescription>
+          </div>
+          <button
+            onClick={() => setIsCardCollapsed(!isCardCollapsed)}
+            className="p-1 hover:bg-gray-100 rounded-md transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500"
+            aria-label={isCardCollapsed ? 'Expand task management' : 'Collapse task management'}
+            title={isCardCollapsed ? 'Expand' : 'Collapse'}
+          >
+            <ChevronDown 
+              className={`w-5 h-5 text-gray-500 transition-transform ${
+                isCardCollapsed ? '-rotate-90' : ''
+              }`}
+            />
+          </button>
+        </div>
       </CardHeader>
-      <CardContent className="space-y-4">
+      {!isCardCollapsed && (
+        <CardContent className="space-y-4">
         {isModerator && (
           <div className="border rounded-lg bg-gray-50">
             {/* Collapsible Header */}
@@ -511,6 +529,7 @@ export default function TaskManagement({ sessionId, tasks, onTaskUpdate, isModer
           )}
         </div>
       </CardContent>
+      )}
 
       {/* Delete Task Confirmation Dialog */}
       <ConfirmDialog

@@ -543,7 +543,7 @@ export default function SessionPage({ sessionCode }: SessionPageProps) {
               </Card>
 
               {/* Task History - Show if there are completed tasks */}
-              {tasks.some(task => task.status === 'completed' || task.status === 'voting_completed') && (
+              {tasks.some(task => task.status === 'completed') && (
                 <TaskHistory tasks={tasks} sessionId={session?.id || sessionCode} />
               )}
 

@@ -258,24 +258,26 @@ export default function VotingResults({ taskTitle, taskId, votes, participants, 
         </div>
       </CardHeader>
       <CardContent className="space-y-6">
-        {/* Summary Statistics - Prominent and Clean */}
-        <div className="bg-gradient-to-br from-blue-50 to-blue-100 rounded-xl p-6 border border-blue-200">
-          <h3 className="text-sm font-medium text-blue-900 mb-4 uppercase tracking-wide">Final Estimate</h3>
-          <div className="grid grid-cols-3 gap-6">
-            <div className="text-center">
-              <div className="text-xs text-gray-600 mb-1">Minimum</div>
-              <div className="text-2xl font-bold text-blue-500">{estimateToTShirtSize(minEstimate)}</div>
-              <div className="text-xs text-gray-500 mt-1">{minEstimate} pts</div>
+        {/* Summary Statistics - Minimal layout */}
+        <div className="rounded-lg border border-gray-200 bg-white">
+          <div className="px-4 pt-4">
+            <h3 className="text-xs font-semibold uppercase tracking-[0.12em] text-gray-500">Final estimate</h3>
+          </div>
+          <div className="grid grid-cols-3 divide-x divide-gray-100 px-4 py-5">
+            <div className="flex flex-col items-center gap-1 text-center">
+              <span className="text-xs text-gray-500">Minimum</span>
+              <span className="text-lg font-semibold text-gray-900">{estimateToTShirtSize(minEstimate)}</span>
+              <span className="text-xs text-gray-400">{minEstimate} pts</span>
             </div>
-            <div className="text-center border-x border-blue-200">
-              <div className="text-xs text-gray-600 mb-1">Average</div>
-              <div className="text-3xl font-bold text-blue-600">{estimateToTShirtSize(averageEstimate)}</div>
-              <div className="text-xs text-gray-500 mt-1">{averageEstimate} pts</div>
+            <div className="flex flex-col items-center gap-1 text-center">
+              <span className="text-xs text-gray-500">Average</span>
+              <span className="text-2xl font-semibold text-gray-900">{estimateToTShirtSize(averageEstimate)}</span>
+              <span className="text-[11px] font-medium text-blue-600/80 bg-blue-50 px-2 py-0.5 rounded-full">{averageEstimate} pts</span>
             </div>
-            <div className="text-center">
-              <div className="text-xs text-gray-600 mb-1">Maximum</div>
-              <div className="text-2xl font-bold text-blue-700">{estimateToTShirtSize(maxEstimate)}</div>
-              <div className="text-xs text-gray-500 mt-1">{maxEstimate} pts</div>
+            <div className="flex flex-col items-center gap-1 text-center">
+              <span className="text-xs text-gray-500">Maximum</span>
+              <span className="text-lg font-semibold text-gray-900">{estimateToTShirtSize(maxEstimate)}</span>
+              <span className="text-xs text-gray-400">{maxEstimate} pts</span>
             </div>
           </div>
         </div>

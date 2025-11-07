@@ -5,9 +5,11 @@ import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogClose } from '@/components/ui/dialog'
 import { Task } from '@/lib/supabase'
 import { Download, FileText, ChevronDown, Copy, Check } from 'lucide-react'
 import { toast } from 'sonner'
+import { estimateToTShirtSize } from '@/lib/constants'
 
 interface TaskHistoryProps {
   tasks: Task[]
@@ -18,6 +20,8 @@ export default function TaskHistory({ tasks, sessionId }: TaskHistoryProps) {
   const [isExporting, setIsExporting] = useState(false)
   const [isCollapsed, setIsCollapsed] = useState(false)
   const [copiedTaskId, setCopiedTaskId] = useState<string | null>(null)
+  const [selectedTask, setSelectedTask] = useState<Task | null>(null)
+  const [taskDialogOpen, setTaskDialogOpen] = useState(false)
 
   const completedTasks = tasks.filter(task => task.status === 'completed' || task.status === 'voting_completed')
 
@@ -180,7 +184,16 @@ export default function TaskHistory({ tasks, sessionId }: TaskHistoryProps) {
                 return (
                   <TableRow key={task.id}>
                     <TableCell>
-                      <div className="font-medium">{task.title}</div>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setSelectedTask(task)
+                          setTaskDialogOpen(true)
+                        }}
+                        className="font-medium text-blue-600 hover:underline focus:outline-none focus:ring-2 focus:ring-blue-300 rounded"
+                      >
+                        {task.title}
+                      </button>
                     </TableCell>
                     <TableCell>
                       <Badge variant="outline">{baseEstimate} pts</Badge>
@@ -232,6 +245,94 @@ export default function TaskHistory({ tasks, sessionId }: TaskHistoryProps) {
         </div>
       </CardContent>
       )}
+
+      <Dialog
+        open={taskDialogOpen}
+        onOpenChange={(open) => {
+          setTaskDialogOpen(open)
+          if (!open) {
+            setSelectedTask(null)
+          }
+        }}
+      >
+        {selectedTask && (
+          <DialogContent className="sm:max-w-xl">
+            <DialogHeader className="space-y-2">
+              <DialogTitle>{selectedTask.title}</DialogTitle>
+              <DialogDescription className="whitespace-pre-line text-gray-600">
+                {selectedTask.description || 'No description provided.'}
+              </DialogDescription>
+            </DialogHeader>
+
+            {(() => {
+              const baseEstimate = selectedTask.final_estimate || 0
+              const bufferPercent = selectedTask.meeting_buffer ? Math.round(selectedTask.meeting_buffer * 100) : 0
+              const bufferAmount = selectedTask.meeting_buffer ? Math.round(baseEstimate * selectedTask.meeting_buffer) : 0
+              const iterationMultiplier = selectedTask.iteration_multiplier || 1
+              const totalPoints = Math.round((baseEstimate + bufferAmount) * iterationMultiplier)
+              const completedDate = new Date(selectedTask.created_at)
+
+              return (
+                <div className="space-y-5">
+                  <div className="grid grid-cols-2 gap-3 text-sm">
+                    <div className="rounded-md border bg-gray-50 p-3">
+                      <p className="text-xs text-gray-500">Base Estimate</p>
+                      <p className="text-lg font-semibold text-gray-900">{baseEstimate > 0 ? `${baseEstimate} pts` : '—'}</p>
+                      {baseEstimate > 0 && (
+                        <p className="text-xs text-gray-500">{estimateToTShirtSize(baseEstimate)}</p>
+                      )}
+                    </div>
+                    <div className="rounded-md border bg-gray-50 p-3">
+                      <p className="text-xs text-gray-500">Meeting Buffer</p>
+                      <p className="text-lg font-semibold text-gray-900">
+                        {bufferPercent > 0 ? `+${bufferPercent}%` : 'None'}
+                      </p>
+                      {bufferPercent > 0 && (
+                        <p className="text-xs text-gray-500">≈ {bufferAmount} pts extra</p>
+                      )}
+                    </div>
+                    <div className="rounded-md border bg-gray-50 p-3">
+                      <p className="text-xs text-gray-500">Iteration Multiplier</p>
+                      <p className="text-lg font-semibold text-gray-900">{iterationMultiplier}x</p>
+                      {iterationMultiplier > 1 && (
+                        <p className="text-xs text-gray-500">Accounts for additional review cycles</p>
+                      )}
+                    </div>
+                    <div className="rounded-md border bg-blue-50 p-3">
+                      <p className="text-xs text-blue-600">Total Effort</p>
+                      <p className="text-xl font-semibold text-blue-700">{totalPoints} pts</p>
+                      {totalPoints > 0 && (
+                        <p className="text-xs text-blue-600/80">{estimateToTShirtSize(totalPoints)}</p>
+                      )}
+                    </div>
+                  </div>
+
+                  <div className="rounded-md border border-dashed border-gray-200 px-4 py-3 text-sm text-gray-600">
+                    <p className="font-medium text-gray-900">Completion Details</p>
+                    <div className="mt-2 space-y-1">
+                      <p>Logged on <span className="font-medium">{completedDate.toLocaleDateString()}</span></p>
+                      <p>Created at <span className="font-medium">{completedDate.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span></p>
+                    </div>
+                  </div>
+                </div>
+              )
+            })()}
+
+            <DialogFooter className="mt-6">
+              <Button
+                variant="outline"
+                onClick={() => selectedTask && copyTaskForJira(selectedTask)}
+                className="flex items-center gap-2"
+              >
+                <Copy className="w-4 h-4" /> Copy summary
+              </Button>
+              <DialogClose asChild>
+                <Button>Close</Button>
+              </DialogClose>
+            </DialogFooter>
+          </DialogContent>
+        )}
+      </Dialog>
     </Card>
   )
 }
