@@ -390,33 +390,41 @@ export default function SessionPage({ sessionCode }: SessionPageProps) {
 
           {/* Right Column - Participants & Task History */}
           <div className="space-y-4 order-1 lg:order-2">
-            {/* Participants */}
-            <Card>
-              <CardHeader className="pb-0 pt-3">
-                <CardTitle className="flex items-center gap-2 text-sm">
-                  <Users className="w-3 h-3" />
-                  Participants ({participants.length})
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="pt-0 pb-3">
-                <div className="flex flex-wrap gap-1">
-                  {participants.map((participant) => {
-                    const hasVoted = currentTask ? votes.some(vote => vote.participant_id === participant.id) : false
-                    return (
-                      <Badge 
-                        key={participant.id} 
-                        variant={hasVoted ? "default" : "outline"}
-                        className="text-xs px-2 py-0.5"
-                      >
-                        {participant.nickname}
-                        {participant.is_moderator && " (M)"}
-                        {hasVoted && " ✓"}
-                      </Badge>
-                    )
-                  })}
-                </div>
-              </CardContent>
-            </Card>
+            {/* Sticky container for participants and current estimate */}
+            <div className="lg:sticky lg:top-6 space-y-4">
+              {/* Participants */}
+              <Card>
+                <CardHeader className="pb-0 pt-3">
+                  <CardTitle className="flex items-center gap-2 text-sm">
+                    <Users className="w-3 h-3" />
+                    Participants ({participants.length})
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="pt-0 pb-3">
+                  <div className="flex flex-wrap gap-1">
+                    {participants.map((participant) => {
+                      const hasVoted = currentTask ? votes.some(vote => vote.participant_id === participant.id) : false
+                      return (
+                        <Badge 
+                          key={participant.id} 
+                          variant={hasVoted ? "default" : "outline"}
+                          className="text-xs px-2 py-0.5"
+                        >
+                          {participant.nickname}
+                          {participant.is_moderator && " (M)"}
+                          {hasVoted && " ✓"}
+                        </Badge>
+                      )
+                    })}
+                  </div>
+                </CardContent>
+              </Card>
+
+              {/* Current Estimate Display - Only show when there's an active vote and user hasn't voted */}
+              {currentTask && currentParticipant && !votes.some(v => v.participant_id === currentParticipant.id) && (
+                <div id="current-estimate-box" />
+              )}
+            </div>
 
             {/* Task History - Only show if there are completed tasks */}
             {tasks.some(task => task.status === 'completed') && (

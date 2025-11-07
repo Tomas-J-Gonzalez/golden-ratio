@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect, useCallback } from 'react'
+import { createPortal } from 'react-dom'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
@@ -61,6 +62,7 @@ export default function VotingArea({
   })
   const [hasVoted, setHasVoted] = useState(false)
   const [isSubmitting, setIsSubmitting] = useState(false)
+  const [portalContainer, setPortalContainer] = useState<HTMLElement | null>(null)
 
   const checkExistingVote = useCallback(async () => {
     try {
@@ -84,6 +86,12 @@ export default function VotingArea({
   useEffect(() => {
     checkExistingVote()
   }, [checkExistingVote])
+
+  useEffect(() => {
+    // Find the portal container in the DOM
+    const container = document.getElementById('current-estimate-box')
+    setPortalContainer(container)
+  }, [])
 
   const updateFactor = (factorType: keyof EstimationFactors, value: number) => {
     setFactors(prev => ({
@@ -309,28 +317,42 @@ export default function VotingArea({
   const currentEstimate = getCurrentEstimate()
   const hoursEstimate = currentEstimate ? estimateToTShirtSize(currentEstimate) : 'Complete all factors'
 
-  return (
-    <Card>
-      <CardHeader>
-        <CardTitle>Estimate Task</CardTitle>
-        <CardDescription>
-          Select factors for: <span className="font-medium">&ldquo;{taskTitle}&rdquo;</span>
-        </CardDescription>
+  // Current Estimate Component to be portaled to sidebar
+  const currentEstimateBox = (
+    <Card className="border-blue-200 bg-blue-50">
+      <CardHeader className="pb-3 pt-4">
+        <CardTitle className="flex items-center gap-2 text-sm">
+          <Calculator className="w-4 h-4 text-blue-600" />
+          <span className="text-blue-900">Current Estimate</span>
+        </CardTitle>
       </CardHeader>
-      <CardContent className="space-y-6">
-        {/* Current Estimate Display */}
-        <div className="p-4 bg-blue-50 rounded-lg">
-          <div className="flex items-center gap-2 mb-2">
-            <Calculator className="w-4 h-4 text-blue-600" />
-            <span className="font-medium text-blue-900">Current Estimate</span>
+      <CardContent className="pb-4">
+        <div className="text-center">
+          <div className="text-3xl font-bold text-blue-600">
+            {currentEstimate ? `${currentEstimate}` : '—'}
           </div>
-          <div className="text-center">
-            <div className="text-2xl font-bold text-blue-600">
-              {currentEstimate ? `${currentEstimate} points` : 'Incomplete'}
-            </div>
-            <div className="text-sm text-blue-700">{hoursEstimate}</div>
+          <div className="text-xs text-blue-700 mt-1">
+            {currentEstimate ? 'points' : 'Complete all factors'}
           </div>
+          <div className="text-sm font-medium text-blue-800 mt-2">{hoursEstimate}</div>
         </div>
+      </CardContent>
+    </Card>
+  )
+
+  return (
+    <>
+      {/* Portal the estimate box to sidebar if container exists */}
+      {portalContainer && createPortal(currentEstimateBox, portalContainer)}
+      
+      <Card>
+        <CardHeader>
+          <CardTitle>Estimate Task</CardTitle>
+          <CardDescription>
+            Select factors for: <span className="font-medium">&ldquo;{taskTitle}&rdquo;</span>
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-6">
 
         {/* Factor Selectors */}
         <div className="space-y-6">
@@ -386,5 +408,6 @@ export default function VotingArea({
         )}
       </CardContent>
     </Card>
+    </>
   )
 }
