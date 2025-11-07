@@ -79,8 +79,8 @@ export default function SessionPage({ sessionCode }: SessionPageProps) {
         console.log('No participant ID found in localStorage for session:', sessionCode)
       }
 
-      // Find current voting task
-      const votingTask = tasksData?.find(t => t.status === 'voting')
+      // Find current voting task (including voting_completed)
+      const votingTask = tasksData?.find(t => t.status === 'voting' || t.status === 'voting_completed')
       setCurrentTask(votingTask || null)
 
       // Load votes for current task
@@ -132,8 +132,8 @@ export default function SessionPage({ sessionCode }: SessionPageProps) {
             if (tasksError) throw tasksError
             setTasks(tasksData || [])
 
-            // Update current task if it's voting
-            const votingTask = tasksData?.find(t => t.status === 'voting')
+            // Update current task if it's voting (including voting_completed)
+            const votingTask = tasksData?.find(t => t.status === 'voting' || t.status === 'voting_completed')
             setCurrentTask(votingTask || null)
 
             // Load votes for current task
@@ -157,15 +157,16 @@ export default function SessionPage({ sessionCode }: SessionPageProps) {
           console.log('Votes changed:', payload)
           // Reload votes for all tasks in this session
           try {
+            // Find any active voting task (including voting_completed)
             const { data: tasksData, error: tasksError } = await supabase
               .from('tasks')
               .select('*')
               .eq('session_id', session.id)
-              .eq('status', 'voting')
-              .single()
+              .in('status', ['voting', 'voting_completed'])
 
-            if (!tasksError && tasksData) {
-              loadVotesForTask(tasksData.id)
+            if (!tasksError && tasksData && tasksData.length > 0) {
+              // Load votes for the first matching task (there should only be one active voting task)
+              loadVotesForTask(tasksData[0].id)
             }
           } catch (error) {
             console.error('Error reloading votes:', error)
@@ -192,6 +193,15 @@ export default function SessionPage({ sessionCode }: SessionPageProps) {
 
             if (participantsError) throw participantsError
             setParticipants(participantsData || [])
+            
+            // Also update currentParticipant if it changed
+            const participantId = localStorage.getItem(`participant_${sessionCode}`)
+            if (participantId) {
+              const participant = participantsData?.find(p => p.id === participantId)
+              if (participant) {
+                setCurrentParticipant(participant)
+              }
+            }
           } catch (error) {
             console.error('Error reloading participants:', error)
           }
@@ -207,7 +217,7 @@ export default function SessionPage({ sessionCode }: SessionPageProps) {
       votesSubscription.unsubscribe()
       participantsSubscription.unsubscribe()
     }
-  }, [session])
+  }, [session, sessionCode])
 
   useEffect(() => {
     loadSessionData()
