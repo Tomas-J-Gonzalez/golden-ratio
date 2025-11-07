@@ -95,9 +95,6 @@ export default function VotingArea({
 
   // Auto-suggest effort level based on other factors
   useEffect(() => {
-    // Only suggest if effort is not already set and other factors are selected
-    if (factors.effort !== null) return
-    
     const { sprints, designerCount, breakpoints, fidelity, iterationMultiplier } = factors
     
     // Need at least 3 factors selected to make a suggestion
@@ -150,7 +147,7 @@ export default function VotingArea({
     else if (effortScore <= 35) suggestedEffort = 8  // High
     else suggestedEffort = 16                        // Very High
     
-    // Set the suggested effort
+    // Always update effort to the suggested value (dynamic)
     setFactors(prev => ({ ...prev, effort: suggestedEffort }))
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [factors.sprints, factors.designerCount, factors.breakpoints, factors.fidelity, factors.iterationMultiplier])

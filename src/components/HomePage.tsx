@@ -161,15 +161,15 @@ export default function HomePage() {
           <div className="grid md:grid-cols-2 gap-8">
           {/* Create Session */}
           <Card className="w-full bg-white rounded-lg shadow-sm border border-slate-200">
-            <CardHeader className="p-4">
-              <div className="flex items-center gap-2 mb-1">
+            <CardHeader className="p-4 text-center">
+              <div className="flex justify-center mb-2">
                 <div className="p-1.5 bg-blue-100 rounded-full">
                   <Plus className="h-4 w-4 text-blue-600" />
                 </div>
-                <CardTitle className="text-lg font-semibold text-slate-900">
-                  Create Session
-                </CardTitle>
               </div>
+              <CardTitle className="text-lg font-semibold text-slate-900">
+                Create Session
+              </CardTitle>
               <p className="text-slate-500 text-xs">
                 Start a new estimation session
               </p>
@@ -199,15 +199,15 @@ export default function HomePage() {
 
           {/* Join Session */}
           <Card className="w-full bg-white rounded-lg shadow-sm border border-slate-200">
-            <CardHeader className="p-4">
-              <div className="flex items-center gap-2 mb-1">
+            <CardHeader className="p-4 text-center">
+              <div className="flex justify-center mb-2">
                 <div className="p-1.5 bg-green-100 rounded-full">
                   <Users className="h-4 w-4 text-green-600" />
                 </div>
-                <CardTitle className="text-lg font-semibold text-slate-900">
-                  Join Session
-                </CardTitle>
               </div>
+              <CardTitle className="text-lg font-semibold text-slate-900">
+                Join Session
+              </CardTitle>
               <p className="text-slate-500 text-xs">
                 Enter session code to join
               </p>

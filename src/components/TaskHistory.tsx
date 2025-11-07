@@ -17,7 +17,7 @@ interface TaskHistoryProps {
 export default function TaskHistory({ tasks, sessionId }: TaskHistoryProps) {
   const [isExporting, setIsExporting] = useState(false)
   const [isCollapsed, setIsCollapsed] = useState(false)
-  const [jiraCopied, setJiraCopied] = useState(false)
+  const [copiedTaskId, setCopiedTaskId] = useState<string | null>(null)
 
   const completedTasks = tasks.filter(task => task.status === 'completed' || task.status === 'voting_completed')
 
@@ -71,56 +71,37 @@ export default function TaskHistory({ tasks, sessionId }: TaskHistoryProps) {
     }, 0)
   }
 
-  const copyForJira = () => {
-    // Generate Jira-formatted text
-    let jiraText = `h2. Design Estimation Summary\n\n`
-    jiraText += `*Total Completed Tasks:* ${completedTasks.length}\n`
-    jiraText += `*Total Effort Points:* ${getTotalPoints()}\n`
-    jiraText += `*Session Date:* ${new Date().toLocaleDateString()}\n\n`
-    jiraText += `----\n\n`
+  const copyTaskForJira = (task: Task) => {
+    const baseEstimate = task.final_estimate || 0
+    const bufferAmount = baseEstimate * (task.meeting_buffer || 0)
+    const totalWithBuffer = baseEstimate + bufferAmount
+    const finalTotal = Math.round(totalWithBuffer * (task.iteration_multiplier || 1))
     
-    jiraText += `h3. Task Breakdown\n\n`
-    jiraText += `||Task||Base Estimate||Buffer||Iterations||Total Points||Date||\n`
+    // Generate Jira-formatted text for single task
+    let jiraText = `h3. ${task.title}\n\n`
     
-    completedTasks.forEach((task) => {
-      const baseEstimate = task.final_estimate || 0
-      const bufferAmount = baseEstimate * (task.meeting_buffer || 0)
-      const totalWithBuffer = baseEstimate + bufferAmount
-      const finalTotal = Math.round(totalWithBuffer * (task.iteration_multiplier || 1))
-      const bufferPercent = task.meeting_buffer ? `+${Math.round(task.meeting_buffer * 100)}%` : 'None'
-      const iterations = `${task.iteration_multiplier || 1}x`
-      const date = new Date(task.created_at).toLocaleDateString()
-      
-      jiraText += `|${task.title}|${baseEstimate} pts|${bufferPercent}|${iterations}|*${finalTotal} pts*|${date}|\n`
-    })
+    if (task.description) {
+      jiraText += `${task.description}\n\n`
+    }
     
-    jiraText += `\n----\n\n`
-    jiraText += `h3. Individual Tasks\n\n`
+    jiraText += `h4. Estimation Details\n\n`
+    jiraText += `* *Base Estimate:* ${baseEstimate} points\n`
     
-    completedTasks.forEach((task) => {
-      const baseEstimate = task.final_estimate || 0
-      const bufferAmount = baseEstimate * (task.meeting_buffer || 0)
-      const totalWithBuffer = baseEstimate + bufferAmount
-      const finalTotal = Math.round(totalWithBuffer * (task.iteration_multiplier || 1))
-      
-      jiraText += `h4. ${task.title}\n`
-      if (task.description) {
-        jiraText += `${task.description}\n\n`
-      }
-      jiraText += `* *Base Estimate:* ${baseEstimate} points\n`
-      if (task.meeting_buffer) {
-        jiraText += `* *Meeting Buffer:* +${Math.round(task.meeting_buffer * 100)}% (+${Math.round(bufferAmount)} pts)\n`
-      }
-      if (task.iteration_multiplier && task.iteration_multiplier > 1) {
-        jiraText += `* *Design Iterations:* ${task.iteration_multiplier}x multiplier\n`
-      }
-      jiraText += `* *Total Effort:* *${finalTotal} points*\n\n`
-    })
+    if (task.meeting_buffer) {
+      jiraText += `* *Meeting Buffer:* +${Math.round(task.meeting_buffer * 100)}% (+${Math.round(bufferAmount)} points)\n`
+    }
+    
+    if (task.iteration_multiplier && task.iteration_multiplier > 1) {
+      jiraText += `* *Design Iterations:* ${task.iteration_multiplier}x multiplier\n`
+    }
+    
+    jiraText += `* *Total Effort:* *${finalTotal} points*\n`
+    jiraText += `* *Completed:* ${new Date(task.created_at).toLocaleDateString()}\n`
     
     navigator.clipboard.writeText(jiraText)
-    setJiraCopied(true)
-    setTimeout(() => setJiraCopied(false), 2000)
-    toast.success('Copied for Jira!')
+    setCopiedTaskId(task.id)
+    setTimeout(() => setCopiedTaskId(null), 2000)
+    toast.success('Task copied for Jira!')
   }
 
   if (completedTasks.length === 0) {
@@ -159,35 +140,18 @@ export default function TaskHistory({ tasks, sessionId }: TaskHistoryProps) {
             </div>
           </div>
           {!isCollapsed && (
-            <div className="flex items-center gap-2" onClick={(e) => e.stopPropagation()}>
-              <Button 
-                onClick={copyForJira}
-                variant="outline"
-                size="sm"
-                className="flex items-center gap-1"
-              >
-                {jiraCopied ? (
-                  <>
-                    <Check className="w-3 h-3" />
-                    Copied!
-                  </>
-                ) : (
-                  <>
-                    <Copy className="w-3 h-3" />
-                    Jira
-                  </>
-                )}
-              </Button>
-              <Button 
-                onClick={exportToCSV}
-                disabled={isExporting} 
-                variant="outline"
-                size="sm"
-              >
-                <Download className="w-3 h-3 mr-1" />
-                {isExporting ? 'Exporting...' : 'CSV'}
-              </Button>
-            </div>
+            <Button 
+              onClick={(e) => {
+                e.stopPropagation()
+                exportToCSV()
+              }}
+              disabled={isExporting} 
+              variant="outline"
+              size="sm"
+            >
+              <Download className="w-3 h-3 mr-1" />
+              {isExporting ? 'Exporting...' : 'Export CSV'}
+            </Button>
           )}
         </div>
       </CardHeader>
@@ -203,6 +167,7 @@ export default function TaskHistory({ tasks, sessionId }: TaskHistoryProps) {
                 <TableHead>Iterations</TableHead>
                 <TableHead>Total Points</TableHead>
                 <TableHead>Date</TableHead>
+                <TableHead className="w-20"></TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -235,14 +200,29 @@ export default function TaskHistory({ tasks, sessionId }: TaskHistoryProps) {
                       </Badge>
                     </TableCell>
                     <TableCell>
-                      <Badge className="bg-green-100 text-green-800">
-                        {finalTotal} pts
+                      <Badge className="bg-blue-600 text-white">
+                        {Math.round(finalTotal)} pts
                       </Badge>
                     </TableCell>
                     <TableCell>
                       <span className="text-sm text-gray-600">
                         {new Date(task.created_at).toLocaleDateString()}
                       </span>
+                    </TableCell>
+                    <TableCell>
+                      <Button
+                        onClick={() => copyTaskForJira(task)}
+                        variant="ghost"
+                        size="sm"
+                        className="h-7 px-2"
+                        title="Copy for Jira"
+                      >
+                        {copiedTaskId === task.id ? (
+                          <Check className="w-3 h-3 text-green-600" />
+                        ) : (
+                          <Copy className="w-3 h-3 text-gray-500" />
+                        )}
+                      </Button>
                     </TableCell>
                   </TableRow>
                 )

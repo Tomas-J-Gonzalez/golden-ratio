@@ -26,6 +26,7 @@ export interface Participant {
   nickname: string
   joined_at: string
   is_moderator: boolean
+  avatar_emoji?: string
 }
 
 export interface Task {

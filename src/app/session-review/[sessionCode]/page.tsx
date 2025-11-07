@@ -1,0 +1,367 @@
+'use client'
+
+import { use, useEffect, useState } from 'react'
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import { Button } from '@/components/ui/button'
+import { Badge } from '@/components/ui/badge'
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
+import { supabase, Session, Task, Participant } from '@/lib/supabase'
+import { Copy, Check, Home, Users, Calendar, Clock } from 'lucide-react'
+import { toast } from 'sonner'
+import TopNavigation from '@/components/TopNavigation'
+
+interface SessionReviewPageProps {
+  params: Promise<{ sessionCode: string }>
+}
+
+export default function SessionReviewPage({ params }: SessionReviewPageProps) {
+  const { sessionCode } = use(params)
+  const [session, setSession] = useState<Session | null>(null)
+  const [tasks, setTasks] = useState<Task[]>([])
+  const [participants, setParticipants] = useState<Participant[]>([])
+  const [isLoading, setIsLoading] = useState(true)
+  const [copied, setCopied] = useState(false)
+
+  useEffect(() => {
+    loadSessionData()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [sessionCode])
+
+  const loadSessionData = async () => {
+    try {
+      // Load session
+      const { data: sessionData, error: sessionError } = await supabase
+        .from('sessions')
+        .select('*')
+        .eq('code', sessionCode)
+        .single()
+
+      if (sessionError || !sessionData) {
+        throw new Error('Session not found')
+      }
+
+      setSession(sessionData)
+
+      // Load all tasks
+      const { data: tasksData, error: tasksError } = await supabase
+        .from('tasks')
+        .select('*')
+        .eq('session_id', sessionData.id)
+        .order('created_at', { ascending: false })
+
+      if (tasksError) throw tasksError
+      setTasks(tasksData || [])
+
+      // Load participants
+      const { data: participantsData, error: participantsError } = await supabase
+        .from('participants')
+        .select('*')
+        .eq('session_id', sessionData.id)
+        .order('joined_at', { ascending: true })
+
+      if (participantsError) throw participantsError
+      setParticipants(participantsData || [])
+
+    } catch (error) {
+      console.error('Error loading session data:', error)
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
+  const getSessionDuration = () => {
+    if (!session) return 'Unknown'
+    
+    const startTime = new Date(session.created_at)
+    const endTime = new Date() // Current time as end
+    const durationMs = endTime.getTime() - startTime.getTime()
+    const hours = Math.floor(durationMs / (1000 * 60 * 60))
+    const minutes = Math.floor((durationMs % (1000 * 60 * 60)) / (1000 * 60))
+    
+    if (hours > 0) {
+      return `${hours}h ${minutes}m`
+    }
+    return `${minutes} minutes`
+  }
+
+  const getTotalPoints = () => {
+    return tasks
+      .filter(task => task.final_estimate)
+      .reduce((total, task) => {
+        const baseEstimate = task.final_estimate || 0
+        const bufferAmount = baseEstimate * (task.meeting_buffer || 0)
+        const totalWithBuffer = baseEstimate + bufferAmount
+        const finalTotal = totalWithBuffer * (task.iteration_multiplier || 1)
+        return total + finalTotal
+      }, 0)
+  }
+
+  const generateSummaryMarkdown = () => {
+    let markdown = `# Session Summary\n\n`
+    markdown += `**Session Code:** ${sessionCode}\n`
+    markdown += `**Date:** ${new Date(session?.created_at || '').toLocaleDateString()}\n`
+    markdown += `**Duration:** ${getSessionDuration()}\n`
+    markdown += `**Participants:** ${participants.length}\n`
+    markdown += `**Tasks Completed:** ${tasks.filter(t => t.status === 'completed').length}\n`
+    markdown += `**Total Effort Points:** ${Math.round(getTotalPoints())}\n\n`
+    
+    markdown += `---\n\n`
+    markdown += `## Participants\n\n`
+    participants.forEach(p => {
+      markdown += `- ${p.nickname}${p.is_moderator ? ' (Moderator)' : ''}\n`
+    })
+    
+    markdown += `\n## Tasks Estimated\n\n`
+    markdown += `| Task | Status | Estimate | Date |\n`
+    markdown += `|------|--------|----------|------|\n`
+    
+    tasks.forEach(task => {
+      const estimate = task.final_estimate || 'N/A'
+      const status = task.status.replace('_', ' ')
+      const date = new Date(task.created_at).toLocaleDateString()
+      markdown += `| ${task.title} | ${status} | ${estimate} pts | ${date} |\n`
+    })
+    
+    return markdown
+  }
+
+  const copySummary = () => {
+    const markdown = generateSummaryMarkdown()
+    navigator.clipboard.writeText(markdown)
+    setCopied(true)
+    setTimeout(() => setCopied(false), 2000)
+    toast.success('Summary copied!')
+  }
+
+  if (isLoading) {
+    return (
+      <>
+        <TopNavigation />
+        <div className="min-h-screen flex items-center justify-center pt-16">
+          <div className="text-center">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
+            <p>Loading session summary...</p>
+          </div>
+        </div>
+      </>
+    )
+  }
+
+  const completedTasks = tasks.filter(t => t.status === 'completed')
+
+  return (
+    <>
+      <TopNavigation />
+      <div className="min-h-screen bg-gray-50 pt-16">
+        <div className="container mx-auto px-4 py-8 max-w-5xl">
+          {/* Header */}
+          <div className="mb-8">
+            <div className="flex items-start justify-between mb-4">
+              <div>
+                <h1 className="text-3xl font-bold text-gray-900 mb-2">Session Summary</h1>
+                <p className="text-gray-600">
+                  Session Code: <span className="font-mono font-bold text-gray-900">{sessionCode}</span>
+                </p>
+              </div>
+              <div className="flex gap-2">
+                <Button onClick={copySummary} variant="outline" size="sm">
+                  {copied ? <Check className="w-4 h-4 mr-2" /> : <Copy className="w-4 h-4 mr-2" />}
+                  {copied ? 'Copied!' : 'Copy Summary'}
+                </Button>
+                <Button onClick={() => window.location.href = '/'} variant="outline" size="sm">
+                  <Home className="w-4 h-4 mr-2" />
+                  Home
+                </Button>
+              </div>
+            </div>
+          </div>
+
+          {/* Session Stats */}
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
+            <Card>
+              <CardHeader className="pb-3">
+                <CardTitle className="text-sm font-medium text-gray-600 flex items-center gap-2">
+                  <Calendar className="w-4 h-4" />
+                  Date
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold text-gray-900">
+                  {new Date(session?.created_at || '').toLocaleDateString()}
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader className="pb-3">
+                <CardTitle className="text-sm font-medium text-gray-600 flex items-center gap-2">
+                  <Clock className="w-4 h-4" />
+                  Duration
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold text-gray-900">
+                  {getSessionDuration()}
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader className="pb-3">
+                <CardTitle className="text-sm font-medium text-gray-600 flex items-center gap-2">
+                  <Users className="w-4 h-4" />
+                  Participants
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold text-gray-900">
+                  {participants.length}
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader className="pb-3">
+                <CardTitle className="text-sm font-medium text-gray-600">
+                  Total Points
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold text-blue-600">
+                  {Math.round(getTotalPoints())}
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+
+          {/* Participants List */}
+          <Card className="mb-8">
+            <CardHeader>
+              <CardTitle>Participants</CardTitle>
+              <CardDescription>
+                {participants.length} participant{participants.length !== 1 ? 's' : ''} joined this session
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="flex flex-wrap gap-2">
+                {participants.map(participant => (
+                  <Badge 
+                    key={participant.id}
+                    variant={participant.is_moderator ? "default" : "outline"}
+                    className="px-3 py-1"
+                  >
+                    {participant.nickname}
+                    {participant.is_moderator && " (Moderator)"}
+                  </Badge>
+                ))}
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Completed Tasks */}
+          <Card>
+            <CardHeader>
+              <CardTitle>Tasks Completed</CardTitle>
+              <CardDescription>
+                {completedTasks.length} task{completedTasks.length !== 1 ? 's' : ''} estimated during this session
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              {completedTasks.length > 0 ? (
+                <div className="rounded-md border">
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>Task</TableHead>
+                        <TableHead>Base Estimate</TableHead>
+                        <TableHead>Buffer</TableHead>
+                        <TableHead>Iterations</TableHead>
+                        <TableHead>Total Points</TableHead>
+                        <TableHead>Date</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {completedTasks.map((task) => {
+                        const baseEstimate = task.final_estimate || 0
+                        const bufferAmount = baseEstimate * (task.meeting_buffer || 0)
+                        const totalWithBuffer = baseEstimate + bufferAmount
+                        const finalTotal = Math.round(totalWithBuffer * (task.iteration_multiplier || 1))
+
+                        return (
+                          <TableRow key={task.id}>
+                            <TableCell>
+                              <div className="font-medium">{task.title}</div>
+                            </TableCell>
+                            <TableCell>
+                              <Badge variant="outline">{baseEstimate} pts</Badge>
+                            </TableCell>
+                            <TableCell>
+                              {task.meeting_buffer ? (
+                                <Badge variant="secondary">
+                                  +{Math.round(task.meeting_buffer * 100)}%
+                                </Badge>
+                              ) : (
+                                <span className="text-gray-400">None</span>
+                              )}
+                            </TableCell>
+                            <TableCell>
+                              <Badge variant="secondary">
+                                {task.iteration_multiplier || 1}x
+                              </Badge>
+                            </TableCell>
+                            <TableCell>
+                              <Badge className="bg-blue-600 text-white">
+                                {finalTotal} pts
+                              </Badge>
+                            </TableCell>
+                            <TableCell>
+                              <span className="text-sm text-gray-600">
+                                {new Date(task.created_at).toLocaleDateString()}
+                              </span>
+                            </TableCell>
+                          </TableRow>
+                        )
+                      })}
+                    </TableBody>
+                  </Table>
+                </div>
+              ) : (
+                <div className="text-center py-8 text-gray-500">
+                  <p>No tasks were completed in this session</p>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+
+          {/* All Tasks (including pending/voting) */}
+          {tasks.filter(t => t.status !== 'completed').length > 0 && (
+            <Card className="mt-8">
+              <CardHeader>
+                <CardTitle>Other Tasks</CardTitle>
+                <CardDescription>
+                  Tasks that were created but not completed
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-2">
+                  {tasks.filter(t => t.status !== 'completed').map(task => (
+                    <div key={task.id} className="flex items-center justify-between p-3 border rounded-lg">
+                      <div>
+                        <div className="font-medium">{task.title}</div>
+                        {task.description && (
+                          <div className="text-sm text-gray-600 mt-1">{task.description}</div>
+                        )}
+                      </div>
+                      <Badge variant="secondary">{task.status}</Badge>
+                    </div>
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
+          )}
+        </div>
+      </div>
+    </>
+  )
+}
+

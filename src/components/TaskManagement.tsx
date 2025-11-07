@@ -191,6 +191,7 @@ export default function TaskManagement({ sessionId, tasks, onTaskUpdate, isModer
   const [stopVotingDialogOpen, setStopVotingDialogOpen] = useState(false)
   const [taskToStopVoting, setTaskToStopVoting] = useState<string | null>(null)
   const [isAddFormExpanded, setIsAddFormExpanded] = useState(false)
+  const [showDescription, setShowDescription] = useState(false)
   // State to hold the draggable tasks
   const [activeTasks, setActiveTasks] = useState<Task[]>([])
   // Check if there's a voting_completed task
@@ -294,13 +295,29 @@ export default function TaskManagement({ sessionId, tasks, onTaskUpdate, isModer
     }
 
     try {
-      // Update task status to voting in Supabase
+      // Update task status to voting and reset votes_revealed in Supabase
       const { error } = await supabase
         .from('tasks')
-        .update({ status: 'voting' })
+        .update({ 
+          status: 'voting',
+          votes_revealed: false 
+        })
         .eq('id', taskId)
 
-      if (error) throw error
+      if (error) {
+        // If votes_revealed column doesn't exist, just update status
+        if (error.message?.includes('column') || error.code === '42703') {
+          const { error: fallbackError } = await supabase
+            .from('tasks')
+            .update({ status: 'voting' })
+            .eq('id', taskId)
+          
+          if (fallbackError) throw fallbackError
+        } else {
+          throw error
+        }
+      }
+      
       toast.success('Voting started')
       onTaskUpdate()
     } catch (error) {
@@ -400,20 +417,43 @@ export default function TaskManagement({ sessionId, tasks, onTaskUpdate, isModer
                     spellCheck="false"
                   />
                 </div>
-                <div className="space-y-2">
-                  <Label htmlFor="task-description">Description (Optional)</Label>
-                  <Textarea
-                    id="task-description"
-                    placeholder="Add more details about the task..."
-                    value={newTaskDescription}
-                    onChange={(e) => setNewTaskDescription(e.target.value)}
-                    rows={3}
-                    autoComplete="off"
-                    autoCorrect="off"
-                    autoCapitalize="off"
-                    spellCheck="false"
-                  />
-                </div>
+
+                {/* Description Toggle */}
+                {!showDescription ? (
+                  <button
+                    onClick={() => setShowDescription(true)}
+                    className="text-xs text-gray-400 hover:text-gray-600 focus:outline-none"
+                  >
+                    + add description
+                  </button>
+                ) : (
+                  <div className="space-y-2">
+                    <div className="flex items-center justify-between">
+                      <Label htmlFor="task-description">Description (Optional)</Label>
+                      <button
+                        onClick={() => {
+                          setShowDescription(false)
+                          setNewTaskDescription('')
+                        }}
+                        className="text-xs text-gray-400 hover:text-gray-600 focus:outline-none"
+                      >
+                        - remove
+                      </button>
+                    </div>
+                    <Textarea
+                      id="task-description"
+                      placeholder="Add more details about the task..."
+                      value={newTaskDescription}
+                      onChange={(e) => setNewTaskDescription(e.target.value)}
+                      rows={3}
+                      autoComplete="off"
+                      autoCorrect="off"
+                      autoCapitalize="off"
+                      spellCheck="false"
+                    />
+                  </div>
+                )}
+
                 <Button 
                   onClick={addTask} 
                   disabled={!newTaskTitle.trim() || isAdding || hasActiveVoting}

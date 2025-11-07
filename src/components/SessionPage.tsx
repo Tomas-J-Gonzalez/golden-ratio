@@ -10,6 +10,7 @@ import VotingArea from './VotingArea'
 import VotingResults from './VotingResults'
 import VotesHidden from './VotesHidden'
 import TaskHistory from './TaskHistory'
+import { EmojiPicker } from './EmojiPicker'
 import { ConfirmDialog } from './ui/confirm-dialog'
 import { Users, Copy, Check, LogOut } from 'lucide-react'
 import { toast } from 'sonner'
@@ -28,6 +29,8 @@ export default function SessionPage({ sessionCode }: SessionPageProps) {
   const [isLoading, setIsLoading] = useState(true)
   const [codeCopied, setCodeCopied] = useState(false)
   const [leaveDialogOpen, setLeaveDialogOpen] = useState(false)
+  const [emojiPickerOpen, setEmojiPickerOpen] = useState(false)
+  const [selectedParticipantForEmoji, setSelectedParticipantForEmoji] = useState<Participant | null>(null)
 
   const loadSessionData = useCallback(async () => {
     try {
@@ -229,37 +232,45 @@ export default function SessionPage({ sessionCode }: SessionPageProps) {
       const isModerator = currentParticipant.is_moderator
       
       if (isModerator) {
-        // If moderator leaves, deactivate the session
+        // If moderator ends session, deactivate it but don't delete participant yet
         const { error: sessionError } = await supabase
           .from('sessions')
           .update({ is_active: false })
           .eq('id', session?.id)
 
         if (sessionError) throw sessionError
+
+        setLeaveDialogOpen(false)
+        toast.success('Session ended')
+        
+        // Redirect moderator to review page
+        setTimeout(() => {
+          window.location.href = `/session-review/${sessionCode}`
+        }, 500)
+      } else {
+        // Regular participant leaves
+        const { error: participantError } = await supabase
+          .from('participants')
+          .delete()
+          .eq('id', currentParticipant.id)
+
+        if (participantError) throw participantError
+
+        // Clear participant data from localStorage
+        localStorage.removeItem(`participant_${sessionCode}`)
+
+        setLeaveDialogOpen(false)
+        toast.success('Left session successfully')
+        
+        // Redirect to home page
+        setTimeout(() => {
+          window.location.href = '/'
+        }, 500)
       }
-
-      // Remove participant from session
-      const { error: participantError } = await supabase
-        .from('participants')
-        .delete()
-        .eq('id', currentParticipant.id)
-
-      if (participantError) throw participantError
-
-      // Clear participant data from localStorage
-      localStorage.removeItem(`participant_${sessionCode}`)
-
-      setLeaveDialogOpen(false)
-      toast.success('Left session successfully')
-      
-      // Redirect to home page
-      setTimeout(() => {
-        window.location.href = '/'
-      }, 500)
     } catch (error) {
       console.error('Error leaving session:', error)
       setLeaveDialogOpen(false)
-      toast.error('Failed to leave session. Please try again.')
+      toast.error(currentParticipant.is_moderator ? 'Failed to end session. Please try again.' : 'Failed to leave session. Please try again.')
     }
   }
 
@@ -282,13 +293,57 @@ export default function SessionPage({ sessionCode }: SessionPageProps) {
         .update({ votes_revealed: true })
         .eq('id', currentTask.id)
 
-      if (error) throw error
+      if (error) {
+        console.error('Error details:', error)
+        // If column doesn't exist yet, just show results anyway
+        if (error.message?.includes('column') || error.code === '42703') {
+          toast.info('Showing results (database migration needed)')
+          // Force update by reloading
+          loadSessionData()
+          return
+        }
+        throw error
+      }
       
       toast.success('Votes revealed!')
       loadSessionData()
     } catch (error) {
       console.error('Error revealing votes:', error)
       toast.error('Failed to reveal votes. Please try again.')
+    }
+  }
+
+  const updateParticipantEmoji = async (emoji: string) => {
+    if (!selectedParticipantForEmoji) return
+
+    try {
+      const { error } = await supabase
+        .from('participants')
+        .update({ avatar_emoji: emoji })
+        .eq('id', selectedParticipantForEmoji.id)
+
+      if (error) {
+        // If column doesn't exist, show helpful message
+        if (error.message?.includes('column') || error.code === '42703') {
+          toast.error('Avatar feature requires database migration')
+          return
+        }
+        throw error
+      }
+      
+      toast.success('Avatar updated!')
+      loadSessionData()
+    } catch (error) {
+      console.error('Error updating avatar:', error)
+      toast.error('Failed to update avatar. Please try again.')
+    }
+  }
+
+  const handleParticipantClick = (participant: Participant) => {
+    // Only allow users to change their own avatar
+    if (currentParticipant?.id === participant.id) {
+      setSelectedParticipantForEmoji(participant)
+      setEmojiPickerOpen(true)
     }
   }
 
@@ -375,7 +430,7 @@ export default function SessionPage({ sessionCode }: SessionPageProps) {
               {currentParticipant && (
                 <Button onClick={() => setLeaveDialogOpen(true)} variant="outline" size="sm" className="border-black text-black hover:bg-black hover:text-white">
                   <LogOut className="w-4 h-4 mr-2" />
-                  Leave Session
+                  {currentParticipant.is_moderator ? 'End Session' : 'Leave Session'}
                 </Button>
               )}
             </div>
@@ -399,7 +454,8 @@ export default function SessionPage({ sessionCode }: SessionPageProps) {
             {currentTask && (
               <div>
                 {allParticipantsVoted ? (
-                  currentTask.votes_revealed ? (
+                  // Show results if revealed OR if votes_revealed field doesn't exist (undefined = backward compatible)
+                  currentTask.votes_revealed !== false ? (
                     <VotingResults
                       taskTitle={currentTask.title}
                       taskId={currentTask.id}
@@ -454,12 +510,18 @@ export default function SessionPage({ sessionCode }: SessionPageProps) {
                   <div className="flex flex-wrap gap-1">
                     {participants.map((participant) => {
                       const hasVoted = currentTask ? votes.some(vote => vote.participant_id === participant.id) : false
+                      const isCurrentUser = currentParticipant?.id === participant.id
                       return (
                         <Badge 
                           key={participant.id} 
                           variant={hasVoted ? "default" : "outline"}
-                          className="text-xs px-2 py-0.5"
+                          className={`text-xs px-2 py-0.5 ${
+                            isCurrentUser ? 'cursor-pointer hover:ring-2 hover:ring-blue-300' : ''
+                          }`}
+                          onClick={() => isCurrentUser && handleParticipantClick(participant)}
+                          title={isCurrentUser ? 'Click to change your avatar' : ''}
                         >
+                          {participant.avatar_emoji && `${participant.avatar_emoji} `}
                           {participant.nickname}
                           {participant.is_moderator && " (M)"}
                           {hasVoted && " ✓"}
@@ -484,21 +546,32 @@ export default function SessionPage({ sessionCode }: SessionPageProps) {
         </div>
       </div>
 
-      {/* Leave Session Confirmation Dialog */}
+      {/* Leave/End Session Confirmation Dialog */}
       <ConfirmDialog
         open={leaveDialogOpen}
         onOpenChange={setLeaveDialogOpen}
-        title={currentParticipant?.is_moderator ? "End Session for Everyone?" : "Leave Session?"}
+        title={currentParticipant?.is_moderator ? "End Session?" : "Leave Session?"}
         description={
           currentParticipant?.is_moderator
-            ? "As the moderator, leaving will end the session for all participants. This action cannot be undone."
+            ? "This will end the session for all participants and take you to a summary page. The session data will be preserved."
             : "Are you sure you want to leave this session? You can rejoin using the session code."
         }
-        confirmText="Leave Session"
-        cancelText="Stay"
+        confirmText={currentParticipant?.is_moderator ? "End Session" : "Leave Session"}
+        cancelText={currentParticipant?.is_moderator ? "Continue Session" : "Stay"}
         onConfirm={confirmLeaveSession}
         variant="destructive"
       />
+
+      {/* Emoji Picker Dialog */}
+      {selectedParticipantForEmoji && (
+        <EmojiPicker
+          open={emojiPickerOpen}
+          onOpenChange={setEmojiPickerOpen}
+          currentEmoji={selectedParticipantForEmoji.avatar_emoji}
+          onSelectEmoji={updateParticipantEmoji}
+          participantName={selectedParticipantForEmoji.nickname}
+        />
+      )}
     </div>
   )
 }
