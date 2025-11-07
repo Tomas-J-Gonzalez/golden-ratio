@@ -328,7 +328,7 @@ export default function VotingArea({
           <span className="text-blue-900">Current Estimate</span>
         </CardTitle>
       </CardHeader>
-      <CardContent className="pb-4">
+      <CardContent className="pb-4 space-y-4">
         <div className="text-center">
           <div className="text-3xl font-bold text-blue-600">
             {currentEstimate ? `${currentEstimate}` : '—'}
@@ -338,6 +338,43 @@ export default function VotingArea({
           </div>
           <div className="text-sm font-medium text-blue-800 mt-2">{hoursEstimate}</div>
         </div>
+
+        {/* Final Estimate Input */}
+        <div className="space-y-2">
+          <Label htmlFor="final-estimate-sidebar" className="text-xs text-blue-900">
+            Final Estimate (t-shirt size)
+          </Label>
+          <Input
+            id="final-estimate-sidebar"
+            type="number"
+            min="1"
+            value={factors.finalEstimate || ''}
+            onChange={(e) => setFactors(prev => ({ ...prev, finalEstimate: Number(e.target.value) || null }))}
+            placeholder="Enter final estimate"
+            className="bg-white border-blue-300 text-center"
+            autoComplete="off"
+            autoCorrect="off"
+            autoCapitalize="off"
+            spellCheck="false"
+          />
+          {factors.finalEstimate && factors.finalEstimate > 0 && (
+            <div className="text-center text-xs text-blue-800">
+              <strong>{estimateToTShirtSize(factors.finalEstimate)}</strong> ({factors.finalEstimate} points)
+            </div>
+          )}
+        </div>
+
+        {/* Submit Button */}
+        {isEstimationComplete() && (
+          <Button 
+            onClick={submitVote} 
+            disabled={isSubmitting}
+            className="w-full bg-blue-600 hover:bg-blue-700"
+            size="sm"
+          >
+            {isSubmitting ? 'Submitting...' : 'Submit Estimate'}
+          </Button>
+        )}
       </CardContent>
     </Card>
   )
@@ -368,46 +405,12 @@ export default function VotingArea({
           {renderFactorSelector('Design Iterations', 'iterationMultiplier', ITERATION_MULTIPLIER_OPTIONS)}
         </div>
 
-        {/* Final Estimate Input */}
-        <div className="space-y-2">
-          <Label htmlFor="final-estimate">Final Estimate (t-shirt size)</Label>
-          <Input
-            id="final-estimate"
-            type="number"
-            min="1"
-            value={factors.finalEstimate || ''}
-            onChange={(e) => setFactors(prev => ({ ...prev, finalEstimate: Number(e.target.value) || null }))}
-            placeholder="Enter final estimate"
-            autoComplete="off"
-            autoCorrect="off"
-            autoCapitalize="off"
-            spellCheck="false"
-          />
-          {factors.finalEstimate && factors.finalEstimate > 0 && (
-            <div className="p-3 bg-blue-50 rounded-lg">
-              <div className="text-sm font-medium mb-2">Estimate Summary:</div>
-              <div className="grid grid-cols-2 gap-2 text-xs">
-                <div><strong>Size:</strong> {estimateToTShirtSize(factors.finalEstimate)}</div>
-                <div><strong>Value:</strong> {factors.finalEstimate}</div>
-                <div className="col-span-2 text-gray-600">
-                  Final estimate based on all factors
-                </div>
-              </div>
-            </div>
-          )}
+        {/* Instruction to use sidebar */}
+        <div className="p-4 bg-blue-50 border border-blue-200 rounded-lg text-center">
+          <p className="text-sm text-blue-900">
+            Enter your final estimate and submit in the <strong>Current Estimate</strong> box on the right →
+          </p>
         </div>
-        
-        {isEstimationComplete() && (
-          <div className="pt-4 border-t">
-            <Button 
-              onClick={submitVote} 
-              disabled={isSubmitting}
-              className="w-full"
-            >
-              {isSubmitting ? 'Submitting...' : 'Submit Estimate'}
-            </Button>
-          </div>
-        )}
       </CardContent>
     </Card>
     </>

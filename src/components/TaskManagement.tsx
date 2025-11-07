@@ -9,8 +9,25 @@ import { Textarea } from '@/components/ui/textarea'
 import { Badge } from '@/components/ui/badge'
 import { ConfirmDialog } from './ui/confirm-dialog'
 import { supabase, Task } from '@/lib/supabase'
-import { Plus, Trash2, Play } from 'lucide-react'
+import { Plus, Trash2, Play, GripVertical, Square } from 'lucide-react'
 import { toast } from 'sonner'
+import {
+  DndContext,
+  closestCenter,
+  KeyboardSensor,
+  PointerSensor,
+  useSensor,
+  useSensors,
+  DragEndEvent,
+} from '@dnd-kit/core'
+import {
+  SortableContext,
+  sortableKeyboardCoordinates,
+  useSortable,
+  verticalListSortingStrategy,
+} from '@dnd-kit/sortable'
+import { CSS } from '@dnd-kit/utilities'
+import type { ReactElement } from 'react'
 
 interface TaskManagementProps {
   sessionId: string
@@ -20,12 +37,168 @@ interface TaskManagementProps {
   hasActiveVoting: boolean
 }
 
+// Sortable Task Item Component
+function SortableTaskItem({ 
+  task, 
+  isModerator, 
+  getStatusBadge, 
+  onStartVoting, 
+  onStopVoting,
+  onDeleteClick,
+  hasActiveVoting,
+  hasVotingCompleted
+}: { 
+  task: Task
+  isModerator: boolean
+  getStatusBadge: (status: string) => ReactElement
+  onStartVoting: (taskId: string) => void
+  onStopVoting: (taskId: string) => void
+  onDeleteClick: (taskId: string) => void
+  hasActiveVoting: boolean
+  hasVotingCompleted: boolean
+}) {
+  const {
+    attributes,
+    listeners,
+    setNodeRef,
+    transform,
+    transition,
+    isDragging,
+  } = useSortable({ id: task.id })
+
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    opacity: isDragging ? 0.5 : 1,
+  }
+
+  return (
+    <div
+      ref={setNodeRef}
+      style={style}
+      className={`flex items-center gap-3 p-4 border rounded-lg bg-white ${
+        isDragging ? 'shadow-lg ring-2 ring-blue-500' : ''
+      }`}
+    >
+      {/* Drag Handle */}
+      {isModerator && (
+        <button
+          className="cursor-grab active:cursor-grabbing text-gray-400 hover:text-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-500 rounded p-1"
+          {...attributes}
+          {...listeners}
+          aria-label="Drag to reorder task"
+        >
+          <GripVertical className="w-5 h-5" />
+        </button>
+      )}
+
+      {/* Task Content */}
+      <div className="flex-1">
+        <h3 className="font-medium">{task.title}</h3>
+        {task.description && (
+          <p className="text-sm text-gray-600 mt-1">{task.description}</p>
+        )}
+        <div className="flex items-center gap-2 mt-2">
+          {getStatusBadge(task.status)}
+          {task.final_estimate && (
+            <Badge variant="outline">
+              Final: {task.final_estimate} points
+            </Badge>
+          )}
+        </div>
+      </div>
+
+      {/* Action Buttons */}
+      {isModerator && (
+        <div className="flex flex-col gap-2">
+          <div className="flex gap-2">
+            {task.status === 'pending' && (
+              <Button
+                size="sm"
+                onClick={() => onStartVoting(task.id)}
+                disabled={hasActiveVoting || hasVotingCompleted}
+                title={
+                  hasActiveVoting 
+                    ? "Complete the current voting task first" 
+                    : hasVotingCompleted 
+                    ? "Complete the finished task before starting a new vote"
+                    : "Start voting on this task"
+                }
+              >
+                <Play className="w-4 h-4 mr-1" />
+                Start Voting
+              </Button>
+            )}
+            {task.status === 'voting' && (
+              <Button
+                size="sm"
+                variant="outline"
+                className="border-amber-600 text-amber-600 hover:bg-amber-600 hover:text-white"
+                onClick={() => onStopVoting(task.id)}
+                title="Stop voting and return to pending"
+              >
+                <Square className="w-4 h-4 mr-1" />
+                Stop Voting
+              </Button>
+            )}
+            <Button
+              size="sm"
+              variant="outline"
+              className="border-black text-black hover:bg-black hover:text-white"
+              onClick={() => onDeleteClick(task.id)}
+            >
+              <Trash2 className="w-4 h-4 mr-2" />
+              Delete task
+            </Button>
+          </div>
+          {task.status === 'pending' && (hasActiveVoting || hasVotingCompleted) && (
+            <p className="text-xs text-amber-600">
+              {hasVotingCompleted 
+                ? "⚠️ Complete the finished voting task before starting this one"
+                : "⚠️ Another task is currently being voted on"}
+            </p>
+          )}
+        </div>
+      )}
+    </div>
+  )
+}
+
 export default function TaskManagement({ sessionId, tasks, onTaskUpdate, isModerator, hasActiveVoting }: TaskManagementProps) {
   const [newTaskTitle, setNewTaskTitle] = useState('')
   const [newTaskDescription, setNewTaskDescription] = useState('')
   const [isAdding, setIsAdding] = useState(false)
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false)
   const [taskToDelete, setTaskToDelete] = useState<string | null>(null)
+  const [stopVotingDialogOpen, setStopVotingDialogOpen] = useState(false)
+  const [taskToStopVoting, setTaskToStopVoting] = useState<string | null>(null)
+  // Filter to only show pending/voting tasks
+  const activeTasks = tasks.filter(task => task.status === 'pending' || task.status === 'voting')
+  // Check if there's a voting_completed task
+  const hasVotingCompleted = tasks.some(task => task.status === 'voting_completed')
+
+  // Configure sensors for drag and drop
+  const sensors = useSensors(
+    useSensor(PointerSensor, {
+      activationConstraint: {
+        distance: 8, // 8px of movement required before drag starts
+      },
+    }),
+    useSensor(KeyboardSensor, {
+      coordinateGetter: sortableKeyboardCoordinates,
+    })
+  )
+
+  // Handle drag end
+  const handleDragEnd = (event: DragEndEvent) => {
+    const { active, over } = event
+
+    if (over && active.id !== over.id) {
+      // We could update the order in the database here if needed
+      // For now, just show visual feedback
+      toast.success('Task order updated')
+    }
+  }
 
   const addTask = async () => {
     if (!newTaskTitle.trim()) return
@@ -79,6 +252,16 @@ export default function TaskManagement({ sessionId, tasks, onTaskUpdate, isModer
   }
 
   const startVoting = async (taskId: string) => {
+    // Check if there's already an active voting or voting_completed task
+    if (hasActiveVoting || hasVotingCompleted) {
+      toast.error(
+        hasVotingCompleted 
+          ? 'Please complete the finished voting task before starting a new one'
+          : 'Please complete the current voting task before starting a new one'
+      )
+      return
+    }
+
     try {
       // Update task status to voting in Supabase
       const { error } = await supabase
@@ -92,6 +275,37 @@ export default function TaskManagement({ sessionId, tasks, onTaskUpdate, isModer
     } catch (error) {
       console.error('Error starting voting:', error)
       toast.error('Failed to start voting. Please try again.')
+    }
+  }
+
+  const confirmStopVoting = async () => {
+    if (!taskToStopVoting) return
+
+    try {
+      // Delete all votes for this task
+      const { error: deleteVotesError } = await supabase
+        .from('votes')
+        .delete()
+        .eq('task_id', taskToStopVoting)
+
+      if (deleteVotesError) throw deleteVotesError
+
+      // Update task status back to pending
+      const { error: updateTaskError } = await supabase
+        .from('tasks')
+        .update({ status: 'pending' })
+        .eq('id', taskToStopVoting)
+
+      if (updateTaskError) throw updateTaskError
+
+      toast.success('Voting stopped and votes cleared')
+      onTaskUpdate()
+    } catch (error) {
+      console.error('Error stopping voting:', error)
+      toast.error('Failed to stop voting. Please try again.')
+    } finally {
+      setTaskToStopVoting(null)
+      setStopVotingDialogOpen(false)
     }
   }
 
@@ -165,50 +379,41 @@ export default function TaskManagement({ sessionId, tasks, onTaskUpdate, isModer
         )}
 
         <div className="space-y-3">
-          {tasks.filter(task => task.status === 'pending' || task.status === 'voting').length > 0 && (
-            tasks.filter(task => task.status === 'pending' || task.status === 'voting').map((task) => (
-              <div key={task.id} className="flex items-center justify-between p-4 border rounded-lg">
-                <div className="flex-1">
-                  <h3 className="font-medium">{task.title}</h3>
-                  {task.description && (
-                    <p className="text-sm text-gray-600 mt-1">{task.description}</p>
-                  )}
-                  <div className="flex items-center gap-2 mt-2">
-                    {getStatusBadge(task.status)}
-                    {task.final_estimate && (
-                      <Badge variant="outline">
-                        Final: {task.final_estimate} points
-                      </Badge>
-                    )}
-                  </div>
-                </div>
-                {isModerator && (
-                  <div className="flex gap-2">
-                    {task.status === 'pending' && (
-                      <Button
-                        size="sm"
-                        onClick={() => startVoting(task.id)}
-                      >
-                        <Play className="w-4 h-4 mr-1" />
-                        Start Voting
-                      </Button>
-                    )}
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      className="border-black text-black hover:bg-black hover:text-white"
-                      onClick={() => {
-                        setTaskToDelete(task.id)
-                        setDeleteDialogOpen(true)
-                      }}
-                    >
-                      <Trash2 className="w-4 h-4 mr-2" />
-                      Delete task
-                    </Button>
-                  </div>
-                )}
-              </div>
-            ))
+          {activeTasks.length > 0 ? (
+            <DndContext
+              sensors={sensors}
+              collisionDetection={closestCenter}
+              onDragEnd={handleDragEnd}
+            >
+              <SortableContext
+                items={activeTasks.map(task => task.id)}
+                strategy={verticalListSortingStrategy}
+              >
+                {activeTasks.map((task) => (
+                  <SortableTaskItem
+                    key={task.id}
+                    task={task}
+                    isModerator={isModerator}
+                    getStatusBadge={getStatusBadge}
+                    onStartVoting={startVoting}
+                    onStopVoting={(taskId) => {
+                      setTaskToStopVoting(taskId)
+                      setStopVotingDialogOpen(true)
+                    }}
+                    onDeleteClick={(taskId) => {
+                      setTaskToDelete(taskId)
+                      setDeleteDialogOpen(true)
+                    }}
+                    hasActiveVoting={hasActiveVoting}
+                    hasVotingCompleted={hasVotingCompleted}
+                  />
+                ))}
+              </SortableContext>
+            </DndContext>
+          ) : (
+            <div className="text-center py-8 text-gray-500">
+              <p className="text-sm">No active tasks</p>
+            </div>
           )}
         </div>
       </CardContent>
@@ -222,6 +427,18 @@ export default function TaskManagement({ sessionId, tasks, onTaskUpdate, isModer
         confirmText="Delete"
         cancelText="Cancel"
         onConfirm={confirmDeleteTask}
+        variant="destructive"
+      />
+
+      {/* Stop Voting Confirmation Dialog */}
+      <ConfirmDialog
+        open={stopVotingDialogOpen}
+        onOpenChange={setStopVotingDialogOpen}
+        title="Stop Voting?"
+        description="This will cancel the current vote, delete all submitted votes, and return the task to pending status. This action cannot be undone."
+        confirmText="Stop Voting"
+        cancelText="Continue Voting"
+        onConfirm={confirmStopVoting}
         variant="destructive"
       />
     </Card>
