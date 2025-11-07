@@ -1,7 +1,10 @@
 'use client'
 
+import { useState } from 'react'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
+import { Button } from '@/components/ui/button'
+import { Copy, Check } from 'lucide-react'
 import { Vote, Participant } from '@/lib/supabase'
 import { 
   EFFORT_OPTIONS, 
@@ -39,6 +42,8 @@ interface VotingResultsProps {
 }
 
 export default function VotingResults({ taskTitle, votes, participants }: VotingResultsProps) {
+  const [copied, setCopied] = useState(false)
+
   const getParticipantName = (participantId: string) => {
     const participant = participants.find(p => p.id === participantId)
     return participant ? participant.nickname : 'Unknown'
@@ -76,6 +81,74 @@ export default function VotingResults({ taskTitle, votes, participants }: Voting
     ).join(', ')
   }
 
+  const generateMarkdownSummary = () => {
+    const estimates = votes.map(vote => {
+      if (vote.factors && typeof vote.factors === 'object') {
+        const factors = vote.factors as Record<string, number>
+        const baseEstimate = factors.time || 1
+        const complexityMultiplier = (factors.effort + factors.sprints + (factors.designerCount || 1) + factors.breakpoints + factors.fidelity) / 5
+        return Math.round(baseEstimate * complexityMultiplier)
+      }
+      return 0
+    })
+
+    const averageEstimate = estimates.length > 0 ? Math.round(estimates.reduce((sum, est) => sum + est, 0) / estimates.length) : 0
+    const minEstimate = estimates.length > 0 ? Math.min(...estimates) : 0
+    const maxEstimate = estimates.length > 0 ? Math.max(...estimates) : 0
+
+    let markdown = `# Task Estimation Results\n\n`
+    markdown += `## Task: ${taskTitle}\n\n`
+    markdown += `**Participants:** ${votes.length}\n\n`
+    markdown += `---\n\n`
+    
+    // Summary Statistics
+    markdown += `## Summary\n\n`
+    markdown += `| Metric | Estimate | Points |\n`
+    markdown += `|--------|----------|--------|\n`
+    markdown += `| **Average** | ${estimateToTShirtSize(averageEstimate)} | ${averageEstimate} |\n`
+    markdown += `| **Minimum** | ${estimateToTShirtSize(minEstimate)} | ${minEstimate} |\n`
+    markdown += `| **Maximum** | ${estimateToTShirtSize(maxEstimate)} | ${maxEstimate} |\n\n`
+    
+    // Individual Estimates
+    markdown += `## Individual Estimates\n\n`
+    
+    votes.forEach((vote) => {
+      const factors = vote.factors as VoteFactors
+      const estimate = estimates[votes.indexOf(vote)]
+      const participantName = getParticipantName(vote.participant_id)
+      
+      markdown += `### ${participantName}\n\n`
+      markdown += `**Estimate:** ${estimateToTShirtSize(estimate)} (${estimate} points)\n\n`
+      markdown += `**Factors:**\n`
+      markdown += `- **Effort:** ${getFactorLabel('effort', factors.effort)}\n`
+      if (factors.time) markdown += `- **Time:** ${getFactorLabel('time', factors.time)}\n`
+      markdown += `- **Sprints:** ${getFactorLabel('sprints', factors.sprints)}\n`
+      if (factors.designerCount || factors.designers) {
+        markdown += `- **Designers:** ${getFactorLabel('designerCount', factors.designerCount || factors.designers || 0)}\n`
+      }
+      if (factors.designerLevels && factors.designerLevels.length > 0) {
+        markdown += `- **Designer Levels:** ${getDesignerLevels(factors.designerLevels)}\n`
+      }
+      markdown += `- **Breakpoints:** ${getFactorLabel('breakpoints', factors.breakpoints)}\n`
+      markdown += `- **Fidelity:** ${getFactorLabel('fidelity', factors.fidelity)}\n`
+      if (factors.meetingBuffer) markdown += `- **Meeting Buffer:** ${getFactorLabel('meetingBuffer', factors.meetingBuffer)}\n`
+      if (factors.iterationMultiplier) markdown += `- **Design Iterations:** ${getFactorLabel('iterationMultiplier', factors.iterationMultiplier)}\n`
+      markdown += `\n`
+    })
+    
+    markdown += `---\n\n`
+    markdown += `*Generated on ${new Date().toLocaleDateString()} at ${new Date().toLocaleTimeString()}*\n`
+    
+    return markdown
+  }
+
+  const copyToClipboard = () => {
+    const markdown = generateMarkdownSummary()
+    navigator.clipboard.writeText(markdown)
+    setCopied(true)
+    setTimeout(() => setCopied(false), 2000)
+  }
+
   // Calculate statistics
   const estimates = votes.map(vote => {
     if (vote.factors && typeof vote.factors === 'object') {
@@ -95,13 +168,35 @@ export default function VotingResults({ taskTitle, votes, participants }: Voting
   return (
     <Card>
       <CardHeader>
-        <CardTitle className="flex items-center gap-2">
-          <span className="text-green-600">✓</span>
-          Voting Results: {taskTitle}
-        </CardTitle>
-        <CardDescription>
-          All {votes.length} participants have completed their estimates
-        </CardDescription>
+        <div className="flex items-center justify-between">
+          <div>
+            <CardTitle className="flex items-center gap-2">
+              <span className="text-green-600">✓</span>
+              Voting Results: {taskTitle}
+            </CardTitle>
+            <CardDescription>
+              All {votes.length} participants have completed their estimates
+            </CardDescription>
+          </div>
+          <Button 
+            onClick={copyToClipboard}
+            variant="outline"
+            size="sm"
+            className="flex items-center gap-2"
+          >
+            {copied ? (
+              <>
+                <Check className="w-4 h-4" />
+                Copied!
+              </>
+            ) : (
+              <>
+                <Copy className="w-4 h-4" />
+                Copy Results
+              </>
+            )}
+          </Button>
+        </div>
       </CardHeader>
       <CardContent className="space-y-6">
         {/* Summary Statistics */}
