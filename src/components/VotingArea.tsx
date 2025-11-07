@@ -8,6 +8,7 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { CheckCircle, Calculator } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
+import { toast } from 'sonner'
 import { 
   EFFORT_OPTIONS, 
   TIME_OPTIONS,
@@ -161,6 +162,7 @@ export default function VotingArea({
       if (error) throw error
 
       setHasVoted(true)
+      toast.success('Estimate submitted successfully!')
       onVoteSubmitted()
     } catch (error) {
       console.error('Error submitting vote:', error)
@@ -171,7 +173,7 @@ export default function VotingArea({
         factors,
         error: error instanceof Error ? error.message : error
       })
-      alert(`Failed to submit vote: ${error instanceof Error ? error.message : 'Unknown error'}`)
+      toast.error(`Failed to submit vote: ${error instanceof Error ? error.message : 'Unknown error'}`)
     } finally {
       setIsSubmitting(false)
     }

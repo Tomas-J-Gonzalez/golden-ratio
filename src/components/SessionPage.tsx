@@ -9,7 +9,9 @@ import TaskManagement from './TaskManagement'
 import VotingArea from './VotingArea'
 import VotingResults from './VotingResults'
 import TaskHistory from './TaskHistory'
+import { ConfirmDialog } from './ui/confirm-dialog'
 import { Users, Copy, Check, LogOut } from 'lucide-react'
+import { toast } from 'sonner'
 
 interface SessionPageProps {
   sessionCode: string
@@ -24,6 +26,7 @@ export default function SessionPage({ sessionCode }: SessionPageProps) {
   const [currentTask, setCurrentTask] = useState<Task | null>(null)
   const [isLoading, setIsLoading] = useState(true)
   const [codeCopied, setCodeCopied] = useState(false)
+  const [leaveDialogOpen, setLeaveDialogOpen] = useState(false)
 
   const loadSessionData = useCallback(async () => {
     try {
@@ -218,17 +221,12 @@ export default function SessionPage({ sessionCode }: SessionPageProps) {
     setTimeout(() => setCodeCopied(false), 2000)
   }
 
-  const leaveSession = async () => {
+  const confirmLeaveSession = async () => {
     if (!currentParticipant) return
 
-    const isModerator = currentParticipant.is_moderator
-    const confirmMessage = isModerator 
-      ? 'Are you sure you want to leave this session? As the moderator, this will end the session for all participants.'
-      : 'Are you sure you want to leave this session?'
-
-    if (!confirm(confirmMessage)) return
-
     try {
+      const isModerator = currentParticipant.is_moderator
+      
       if (isModerator) {
         // If moderator leaves, deactivate the session
         const { error: sessionError } = await supabase
@@ -250,11 +248,15 @@ export default function SessionPage({ sessionCode }: SessionPageProps) {
       // Clear participant data from localStorage
       localStorage.removeItem(`participant_${sessionCode}`)
 
+      toast.success('Left session successfully')
+      
       // Redirect to home page
-      window.location.href = '/'
+      setTimeout(() => {
+        window.location.href = '/'
+      }, 500)
     } catch (error) {
       console.error('Error leaving session:', error)
-      alert('Failed to leave session. Please try again.')
+      toast.error('Failed to leave session. Please try again.')
     }
   }
 
@@ -349,7 +351,7 @@ export default function SessionPage({ sessionCode }: SessionPageProps) {
             </div>
             <div className="flex items-center gap-3">
               {currentParticipant && (
-                <Button onClick={leaveSession} variant="outline" size="sm" className="border-black text-black hover:bg-black hover:text-white">
+                <Button onClick={() => setLeaveDialogOpen(true)} variant="outline" size="sm" className="border-black text-black hover:bg-black hover:text-white">
                   <LogOut className="w-4 h-4 mr-2" />
                   Leave Session
                 </Button>
@@ -449,6 +451,22 @@ export default function SessionPage({ sessionCode }: SessionPageProps) {
           </div>
         </div>
       </div>
+
+      {/* Leave Session Confirmation Dialog */}
+      <ConfirmDialog
+        open={leaveDialogOpen}
+        onOpenChange={setLeaveDialogOpen}
+        title={currentParticipant?.is_moderator ? "End Session for Everyone?" : "Leave Session?"}
+        description={
+          currentParticipant?.is_moderator
+            ? "As the moderator, leaving will end the session for all participants. This action cannot be undone."
+            : "Are you sure you want to leave this session? You can rejoin using the session code."
+        }
+        confirmText="Leave Session"
+        cancelText="Stay"
+        onConfirm={confirmLeaveSession}
+        variant="destructive"
+      />
     </div>
   )
 }

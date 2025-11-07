@@ -7,6 +7,7 @@ import { Badge } from '@/components/ui/badge'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 import { Task } from '@/lib/supabase'
 import { Download, FileText } from 'lucide-react'
+import { toast } from 'sonner'
 
 interface TaskHistoryProps {
   tasks: Task[]
@@ -48,9 +49,10 @@ export default function TaskHistory({ tasks, sessionId }: TaskHistoryProps) {
       document.body.appendChild(link)
       link.click()
       document.body.removeChild(link)
+      toast.success('CSV exported successfully!')
     } catch (error) {
       console.error('Error exporting CSV:', error)
-      alert('Failed to export CSV. Please try again.')
+      toast.error('Failed to export CSV. Please try again.')
     } finally {
       setIsExporting(false)
     }

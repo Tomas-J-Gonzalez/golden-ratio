@@ -7,8 +7,10 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
 import { Badge } from '@/components/ui/badge'
+import { ConfirmDialog } from './ui/confirm-dialog'
 import { supabase, Task } from '@/lib/supabase'
 import { Plus, Trash2, Play } from 'lucide-react'
+import { toast } from 'sonner'
 
 interface TaskManagementProps {
   sessionId: string
@@ -22,6 +24,8 @@ export default function TaskManagement({ sessionId, tasks, onTaskUpdate, isModer
   const [newTaskTitle, setNewTaskTitle] = useState('')
   const [newTaskDescription, setNewTaskDescription] = useState('')
   const [isAdding, setIsAdding] = useState(false)
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false)
+  const [taskToDelete, setTaskToDelete] = useState<string | null>(null)
 
   const addTask = async () => {
     if (!newTaskTitle.trim()) return
@@ -42,30 +46,35 @@ export default function TaskManagement({ sessionId, tasks, onTaskUpdate, isModer
 
       setNewTaskTitle('')
       setNewTaskDescription('')
+      toast.success('Task added successfully')
       onTaskUpdate()
     } catch (error) {
       console.error('Error adding task:', error)
-      alert('Failed to add task. Please try again.')
+      toast.error('Failed to add task. Please try again.')
     } finally {
       setIsAdding(false)
     }
   }
 
-  const deleteTask = async (taskId: string) => {
-    if (!confirm('Are you sure you want to delete this task?')) return
+  const confirmDeleteTask = async () => {
+    if (!taskToDelete) return
 
     try {
       // Delete task from Supabase
       const { error } = await supabase
         .from('tasks')
         .delete()
-        .eq('id', taskId)
+        .eq('id', taskToDelete)
 
       if (error) throw error
+      toast.success('Task deleted successfully')
       onTaskUpdate()
     } catch (error) {
       console.error('Error deleting task:', error)
-      alert('Failed to delete task. Please try again.')
+      toast.error('Failed to delete task. Please try again.')
+    } finally {
+      setTaskToDelete(null)
+      setDeleteDialogOpen(false)
     }
   }
 
@@ -78,10 +87,11 @@ export default function TaskManagement({ sessionId, tasks, onTaskUpdate, isModer
         .eq('id', taskId)
 
       if (error) throw error
+      toast.success('Voting started')
       onTaskUpdate()
     } catch (error) {
       console.error('Error starting voting:', error)
-      alert('Failed to start voting. Please try again.')
+      toast.error('Failed to start voting. Please try again.')
     }
   }
 
@@ -187,7 +197,10 @@ export default function TaskManagement({ sessionId, tasks, onTaskUpdate, isModer
                       size="sm"
                       variant="outline"
                       className="border-black text-black hover:bg-black hover:text-white"
-                      onClick={() => deleteTask(task.id)}
+                      onClick={() => {
+                        setTaskToDelete(task.id)
+                        setDeleteDialogOpen(true)
+                      }}
                     >
                       <Trash2 className="w-4 h-4 mr-2" />
                       Delete task
@@ -199,6 +212,18 @@ export default function TaskManagement({ sessionId, tasks, onTaskUpdate, isModer
           )}
         </div>
       </CardContent>
+
+      {/* Delete Task Confirmation Dialog */}
+      <ConfirmDialog
+        open={deleteDialogOpen}
+        onOpenChange={setDeleteDialogOpen}
+        title="Delete Task?"
+        description="Are you sure you want to delete this task? This action cannot be undone."
+        confirmText="Delete"
+        cancelText="Cancel"
+        onConfirm={confirmDeleteTask}
+        variant="destructive"
+      />
     </Card>
   )
 }

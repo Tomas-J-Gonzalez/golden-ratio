@@ -9,6 +9,7 @@ import { Plus, Users } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
 import { generateSessionCode } from '@/lib/constants'
 import TopNavigation from './TopNavigation'
+import { toast } from 'sonner'
 
 export default function HomePage() {
   const [sessionCode, setSessionCode] = useState('')
@@ -89,10 +90,11 @@ export default function HomePage() {
       localStorage.setItem(`participant_${newSessionCode}`, participant.id)
 
       // Navigate to session
+      toast.success('Session created successfully!')
       router.push(`/session/${newSessionCode}`)
     } catch (error) {
       console.error('Error creating session:', error)
-      alert('Failed to create session. Please try again.')
+      toast.error('Failed to create session. Please try again.')
     } finally {
       setIsCreating(false)
     }
@@ -132,10 +134,11 @@ export default function HomePage() {
       localStorage.setItem(`participant_${sessionCode}`, participant.id)
 
       // Navigate directly to session
+      toast.success('Joined session successfully!')
       router.push(`/session/${sessionCode}`)
     } catch (error) {
       console.error('Error joining session:', error)
-      alert('Failed to join session. Please check the session code.')
+      toast.error('Failed to join session. Please check the session code.')
     } finally {
       setIsJoining(false)
     }

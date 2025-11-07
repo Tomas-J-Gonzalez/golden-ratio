@@ -6,6 +6,7 @@ import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Copy, Check, CheckCircle } from 'lucide-react'
 import { Vote, Participant, supabase } from '@/lib/supabase'
+import { toast } from 'sonner'
 import { 
   EFFORT_OPTIONS, 
   TIME_OPTIONS,
@@ -181,12 +182,14 @@ export default function VotingResults({ taskTitle, taskId, votes, participants, 
 
       if (error) throw error
       
+      toast.success('Task completed successfully!')
+      
       if (onTaskCompleted) {
         onTaskCompleted()
       }
     } catch (error) {
       console.error('Error completing task:', error)
-      alert('Failed to complete task. Please try again.')
+      toast.error('Failed to complete task. Please try again.')
     } finally {
       setIsCompleting(false)
     }
