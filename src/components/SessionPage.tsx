@@ -24,6 +24,7 @@ export default function SessionPage({ sessionCode }: SessionPageProps) {
   const [currentTask, setCurrentTask] = useState<Task | null>(null)
   const [isLoading, setIsLoading] = useState(true)
   const [copied, setCopied] = useState(false)
+  const [codeCopied, setCodeCopied] = useState(false)
 
   const loadSessionData = useCallback(async () => {
     try {
@@ -218,6 +219,12 @@ export default function SessionPage({ sessionCode }: SessionPageProps) {
     setTimeout(() => setCopied(false), 2000)
   }
 
+  const copySessionCode = () => {
+    navigator.clipboard.writeText(sessionCode)
+    setCodeCopied(true)
+    setTimeout(() => setCodeCopied(false), 2000)
+  }
+
   const leaveSession = async () => {
     if (!currentParticipant) return
 
@@ -328,7 +335,24 @@ export default function SessionPage({ sessionCode }: SessionPageProps) {
           <div className="flex items-center justify-between mb-4">
             <div>
               <h1 className="text-2xl font-bold text-gray-900">Design Estimation Session</h1>
-              <p className="text-gray-600">Session Code: <span className="font-mono font-bold">{sessionCode}</span></p>
+              <div className="flex items-center gap-2">
+                <p className="text-gray-600">
+                  Session Code: <span className="font-mono font-bold text-gray-900">{sessionCode}</span>
+                </p>
+                <Button 
+                  onClick={copySessionCode} 
+                  variant="ghost" 
+                  size="sm"
+                  className="h-6 px-2 hover:bg-gray-100"
+                  title="Copy session code"
+                >
+                  {codeCopied ? (
+                    <Check className="w-3 h-3 text-green-600" />
+                  ) : (
+                    <Copy className="w-3 h-3 text-gray-500" />
+                  )}
+                </Button>
+              </div>
             </div>
             <div className="flex items-center gap-3">
               <Button onClick={copySessionLink} variant="outline" size="sm">
