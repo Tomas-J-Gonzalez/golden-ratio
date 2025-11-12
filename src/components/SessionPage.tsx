@@ -86,6 +86,7 @@ export default function SessionPage({ sessionCode }: SessionPageProps) {
       // Find current voting task (prioritize 'voting' over 'voting_completed')
       const votingTask = tasksData?.find((t: Task) => t.status === 'voting') 
         || tasksData?.find((t: Task) => t.status === 'voting_completed')
+      console.log('[Initial Load] Setting currentTask to:', votingTask ? `${votingTask.title} (${votingTask.status})` : 'null')
       setCurrentTask(votingTask || null)
 
       // Load votes for current task
@@ -177,6 +178,7 @@ export default function SessionPage({ sessionCode }: SessionPageProps) {
             // Update current task if it's voting (prioritize 'voting' over 'voting_completed')
             const votingTask = tasksData?.find((t: Task) => t.status === 'voting')
               || tasksData?.find((t: Task) => t.status === 'voting_completed')
+            console.log('[Real-time Update] Setting currentTask to:', votingTask ? `${votingTask.title} (${votingTask.status})` : 'null')
             setCurrentTask(votingTask || null)
 
             // Load votes for current task
@@ -428,6 +430,14 @@ export default function SessionPage({ sessionCode }: SessionPageProps) {
   const isModerator = currentParticipant?.is_moderator || false
   const allParticipantsVoted = currentTask && votes.length >= participants.length
   const isVotingInProgress = currentTask?.status === 'voting'
+  
+  // Debug logging for music toggle visibility
+  console.log('Music toggle debug:', {
+    currentTaskStatus: currentTask?.status,
+    currentTaskTitle: currentTask?.title,
+    isVotingInProgress,
+    allTasks: tasks.map(t => ({ title: t.title, status: t.status }))
+  })
 
   // Update task status to voting_completed when all participants have voted
   useEffect(() => {
