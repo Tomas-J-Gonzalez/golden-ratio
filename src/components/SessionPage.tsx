@@ -76,7 +76,7 @@ export default function SessionPage({ sessionCode }: SessionPageProps) {
       const participantId = localStorage.getItem(`participant_${sessionCode}`)
       console.log('Looking for participant:', { participantId, sessionCode, participantsData })
       if (participantId) {
-        const participant = participantsData?.find(p => p.id === participantId)
+        const participant = participantsData?.find((p: Participant) => p.id === participantId)
         console.log('Found participant:', participant)
         setCurrentParticipant(participant || null)
       } else {
@@ -84,7 +84,7 @@ export default function SessionPage({ sessionCode }: SessionPageProps) {
       }
 
       // Find current voting task (including voting_completed)
-      const votingTask = tasksData?.find(t => t.status === 'voting' || t.status === 'voting_completed')
+      const votingTask = tasksData?.find((t: Task) => t.status === 'voting' || t.status === 'voting_completed')
       setCurrentTask(votingTask || null)
 
       // Load votes for current task
@@ -159,7 +159,8 @@ export default function SessionPage({ sessionCode }: SessionPageProps) {
       .channel(`tasks-${session.id}`)
       .on('postgres_changes', 
         { event: '*', schema: 'public', table: 'tasks', filter: `session_id=eq.${session.id}` },
-        async (payload) => {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        async (payload: any) => {
           console.log('Tasks changed:', payload)
           // Reload tasks when they change
           try {
@@ -173,7 +174,7 @@ export default function SessionPage({ sessionCode }: SessionPageProps) {
             setTasks(tasksData || [])
 
             // Update current task if it's voting (including voting_completed)
-            const votingTask = tasksData?.find(t => t.status === 'voting' || t.status === 'voting_completed')
+            const votingTask = tasksData?.find((t: Task) => t.status === 'voting' || t.status === 'voting_completed')
             setCurrentTask(votingTask || null)
 
             // Load votes for current task
@@ -185,7 +186,7 @@ export default function SessionPage({ sessionCode }: SessionPageProps) {
           }
         }
       )
-      .subscribe((status) => {
+      .subscribe((status: string) => {
         console.log('Tasks subscription status:', status)
       })
 
@@ -193,7 +194,8 @@ export default function SessionPage({ sessionCode }: SessionPageProps) {
       .channel(`votes-${session.id}`)
       .on('postgres_changes', 
         { event: '*', schema: 'public', table: 'votes' },
-        async (payload) => {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        async (payload: any) => {
           console.log('Votes changed:', payload)
           // Reload votes for all tasks in this session
           try {
@@ -213,7 +215,7 @@ export default function SessionPage({ sessionCode }: SessionPageProps) {
           }
         }
       )
-      .subscribe((status) => {
+      .subscribe((status: string) => {
         console.log('Votes subscription status:', status)
       })
 
@@ -221,7 +223,8 @@ export default function SessionPage({ sessionCode }: SessionPageProps) {
       .channel(`participants-${session.id}`)
       .on('postgres_changes', 
         { event: '*', schema: 'public', table: 'participants', filter: `session_id=eq.${session.id}` },
-        async (payload) => {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        async (payload: any) => {
           console.log('Participants changed:', payload)
           // Reload participants when they change
           try {
@@ -237,7 +240,7 @@ export default function SessionPage({ sessionCode }: SessionPageProps) {
             // Also update currentParticipant if it changed
             const participantId = localStorage.getItem(`participant_${sessionCode}`)
             if (participantId) {
-              const participant = participantsData?.find(p => p.id === participantId)
+              const participant = participantsData?.find((p: Participant) => p.id === participantId)
               if (participant) {
                 setCurrentParticipant(participant)
               }
@@ -247,7 +250,7 @@ export default function SessionPage({ sessionCode }: SessionPageProps) {
           }
         }
       )
-      .subscribe((status) => {
+      .subscribe((status: string) => {
         console.log('Participants subscription status:', status)
       })
 

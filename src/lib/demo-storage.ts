@@ -1,6 +1,9 @@
 // Demo mode storage using localStorage
 // This provides a mock implementation of Supabase for demo purposes
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+type StorageRecord = Record<string, any>
+
 export class DemoStorage {
   private prefix = 'demo_'
 
@@ -10,14 +13,14 @@ export class DemoStorage {
   }
 
   // Get all items of a type
-  private getAll(type: string): any[] {
-    const items: any[] = []
+  private getAll(type: string): StorageRecord[] {
+    const items: StorageRecord[] = []
     for (let i = 0; i < localStorage.length; i++) {
       const key = localStorage.key(i)
       if (key && key.startsWith(`${this.prefix}${type}_`)) {
         const item = localStorage.getItem(key)
         if (item) {
-          items.push(JSON.parse(item))
+          items.push(JSON.parse(item) as StorageRecord)
         }
       }
     }
@@ -25,14 +28,14 @@ export class DemoStorage {
   }
 
   // Get a single item
-  private getOne(type: string, id: string): any | null {
+  private getOne(type: string, id: string): StorageRecord | null {
     const key = `${this.prefix}${type}_${id}`
     const item = localStorage.getItem(key)
-    return item ? JSON.parse(item) : null
+    return item ? (JSON.parse(item) as StorageRecord) : null
   }
 
   // Save an item
-  private save(type: string, id: string, data: any): void {
+  private save(type: string, id: string, data: StorageRecord): void {
     const key = `${this.prefix}${type}_${id}`
     localStorage.setItem(key, JSON.stringify(data))
   }
@@ -44,13 +47,13 @@ export class DemoStorage {
   }
 
   // Sessions
-  getSession(code: string): any | null {
+  getSession(code: string): StorageRecord | null {
     const sessions = this.getAll('session')
     return sessions.find(s => s.code === code) || null
   }
 
-  createSession(data: any): any {
-    const id = data.code // Use session code as ID
+  createSession(data: StorageRecord): StorageRecord {
+    const id = data.code as string // Use session code as ID
     const session = {
       id,
       code: data.code,
@@ -62,7 +65,7 @@ export class DemoStorage {
     return session
   }
 
-  updateSession(id: string, data: any): any {
+  updateSession(id: string, data: StorageRecord): StorageRecord | null {
     const session = this.getOne('session', id)
     if (session) {
       const updated = { ...session, ...data }
@@ -73,13 +76,13 @@ export class DemoStorage {
   }
 
   // Participants
-  getParticipants(sessionId: string): any[] {
+  getParticipants(sessionId: string): StorageRecord[] {
     const participants = this.getAll('participant')
     return participants.filter(p => p.session_id === sessionId)
-      .sort((a, b) => new Date(a.joined_at).getTime() - new Date(b.joined_at).getTime())
+      .sort((a, b) => new Date(a.joined_at as string).getTime() - new Date(b.joined_at as string).getTime())
   }
 
-  createParticipant(data: any): any {
+  createParticipant(data: StorageRecord): StorageRecord {
     const id = this.generateId()
     const participant = {
       id,
@@ -93,7 +96,7 @@ export class DemoStorage {
     return participant
   }
 
-  updateParticipant(id: string, data: any): any {
+  updateParticipant(id: string, data: StorageRecord): StorageRecord | null {
     const participant = this.getOne('participant', id)
     if (participant) {
       const updated = { ...participant, ...data }
@@ -108,13 +111,13 @@ export class DemoStorage {
   }
 
   // Tasks
-  getTasks(sessionId: string): any[] {
+  getTasks(sessionId: string): StorageRecord[] {
     const tasks = this.getAll('task')
     return tasks.filter(t => t.session_id === sessionId)
-      .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
+      .sort((a, b) => new Date(b.created_at as string).getTime() - new Date(a.created_at as string).getTime())
   }
 
-  createTask(data: any): any {
+  createTask(data: StorageRecord): StorageRecord {
     const id = this.generateId()
     const task = {
       id,
@@ -132,7 +135,7 @@ export class DemoStorage {
     return task
   }
 
-  updateTask(id: string, data: any): any {
+  updateTask(id: string, data: StorageRecord): StorageRecord | null {
     const task = this.getOne('task', id)
     if (task) {
       const updated = { ...task, ...data }
@@ -147,19 +150,19 @@ export class DemoStorage {
     const votes = this.getAll('vote')
     votes.forEach(vote => {
       if (vote.task_id === id) {
-        this.delete('vote', vote.id)
+        this.delete('vote', vote.id as string)
       }
     })
     this.delete('task', id)
   }
 
   // Votes
-  getVotes(taskId: string): any[] {
+  getVotes(taskId: string): StorageRecord[] {
     const votes = this.getAll('vote')
     return votes.filter(v => v.task_id === taskId)
   }
 
-  createVote(data: any): any {
+  createVote(data: StorageRecord): StorageRecord {
     const id = this.generateId()
     const vote = {
       id,
@@ -173,7 +176,7 @@ export class DemoStorage {
     return vote
   }
 
-  updateVote(id: string, data: any): any {
+  updateVote(id: string, data: StorageRecord): StorageRecord | null {
     const vote = this.getOne('vote', id)
     if (vote) {
       const updated = { ...vote, ...data }
@@ -188,7 +191,7 @@ export class DemoStorage {
   }
 
   // Get a specific vote by participant and task
-  getVoteByParticipantAndTask(participantId: string, taskId: string): any | null {
+  getVoteByParticipantAndTask(participantId: string, taskId: string): StorageRecord | null {
     const votes = this.getAll('vote')
     return votes.find(v => v.participant_id === participantId && v.task_id === taskId) || null
   }

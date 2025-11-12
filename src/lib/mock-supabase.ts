@@ -1,23 +1,28 @@
 // Mock Supabase client for demo mode
 import { demoStorage } from './demo-storage'
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+type StorageRecord = Record<string, any>
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+type EventCallback = (data: any) => void
+
 // Event emitter for simulating real-time subscriptions
 class EventEmitter {
-  private listeners: Map<string, Function[]> = new Map()
+  private listeners: Map<string, EventCallback[]> = new Map()
 
-  on(event: string, callback: Function) {
+  on(event: string, callback: EventCallback) {
     if (!this.listeners.has(event)) {
       this.listeners.set(event, [])
     }
     this.listeners.get(event)!.push(callback)
   }
 
-  emit(event: string, data: any) {
+  emit(event: string, data: StorageRecord) {
     const callbacks = this.listeners.get(event) || []
     callbacks.forEach(cb => cb(data))
   }
 
-  off(event: string, callback: Function) {
+  off(event: string, callback: EventCallback) {
     const callbacks = this.listeners.get(event) || []
     const index = callbacks.indexOf(callback)
     if (index > -1) {
@@ -31,6 +36,7 @@ const globalEmitter = new EventEmitter()
 class MockSupabaseQuery {
   private tableName: string
   private selectFields: string = '*'
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   private filters: Array<{ column: string; operator: string; value: any }> = []
   private orderField?: string
   private orderAscending: boolean = true
@@ -45,11 +51,13 @@ class MockSupabaseQuery {
     return this
   }
 
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   eq(column: string, value: any) {
     this.filters.push({ column, operator: 'eq', value })
     return this
   }
 
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   in(column: string, values: any[]) {
     this.filters.push({ column, operator: 'in', value: values })
     return this
@@ -66,7 +74,7 @@ class MockSupabaseQuery {
     return this
   }
 
-  private applyFilters(items: any[]): any[] {
+  private applyFilters(items: StorageRecord[]): StorageRecord[] {
     return items.filter(item => {
       return this.filters.every(filter => {
         if (filter.operator === 'eq') {
@@ -80,7 +88,7 @@ class MockSupabaseQuery {
     })
   }
 
-  private applyOrder(items: any[]): any[] {
+  private applyOrder(items: StorageRecord[]): StorageRecord[] {
     if (!this.orderField) return items
 
     return [...items].sort((a, b) => {
@@ -106,27 +114,27 @@ class MockSupabaseQuery {
 
   async execute() {
     try {
-      let data: any[] = []
+      let data: StorageRecord[] = []
 
       // Get data based on table
       if (this.tableName === 'sessions') {
         data = this.filters.some(f => f.column === 'code')
-          ? [demoStorage.getSession(this.filters.find(f => f.column === 'code')!.value)].filter(Boolean)
+          ? [demoStorage.getSession(this.filters.find(f => f.column === 'code')!.value)].filter(Boolean) as StorageRecord[]
           : []
       } else if (this.tableName === 'participants') {
         const sessionIdFilter = this.filters.find(f => f.column === 'session_id')
         if (sessionIdFilter) {
-          data = demoStorage.getParticipants(sessionIdFilter.value)
+          data = demoStorage.getParticipants(sessionIdFilter.value as string)
         }
       } else if (this.tableName === 'tasks') {
         const sessionIdFilter = this.filters.find(f => f.column === 'session_id')
         if (sessionIdFilter) {
-          data = demoStorage.getTasks(sessionIdFilter.value)
+          data = demoStorage.getTasks(sessionIdFilter.value as string)
         }
       } else if (this.tableName === 'votes') {
         const taskIdFilter = this.filters.find(f => f.column === 'task_id')
         if (taskIdFilter) {
-          data = demoStorage.getVotes(taskIdFilter.value)
+          data = demoStorage.getVotes(taskIdFilter.value as string)
         }
       }
 
@@ -142,13 +150,15 @@ class MockSupabaseQuery {
       }
 
       return { data, error: null }
-    } catch (error: any) {
-      return { data: null, error: { message: error.message } }
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error'
+      return { data: null, error: { message: errorMessage } }
     }
   }
 
   // Make this class thenable so it can be awaited
-  then(resolve: Function, reject?: Function) {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  then(resolve: (value: any) => any, reject?: (reason: any) => any) {
     return this.execute().then(resolve, reject)
   }
 }
@@ -160,9 +170,10 @@ class MockSupabaseTable {
     return new MockSupabaseQuery(this.tableName).select(fields)
   }
 
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   async insert(data: any) {
     try {
-      let result: any
+      let result: StorageRecord | undefined
 
       if (this.tableName === 'sessions') {
         result = demoStorage.createSession(data)
@@ -175,7 +186,9 @@ class MockSupabaseTable {
       }
 
       // Emit change event
-      globalEmitter.emit(`${this.tableName}-INSERT`, result)
+      if (result) {
+        globalEmitter.emit(`${this.tableName}-INSERT`, result)
+      }
 
       return {
         data: result,
@@ -184,39 +197,44 @@ class MockSupabaseTable {
           single: async () => ({ data: result, error: null })
         })
       }
-    } catch (error: any) {
-      return { data: null, error: { message: error.message } }
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error'
+      return { data: null, error: { message: errorMessage } }
     }
   }
 
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   async update(data: any) {
-    const query = new MockSupabaseQuery(this.tableName)
-    
     return {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       eq: (column: string, value: any) => ({
         execute: async () => {
           try {
-            let result: any
+            let result: StorageRecord | null = null
 
             if (this.tableName === 'sessions') {
-              result = demoStorage.updateSession(value, data)
+              result = demoStorage.updateSession(value as string, data)
             } else if (this.tableName === 'participants') {
-              result = demoStorage.updateParticipant(value, data)
+              result = demoStorage.updateParticipant(value as string, data)
             } else if (this.tableName === 'tasks') {
-              result = demoStorage.updateTask(value, data)
+              result = demoStorage.updateTask(value as string, data)
             } else if (this.tableName === 'votes') {
-              result = demoStorage.updateVote(value, data)
+              result = demoStorage.updateVote(value as string, data)
             }
 
             // Emit change event
-            globalEmitter.emit(`${this.tableName}-UPDATE`, result)
+            if (result) {
+              globalEmitter.emit(`${this.tableName}-UPDATE`, result)
+            }
 
             return { data: result, error: null }
-          } catch (error: any) {
-            return { data: null, error: { message: error.message } }
+          } catch (error) {
+            const errorMessage = error instanceof Error ? error.message : 'Unknown error'
+            return { data: null, error: { message: errorMessage } }
           }
         },
-        then: function(resolve: Function, reject?: Function) {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        then: function(resolve: (value: any) => any, reject?: (reason: any) => any) {
           return this.execute().then(resolve, reject)
         }
       })
@@ -225,26 +243,29 @@ class MockSupabaseTable {
 
   async delete() {
     return {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       eq: (column: string, value: any) => ({
         execute: async () => {
           try {
             if (this.tableName === 'participants') {
-              demoStorage.deleteParticipant(value)
+              demoStorage.deleteParticipant(value as string)
             } else if (this.tableName === 'tasks') {
-              demoStorage.deleteTask(value)
+              demoStorage.deleteTask(value as string)
             } else if (this.tableName === 'votes') {
-              demoStorage.deleteVote(value)
+              demoStorage.deleteVote(value as string)
             }
 
             // Emit change event
             globalEmitter.emit(`${this.tableName}-DELETE`, { id: value })
 
             return { error: null }
-          } catch (error: any) {
-            return { error: { message: error.message } }
+          } catch (error) {
+            const errorMessage = error instanceof Error ? error.message : 'Unknown error'
+            return { error: { message: errorMessage } }
           }
         },
-        then: function(resolve: Function, reject?: Function) {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        then: function(resolve: (value: any) => any, reject?: (reason: any) => any) {
           return this.execute().then(resolve, reject)
         }
       })
@@ -254,19 +275,20 @@ class MockSupabaseTable {
 
 class MockSupabaseChannel {
   private channelName: string
-  private callbacks: Array<{ event: string; callback: Function }> = []
+  private callbacks: Array<{ event: string; callback: EventCallback }> = []
 
   constructor(channelName: string) {
     this.channelName = channelName
   }
 
-  on(event: string, config: any, callback: Function) {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  on(event: string, config: any, callback: EventCallback) {
     // Extract table name from config
-    const tableName = config.table
-    const eventType = config.event // '*' or specific type
+    const tableName = config.table as string
+    const eventType = config.event as string // '*' or specific type
 
     // Listen to global events
-    const handler = (data: any) => {
+    const handler: EventCallback = (data: StorageRecord) => {
       callback({
         eventType: event,
         new: data,
@@ -290,7 +312,7 @@ class MockSupabaseChannel {
     return this
   }
 
-  subscribe(callback?: Function) {
+  subscribe(callback?: (status: string) => void) {
     // Simulate async subscription
     setTimeout(() => {
       if (callback) {

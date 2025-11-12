@@ -9,7 +9,8 @@ const isDemoMode = supabaseUrl.includes('placeholder')
 
 // Use mock client in demo mode, real client in production
 export const supabase = isDemoMode 
-  ? mockSupabase as any
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  ? (mockSupabase as any)
   : createClient(supabaseUrl, supabaseAnonKey, {
       realtime: {
         params: {
