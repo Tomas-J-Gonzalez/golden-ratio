@@ -115,6 +115,58 @@ export default function ColophonPage() {
               </div>
             </section>
 
+            {/* Security & Privacy */}
+            <section className="bg-white rounded-lg shadow-sm border border-slate-200 p-6">
+              <h2 className="text-xl font-semibold text-slate-900 mb-4">Security & Privacy</h2>
+              <div className="space-y-4 text-slate-600">
+                <p>
+                  Your data security and privacy are priorities. This application is designed 
+                  with security best practices and minimal data collection.
+                </p>
+                
+                <div className="grid md:grid-cols-2 gap-6 mt-4">
+                  <div>
+                    <h3 className="font-medium text-slate-900 mb-2">What We Collect</h3>
+                    <ul className="space-y-1 text-sm">
+                      <li>• Nicknames (display names only)</li>
+                      <li>• Task estimates and voting data</li>
+                      <li>• Avatar emojis (optional)</li>
+                      <li>• Session timestamps</li>
+                    </ul>
+                  </div>
+                  <div>
+                    <h3 className="font-medium text-slate-900 mb-2">What We Don&apos;t Collect</h3>
+                    <ul className="space-y-1 text-sm">
+                      <li>• Email addresses</li>
+                      <li>• Passwords or credentials</li>
+                      <li>• IP addresses or location</li>
+                      <li>• Personal identifiable information</li>
+                      <li>• Analytics or tracking data</li>
+                    </ul>
+                  </div>
+                </div>
+
+                <div className="bg-blue-50 border border-blue-100 rounded-lg p-4 mt-4">
+                  <h3 className="font-medium text-blue-900 mb-2">Security Features</h3>
+                  <ul className="space-y-1 text-sm text-blue-800">
+                    <li>✓ All data transmitted over HTTPS encryption</li>
+                    <li>✓ Row Level Security on all database tables</li>
+                    <li>✓ Session isolation (no cross-session data access)</li>
+                    <li>✓ Random session codes (2.1 billion combinations)</li>
+                    <li>✓ Automatic data cleanup when sessions end</li>
+                    <li>✓ No third-party tracking or analytics</li>
+                  </ul>
+                </div>
+
+                <p className="text-sm">
+                  Sessions are temporary and designed for team collaboration. All data is stored 
+                  securely in a PostgreSQL database with Row Level Security policies. When you leave 
+                  a session, your participation data can be removed. Session creators can end sessions 
+                  to clean up all associated data.
+                </p>
+              </div>
+            </section>
+
             {/* Open Source */}
             <section className="bg-white rounded-lg shadow-sm border border-slate-200 p-6">
               <h2 className="text-xl font-semibold text-slate-900 mb-4">Open Source</h2>

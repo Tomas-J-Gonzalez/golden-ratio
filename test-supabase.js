@@ -42,7 +42,7 @@ async function testConnection() {
       if (error.message.includes('relation "sessions" does not exist')) {
         console.log('❌ Database schema not set up');
         console.log('📋 Please run the SQL schema from supabase-schema.sql in your Supabase dashboard');
-        console.log('🔗 Go to: https://supabase.com/dashboard/project/lsgmjswgjlfgnfukbiwg/sql');
+        console.log('🔗 Go to: https://supabase.com/dashboard/project/YOUR_PROJECT_ID/sql');
       } else {
         console.log('❌ Database error:', error.message);
       }

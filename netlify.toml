@@ -14,3 +14,18 @@
   command = "npm run dev"
   port = 3000
   publish = ".next"
+
+# Security Headers
+[[headers]]
+  for = "/*"
+  [headers.values]
+    # Prevent clickjacking
+    X-Frame-Options = "DENY"
+    # Prevent MIME type sniffing
+    X-Content-Type-Options = "nosniff"
+    # Enable XSS protection
+    X-XSS-Protection = "1; mode=block"
+    # Referrer policy
+    Referrer-Policy = "strict-origin-when-cross-origin"
+    # Permissions policy
+    Permissions-Policy = "geolocation=(), microphone=(), camera=(), payment=()"
