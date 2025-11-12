@@ -247,16 +247,22 @@ class MockSupabaseTable {
       eq: (column: string, value: any) => ({
         execute: async () => {
           try {
+            let oldData: StorageRecord | null = null
+            
+            // Get the data before deleting (to emit with DELETE event)
             if (this.tableName === 'participants') {
+              oldData = demoStorage.getParticipantById(value as string)
               demoStorage.deleteParticipant(value as string)
             } else if (this.tableName === 'tasks') {
+              oldData = demoStorage.getTaskById(value as string)
               demoStorage.deleteTask(value as string)
             } else if (this.tableName === 'votes') {
+              oldData = demoStorage.getVoteById(value as string)
               demoStorage.deleteVote(value as string)
             }
 
-            // Emit change event
-            globalEmitter.emit(`${this.tableName}-DELETE`, { id: value })
+            // Emit change event with old data
+            globalEmitter.emit(`${this.tableName}-DELETE`, oldData || { id: value })
 
             return { error: null }
           } catch (error) {
@@ -287,10 +293,10 @@ class MockSupabaseChannel {
     const tableName = config.table as string
     const eventType = config.event as string // '*' or specific type
 
-    // Listen to global events
-    const handler: EventCallback = (data: StorageRecord) => {
+    // Create separate handlers for different event types
+    const insertHandler: EventCallback = (data: StorageRecord) => {
       callback({
-        eventType: event,
+        eventType: 'INSERT',
         new: data,
         old: {},
         schema: 'public',
@@ -298,16 +304,40 @@ class MockSupabaseChannel {
       })
     }
 
-    // Register for all event types or specific ones
-    if (eventType === '*') {
-      globalEmitter.on(`${tableName}-INSERT`, handler)
-      globalEmitter.on(`${tableName}-UPDATE`, handler)
-      globalEmitter.on(`${tableName}-DELETE`, handler)
-    } else {
-      globalEmitter.on(`${tableName}-${eventType.toUpperCase()}`, handler)
+    const updateHandler: EventCallback = (data: StorageRecord) => {
+      callback({
+        eventType: 'UPDATE',
+        new: data,
+        old: {},
+        schema: 'public',
+        table: tableName
+      })
     }
 
-    this.callbacks.push({ event: `${tableName}-${eventType}`, callback: handler })
+    const deleteHandler: EventCallback = (data: StorageRecord) => {
+      callback({
+        eventType: 'DELETE',
+        new: {},
+        old: data,
+        schema: 'public',
+        table: tableName
+      })
+    }
+
+    // Register for all event types or specific ones
+    if (eventType === '*') {
+      globalEmitter.on(`${tableName}-INSERT`, insertHandler)
+      globalEmitter.on(`${tableName}-UPDATE`, updateHandler)
+      globalEmitter.on(`${tableName}-DELETE`, deleteHandler)
+      this.callbacks.push({ event: `${tableName}-INSERT`, callback: insertHandler })
+      this.callbacks.push({ event: `${tableName}-UPDATE`, callback: updateHandler })
+      this.callbacks.push({ event: `${tableName}-DELETE`, callback: deleteHandler })
+    } else {
+      const specificHandler = eventType.toUpperCase() === 'DELETE' ? deleteHandler : 
+                              eventType.toUpperCase() === 'INSERT' ? insertHandler : updateHandler
+      globalEmitter.on(`${tableName}-${eventType.toUpperCase()}`, specificHandler)
+      this.callbacks.push({ event: `${tableName}-${eventType}`, callback: specificHandler })
+    }
 
     return this
   }

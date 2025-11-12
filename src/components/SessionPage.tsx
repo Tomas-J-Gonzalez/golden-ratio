@@ -239,6 +239,14 @@ export default function SessionPage({ sessionCode }: SessionPageProps) {
             if (participantsError) throw participantsError
             setParticipants(participantsData || [])
             
+            // Handle DELETE events - if a participant was deleted, show a toast
+            if (payload.eventType === 'DELETE' && payload.old) {
+              const deletedNickname = payload.old.nickname
+              if (deletedNickname) {
+                toast.info(`${deletedNickname} left the session`)
+              }
+            }
+            
             // Also update currentParticipant if it changed
             const participantId = localStorage.getItem(`participant_${sessionCode}`)
             if (participantId) {

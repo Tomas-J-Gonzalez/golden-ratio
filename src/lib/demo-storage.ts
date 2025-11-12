@@ -106,6 +106,10 @@ export class DemoStorage {
     return null
   }
 
+  getParticipantById(id: string): StorageRecord | null {
+    return this.getOne('participant', id)
+  }
+
   deleteParticipant(id: string): void {
     this.delete('participant', id)
   }
@@ -143,6 +147,10 @@ export class DemoStorage {
       return updated
     }
     return null
+  }
+
+  getTaskById(id: string): StorageRecord | null {
+    return this.getOne('task', id)
   }
 
   deleteTask(id: string): void {
@@ -184,6 +192,10 @@ export class DemoStorage {
       return updated
     }
     return null
+  }
+
+  getVoteById(id: string): StorageRecord | null {
+    return this.getOne('vote', id)
   }
 
   deleteVote(id: string): void {
