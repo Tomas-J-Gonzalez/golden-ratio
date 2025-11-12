@@ -282,9 +282,9 @@ export default function SessionPage({ sessionCode }: SessionPageProps) {
   }, [setupRealtimeSubscriptions])
 
   const copySessionCode = () => {
-    const joinUrl = `${window.location.origin}/join/${sessionCode}`
-    navigator.clipboard.writeText(joinUrl)
+    navigator.clipboard.writeText(sessionCode)
     setCodeCopied(true)
+    toast.success('Session code copied!')
     setTimeout(() => setCodeCopied(false), 2000)
   }
 
@@ -527,7 +527,7 @@ export default function SessionPage({ sessionCode }: SessionPageProps) {
                   variant="ghost" 
                   size="sm"
                   className="h-6 px-2 hover:bg-gray-100"
-                  title="Copy join URL"
+                  title="Copy session code"
                 >
                   {codeCopied ? (
                     <Check className="w-3 h-3 text-green-600" />
