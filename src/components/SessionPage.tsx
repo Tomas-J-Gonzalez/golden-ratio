@@ -83,8 +83,9 @@ export default function SessionPage({ sessionCode }: SessionPageProps) {
         console.log('No participant ID found in localStorage for session:', sessionCode)
       }
 
-      // Find current voting task (including voting_completed)
-      const votingTask = tasksData?.find((t: Task) => t.status === 'voting' || t.status === 'voting_completed')
+      // Find current voting task (prioritize 'voting' over 'voting_completed')
+      const votingTask = tasksData?.find((t: Task) => t.status === 'voting') 
+        || tasksData?.find((t: Task) => t.status === 'voting_completed')
       setCurrentTask(votingTask || null)
 
       // Load votes for current task
@@ -173,8 +174,9 @@ export default function SessionPage({ sessionCode }: SessionPageProps) {
             if (tasksError) throw tasksError
             setTasks(tasksData || [])
 
-            // Update current task if it's voting (including voting_completed)
-            const votingTask = tasksData?.find((t: Task) => t.status === 'voting' || t.status === 'voting_completed')
+            // Update current task if it's voting (prioritize 'voting' over 'voting_completed')
+            const votingTask = tasksData?.find((t: Task) => t.status === 'voting')
+              || tasksData?.find((t: Task) => t.status === 'voting_completed')
             setCurrentTask(votingTask || null)
 
             // Load votes for current task
