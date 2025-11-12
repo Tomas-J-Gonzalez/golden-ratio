@@ -4,6 +4,7 @@ import { useState, useEffect, useCallback } from 'react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
+import { Input } from '@/components/ui/input'
 import { supabase, Session, Task, Participant, Vote } from '@/lib/supabase'
 import TaskManagement from './TaskManagement'
 import VotingArea from './VotingArea'
@@ -32,6 +33,8 @@ export default function SessionPage({ sessionCode }: SessionPageProps) {
   const [leaveDialogOpen, setLeaveDialogOpen] = useState(false)
   const [emojiPickerOpen, setEmojiPickerOpen] = useState(false)
   const [selectedParticipantForEmoji, setSelectedParticipantForEmoji] = useState<Participant | null>(null)
+  const [nickname, setNickname] = useState('')
+  const [isJoining, setIsJoining] = useState(false)
 
   const loadSessionData = useCallback(async () => {
     try {
@@ -107,6 +110,42 @@ export default function SessionPage({ sessionCode }: SessionPageProps) {
       setVotes(data || [])
     } catch (error) {
       console.error('Error loading votes:', error)
+    }
+  }
+
+  const joinSession = async () => {
+    if (!nickname.trim() || !session) return
+
+    setIsJoining(true)
+    try {
+      // Add participant to session
+      const { data: participant, error: participantError } = await supabase
+        .from('participants')
+        .insert({
+          session_id: session.id,
+          nickname: nickname.trim(),
+          is_moderator: false
+        })
+        .select()
+        .single()
+
+      if (participantError) throw participantError
+
+      // Store participant ID for this session
+      localStorage.setItem(`participant_${sessionCode}`, participant.id)
+      
+      // Update current participant
+      setCurrentParticipant(participant)
+      
+      // Reload session data to get updated participants list
+      await loadSessionData()
+      
+      toast.success('Joined session successfully!')
+    } catch (error) {
+      console.error('Error joining session:', error)
+      toast.error('Failed to join session. Please try again.')
+    } finally {
+      setIsJoining(false)
     }
   }
 
@@ -411,6 +450,53 @@ export default function SessionPage({ sessionCode }: SessionPageProps) {
     )
   }
 
+  // Show join form if session exists but user hasn't joined yet
+  if (!currentParticipant) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-100 p-4">
+        <Card className="w-full max-w-md">
+          <CardHeader className="text-center">
+            <CardTitle className="text-2xl font-bold text-gray-900">
+              Join Session
+            </CardTitle>
+            <p className="text-gray-600 mt-2">
+              Session Code: <span className="font-mono font-bold text-gray-900">{sessionCode}</span>
+            </p>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="space-y-2">
+              <Input
+                placeholder="Enter your name"
+                value={nickname}
+                onChange={(e) => setNickname(e.target.value)}
+                onKeyDown={(e) => e.key === 'Enter' && joinSession()}
+                autoComplete="off"
+                autoCorrect="off"
+                autoCapitalize="off"
+                spellCheck="false"
+                autoFocus
+              />
+            </div>
+            <Button 
+              onClick={joinSession} 
+              disabled={!nickname.trim() || isJoining}
+              className="w-full bg-green-600 hover:bg-green-700"
+            >
+              {isJoining ? 'Joining...' : 'Join Session'}
+            </Button>
+            <Button 
+              onClick={() => window.location.href = '/'}
+              variant="outline"
+              className="w-full"
+            >
+              Go Home
+            </Button>
+          </CardContent>
+        </Card>
+      </div>
+    )
+  }
+
   return (
     <div className="min-h-screen bg-gray-50">
       <div className="container mx-auto px-4 py-6">
@@ -439,7 +525,7 @@ export default function SessionPage({ sessionCode }: SessionPageProps) {
               </div>
             </div>
             <div className="flex items-center gap-3">
-              <VotingMusicToggle isVotingActive={isVotingInProgress} />
+              {isVotingInProgress && <VotingMusicToggle isVotingActive={isVotingInProgress} />}
               {currentParticipant && (
                 <Button onClick={() => setLeaveDialogOpen(true)} variant="outline" size="sm" className="border-black text-black hover:bg-black hover:text-white">
                   <LogOut className="w-4 h-4 mr-2" />

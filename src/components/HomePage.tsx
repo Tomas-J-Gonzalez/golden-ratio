@@ -26,42 +26,7 @@ export default function HomePage() {
     try {
       const newSessionCode = generateSessionCode()
       
-      // Check if we're in demo mode (placeholder Supabase URL)
-      const isDemoMode = process.env.NEXT_PUBLIC_SUPABASE_URL?.includes('placeholder')
-      
-      if (isDemoMode) {
-        // Demo mode - simulate session creation
-        console.log('Demo mode: Creating session with code:', newSessionCode)
-        
-        // Store demo session data
-        const demoSession = {
-          id: newSessionCode,
-          code: newSessionCode,
-          created_at: new Date().toISOString(),
-          moderator_id: moderatorName,
-          is_active: true
-        }
-        
-        localStorage.setItem(`demo_session_${newSessionCode}`, JSON.stringify(demoSession))
-        
-        // Store demo participant data
-        const demoParticipant = {
-          id: `demo_${Date.now()}`,
-          session_id: newSessionCode,
-          nickname: moderatorName,
-          is_moderator: true,
-          joined_at: new Date().toISOString()
-        }
-        
-        localStorage.setItem(`demo_participant_${newSessionCode}`, JSON.stringify(demoParticipant))
-        localStorage.setItem(`participant_${newSessionCode}`, demoParticipant.id)
-        
-        // Navigate to session
-        router.push(`/session/${newSessionCode}`)
-        return
-      }
-      
-      // Production mode - use Supabase
+      // Create session (mock client handles demo mode automatically)
       const { data: session, error: sessionError } = await supabase
         .from('sessions')
         .insert({

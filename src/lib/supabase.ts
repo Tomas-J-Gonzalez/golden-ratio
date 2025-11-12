@@ -1,15 +1,22 @@
 import { createClient } from '@supabase/supabase-js'
+import { mockSupabase } from './mock-supabase'
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || 'https://placeholder.supabase.co'
 const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || 'placeholder_key'
 
-export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
-  realtime: {
-    params: {
-      eventsPerSecond: 10
-    }
-  }
-})
+// Check if we're in demo mode
+const isDemoMode = supabaseUrl.includes('placeholder')
+
+// Use mock client in demo mode, real client in production
+export const supabase = isDemoMode 
+  ? mockSupabase as any
+  : createClient(supabaseUrl, supabaseAnonKey, {
+      realtime: {
+        params: {
+          eventsPerSecond: 10
+        }
+      }
+    })
 
 // Database types
 export interface Session {
