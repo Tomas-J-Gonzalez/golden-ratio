@@ -1,12 +1,12 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogClose } from '@/components/ui/dialog'
-import { Task } from '@/lib/supabase'
+import { Task, Participant, Vote, supabase } from '@/lib/supabase'
 import { Download, FileText, ChevronDown, Copy, Check } from 'lucide-react'
 import { toast } from 'sonner'
 import { estimateToTShirtSize } from '@/lib/constants'
@@ -14,16 +14,48 @@ import { estimateToTShirtSize } from '@/lib/constants'
 interface TaskHistoryProps {
   tasks: Task[]
   sessionId: string
+  participants: Participant[]
 }
 
-export default function TaskHistory({ tasks, sessionId }: TaskHistoryProps) {
+export default function TaskHistory({ tasks, sessionId, participants }: TaskHistoryProps) {
   const [isExporting, setIsExporting] = useState(false)
   const [isCollapsed, setIsCollapsed] = useState(false)
   const [copiedTaskId, setCopiedTaskId] = useState<string | null>(null)
   const [selectedTask, setSelectedTask] = useState<Task | null>(null)
   const [taskDialogOpen, setTaskDialogOpen] = useState(false)
+  const [taskVotes, setTaskVotes] = useState<Vote[]>([])
 
   const completedTasks = tasks.filter(task => task.status === 'completed')
+
+  // Load votes when a task is selected
+  useEffect(() => {
+    const loadTaskVotes = async () => {
+      if (!selectedTask) {
+        setTaskVotes([])
+        return
+      }
+
+      try {
+        const { data, error } = await supabase
+          .from('votes')
+          .select('*')
+          .eq('task_id', selectedTask.id)
+
+        if (error) throw error
+        setTaskVotes(data || [])
+      } catch (error) {
+        console.error('Error loading votes:', error)
+        setTaskVotes([])
+      }
+    }
+
+    loadTaskVotes()
+  }, [selectedTask])
+
+  const getParticipantName = (participantId: string) => {
+    const participant = participants.find(p => p.id === participantId)
+    return participant?.nickname || 'Unknown'
+  }
 
   const exportToCSV = async () => {
     setIsExporting(true)
@@ -306,6 +338,27 @@ export default function TaskHistory({ tasks, sessionId }: TaskHistoryProps) {
                       )}
                     </div>
                   </div>
+
+                  {/* Voters Section */}
+                  {taskVotes.length > 0 && (
+                    <div className="rounded-md border border-gray-200 bg-gray-50 px-4 py-3">
+                      <p className="font-medium text-gray-900 text-sm mb-2">
+                        Participants ({taskVotes.length})
+                      </p>
+                      <div className="flex flex-wrap gap-2">
+                        {taskVotes.map((vote) => (
+                          <Badge 
+                            key={vote.id}
+                            variant="default"
+                            className="text-xs px-2 py-1"
+                          >
+                            {getParticipantName(vote.participant_id)}
+                            <span className="ml-1 opacity-70">• {vote.value} pts</span>
+                          </Badge>
+                        ))}
+                      </div>
+                    </div>
+                  )}
 
                   <div className="rounded-md border border-dashed border-gray-200 px-4 py-3 text-sm text-gray-600">
                     <p className="font-medium text-gray-900">Completion Details</p>
