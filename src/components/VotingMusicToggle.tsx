@@ -17,6 +17,8 @@ export function VotingMusicToggle({ isVotingActive }: VotingMusicToggleProps) {
   const [isLoadingAudio, setIsLoadingAudio] = useState(true)
   const [showVolumeControl, setShowVolumeControl] = useState(false)
 
+  console.log('VotingMusicToggle rendered:', { isVotingActive, isLoadingAudio, isEnabled })
+
   useEffect(() => {
     const audioElement = new Audio('/jazz.mp3')
     audioElement.loop = true
