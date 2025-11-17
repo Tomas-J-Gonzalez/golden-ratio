@@ -548,7 +548,7 @@ export default function SessionPage({ sessionCode }: SessionPageProps) {
               </div>
             </div>
             <div className="flex items-center gap-3">
-              {isVotingInProgress && currentTask && <VotingMusicToggle key={currentTask.id} isVotingActive={isVotingInProgress} />}
+              {session && <VotingMusicToggle key={sessionCode} isVotingActive={isVotingInProgress} />}
               {currentParticipant && (
                 <Button onClick={() => setLeaveDialogOpen(true)} variant="outline" size="sm" className="border-black text-black hover:bg-black hover:text-white">
                   <LogOut className="w-4 h-4 mr-2" />
