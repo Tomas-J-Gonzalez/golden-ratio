@@ -464,9 +464,6 @@ export default function SessionPage({ sessionCode }: SessionPageProps) {
   useEffect(() => {
     if (currentTask?.status === 'voting') {
       setVotingDuration(0)
-    } else if (currentTask?.status !== 'voting') {
-      // Reset when voting ends
-      setVotingDuration(0)
     }
   }, [currentTask?.id, currentTask?.status])
 
