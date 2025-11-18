@@ -464,6 +464,9 @@ export default function SessionPage({ sessionCode }: SessionPageProps) {
   useEffect(() => {
     if (currentTask?.status === 'voting') {
       setVotingDuration(0)
+    } else if (currentTask?.status !== 'voting') {
+      // Reset when voting ends
+      setVotingDuration(0)
     }
   }, [currentTask?.id, currentTask?.status])
 
@@ -569,8 +572,8 @@ export default function SessionPage({ sessionCode }: SessionPageProps) {
               </div>
             </div>
             <div className="flex items-center gap-3">
-              {session && <VotingMusicToggle key={sessionCode} isVotingActive={isVotingInProgress} />}
-              {session && <VotingTimer isVotingActive={isVotingInProgress} onDurationChange={setVotingDuration} />}
+              {session && <VotingMusicToggle key={`music-${currentTask?.id || 'none'}`} isVotingActive={isVotingInProgress} />}
+              {session && <VotingTimer key={`timer-${currentTask?.id || 'none'}`} isVotingActive={isVotingInProgress} onDurationChange={setVotingDuration} />}
               {currentParticipant && (
                 <Button onClick={() => setLeaveDialogOpen(true)} variant="outline" size="sm" className="border-black text-black hover:bg-black hover:text-white">
                   <LogOut className="w-4 h-4 mr-2" />

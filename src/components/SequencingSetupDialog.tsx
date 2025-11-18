@@ -14,11 +14,13 @@ interface SequencingSetupDialogProps {
     quarter: string
     startingSprint: number
     sprintsPerQuarter: number
+    initiationDate: string
   }) => void
   existingConfig?: {
     quarter?: string
     startingSprint?: number
     sprintsPerQuarter?: number
+    initiationDate?: string
   }
 }
 
@@ -31,6 +33,14 @@ export function SequencingSetupDialog({
   const [quarter, setQuarter] = useState(existingConfig?.quarter || '')
   const [startingSprint, setStartingSprint] = useState(existingConfig?.startingSprint?.toString() || '154')
   const [sprintsPerQuarter, setSprintsPerQuarter] = useState(existingConfig?.sprintsPerQuarter?.toString() || '6')
+  const [initiationDate, setInitiationDate] = useState(() => {
+    if (existingConfig?.initiationDate) {
+      return existingConfig.initiationDate
+    }
+    // Default to today's date in YYYY-MM-DD format
+    const today = new Date()
+    return today.toISOString().split('T')[0]
+  })
 
   const currentYear = new Date().getFullYear()
   const quarters = [
@@ -45,18 +55,19 @@ export function SequencingSetupDialog({
   ]
 
   const handleConfirm = () => {
-    if (!quarter.trim() || !startingSprint || !sprintsPerQuarter) {
+    if (!quarter.trim() || !startingSprint || !sprintsPerQuarter || !initiationDate) {
       return
     }
 
     onConfirm({
       quarter: quarter.trim(),
       startingSprint: parseInt(startingSprint, 10),
-      sprintsPerQuarter: parseInt(sprintsPerQuarter, 10)
+      sprintsPerQuarter: parseInt(sprintsPerQuarter, 10),
+      initiationDate: initiationDate
     })
   }
 
-  const isValid = quarter.trim() && startingSprint && sprintsPerQuarter && 
+  const isValid = quarter.trim() && startingSprint && sprintsPerQuarter && initiationDate &&
                   parseInt(startingSprint, 10) > 0 && 
                   parseInt(sprintsPerQuarter, 10) > 0
 
@@ -114,6 +125,19 @@ export function SequencingSetupDialog({
             />
             <p className="text-xs text-gray-500">
               Typically 6 sprints per quarter (assuming 2-week sprints)
+            </p>
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="initiation-date">Initiation Date</Label>
+            <Input
+              id="initiation-date"
+              type="date"
+              value={initiationDate}
+              onChange={(e) => setInitiationDate(e.target.value)}
+            />
+            <p className="text-xs text-gray-500">
+              Start date of the first sprint for this quarter
             </p>
           </div>
         </div>

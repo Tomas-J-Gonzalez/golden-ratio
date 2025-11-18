@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react'
 import { DndContext, DragEndEvent, closestCorners, PointerSensor, useSensor, useSensors } from '@dnd-kit/core'
 import { SortableContext, horizontalListSortingStrategy, verticalListSortingStrategy } from '@dnd-kit/sortable'
 import { useDroppable } from '@dnd-kit/core'
-import { Task } from '@/lib/supabase'
+import { Task, Vote, Participant } from '@/lib/supabase'
 import { supabase } from '@/lib/supabase'
 import { SprintColumn } from './SprintColumn'
 import { TaskCard } from './TaskCard'
@@ -12,6 +12,9 @@ import { Button } from '@/components/ui/button'
 import { Download, Settings, RotateCcw } from 'lucide-react'
 import { toast } from 'sonner'
 import { SequencingSetupDialog } from './SequencingSetupDialog'
+import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from '@/components/ui/sheet'
+import { Badge } from '@/components/ui/badge'
+import { estimateToTShirtSize } from '@/lib/constants'
 
 interface TaskSequencingBoardProps {
   sessionId: string
@@ -20,20 +23,26 @@ interface TaskSequencingBoardProps {
     quarter: string
     startingSprint: number
     sprintsPerQuarter: number
+    initiationDate?: string
   }
   onConfigUpdate: () => void
+  participants?: Participant[]
 }
 
 export function TaskSequencingBoard({
   sessionId,
   tasks,
   sequencingConfig,
-  onConfigUpdate
+  onConfigUpdate,
+  participants = []
 }: TaskSequencingBoardProps) {
   const [organizedTasks, setOrganizedTasks] = useState<Record<number, Task[]>>({})
   const [backlogTasks, setBacklogTasks] = useState<Task[]>([])
   const [isSaving, setIsSaving] = useState(false)
   const [setupDialogOpen, setSetupDialogOpen] = useState(false)
+  const [selectedTask, setSelectedTask] = useState<Task | null>(null)
+  const [taskDialogOpen, setTaskDialogOpen] = useState(false)
+  const [taskVotes, setTaskVotes] = useState<Vote[]>([])
 
   const sensors = useSensors(
     useSensor(PointerSensor, {
@@ -270,6 +279,41 @@ export function TaskSequencingBoard({
     }
   }
 
+  // Load votes when a task is selected
+  useEffect(() => {
+    const loadTaskVotes = async () => {
+      if (!selectedTask) {
+        setTaskVotes([])
+        return
+      }
+
+      try {
+        const { data, error } = await supabase
+          .from('votes')
+          .select('*')
+          .eq('task_id', selectedTask.id)
+
+        if (error) throw error
+        setTaskVotes(data || [])
+      } catch (error) {
+        console.error('Error loading votes:', error)
+        setTaskVotes([])
+      }
+    }
+
+    loadTaskVotes()
+  }, [selectedTask])
+
+  const getParticipantName = (participantId: string) => {
+    const participant = participants.find(p => p.id === participantId)
+    return participant?.nickname || 'Unknown'
+  }
+
+  const handleTaskExpand = (task: Task) => {
+    setSelectedTask(task)
+    setTaskDialogOpen(true)
+  }
+
   const sprintNumbers = Array.from(
     { length: sequencingConfig.sprintsPerQuarter },
     (_, i) => sequencingConfig.startingSprint + i
@@ -321,21 +365,36 @@ export function TaskSequencingBoard({
         onDragStart={handleDragStart}
         onDragEnd={handleDragEnd}
       >
-        <div className="flex gap-4 overflow-x-auto pb-4">
+        <div className="flex gap-4 overflow-x-auto pb-4 -mx-4 px-4" style={{ scrollbarWidth: 'thin' }}>
           {/* Backlog Column */}
-          <BacklogColumn tasks={backlogTasks} />
+          <BacklogColumn tasks={backlogTasks} onTaskExpand={handleTaskExpand} />
 
           {/* Sprint Columns */}
           <SortableContext items={sprintNumbers.map(n => `sprint-${n}`)} strategy={horizontalListSortingStrategy}>
-            {sprintNumbers.map((sprintNum) => (
-              <div key={sprintNum} className="flex-shrink-0 w-64">
-                <SprintColumn
-                  sprintNumber={sprintNum}
-                  tasks={organizedTasks[sprintNum] || []}
-                  maxCapacity={40}
-                />
-              </div>
-            ))}
+            {sprintNumbers.map((sprintNum) => {
+              // Calculate sprint start date (assuming 2-week sprints)
+              const sprintStartDate = sequencingConfig.initiationDate 
+                ? (() => {
+                    const initiationDate = new Date(sequencingConfig.initiationDate)
+                    const sprintIndex = sprintNum - sequencingConfig.startingSprint
+                    const sprintStart = new Date(initiationDate)
+                    sprintStart.setDate(sprintStart.getDate() + (sprintIndex * 14)) // 2 weeks per sprint
+                    return sprintStart
+                  })()
+                : null
+
+              return (
+                <div key={sprintNum} className="flex-shrink-0 w-64">
+                  <SprintColumn
+                    sprintNumber={sprintNum}
+                    tasks={organizedTasks[sprintNum] || []}
+                    maxCapacity={40}
+                    onTaskExpand={handleTaskExpand}
+                    sprintStartDate={sprintStartDate}
+                  />
+                </div>
+              )
+            })}
           </SortableContext>
         </div>
       </DndContext>
@@ -350,7 +409,8 @@ export function TaskSequencingBoard({
             .update({
               sequencing_quarter: config.quarter,
               sequencing_starting_sprint: config.startingSprint,
-              sequencing_sprints_per_quarter: config.sprintsPerQuarter
+              sequencing_sprints_per_quarter: config.sprintsPerQuarter,
+              sequencing_initiation_date: config.initiationDate
             })
             .eq('id', sessionId)
 
@@ -363,14 +423,121 @@ export function TaskSequencingBoard({
           setSetupDialogOpen(false)
           onConfigUpdate()
         }}
-        existingConfig={sequencingConfig}
+        existingConfig={{
+          quarter: sequencingConfig.quarter,
+          startingSprint: sequencingConfig.startingSprint,
+          sprintsPerQuarter: sequencingConfig.sprintsPerQuarter,
+          initiationDate: sequencingConfig.initiationDate
+        }}
       />
+
+      {/* Task Detail Sheet (Miro-style side panel) */}
+      <Sheet
+        open={taskDialogOpen}
+        onOpenChange={(open) => {
+          setTaskDialogOpen(open)
+          if (!open) {
+            setSelectedTask(null)
+          }
+        }}
+      >
+        {selectedTask && (
+          <SheetContent className="w-full sm:max-w-lg overflow-y-auto">
+            <SheetHeader className="space-y-3 pb-4 border-b">
+              <SheetTitle className="text-xl">{selectedTask.title}</SheetTitle>
+              <SheetDescription className="whitespace-pre-line text-gray-600 text-base">
+                {selectedTask.description || 'No description provided.'}
+              </SheetDescription>
+            </SheetHeader>
+
+            {(() => {
+              const baseEstimate = selectedTask.final_estimate || 0
+              const bufferPercent = selectedTask.meeting_buffer ? Math.round(selectedTask.meeting_buffer * 100) : 0
+              const bufferAmount = selectedTask.meeting_buffer ? Math.round(baseEstimate * selectedTask.meeting_buffer) : 0
+              const iterationMultiplier = selectedTask.iteration_multiplier || 1
+              const totalPoints = Math.round((baseEstimate + bufferAmount) * iterationMultiplier)
+              const completedDate = new Date(selectedTask.created_at)
+
+              return (
+                <div className="space-y-6 pt-6">
+                  <div className="grid grid-cols-2 gap-3 text-sm">
+                    <div className="rounded-md border bg-gray-50 p-3">
+                      <p className="text-xs text-gray-500">Base Estimate</p>
+                      <p className="text-lg font-semibold text-gray-900">{baseEstimate > 0 ? `${baseEstimate} pts` : '—'}</p>
+                      {baseEstimate > 0 && (
+                        <p className="text-xs text-gray-500">{estimateToTShirtSize(baseEstimate)}</p>
+                      )}
+                    </div>
+                    <div className="rounded-md border bg-gray-50 p-3">
+                      <p className="text-xs text-gray-500">Meeting Buffer</p>
+                      <p className="text-lg font-semibold text-gray-900">
+                        {bufferPercent > 0 ? `+${bufferPercent}%` : 'None'}
+                      </p>
+                      {bufferPercent > 0 && (
+                        <p className="text-xs text-gray-500">≈ {bufferAmount} pts extra</p>
+                      )}
+                    </div>
+                    <div className="rounded-md border bg-gray-50 p-3">
+                      <p className="text-xs text-gray-500">Iteration Multiplier</p>
+                      <p className="text-lg font-semibold text-gray-900">{iterationMultiplier}x</p>
+                      {iterationMultiplier > 1 && (
+                        <p className="text-xs text-gray-500">Accounts for additional review cycles</p>
+                      )}
+                    </div>
+                    <div className="rounded-md border bg-blue-50 p-3">
+                      <p className="text-xs text-blue-600">Total Effort</p>
+                      <p className="text-xl font-semibold text-blue-700">{totalPoints} pts</p>
+                      {totalPoints > 0 && (
+                        <p className="text-xs text-blue-600/80">{estimateToTShirtSize(totalPoints)}</p>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Voters Section */}
+                  {taskVotes.length > 0 && (
+                    <div className="rounded-md border border-gray-200 bg-gray-50 px-4 py-3">
+                      <p className="font-medium text-gray-900 text-sm mb-2">
+                        Participants ({taskVotes.length})
+                      </p>
+                      <div className="flex flex-wrap gap-2">
+                        {taskVotes.map((vote) => (
+                          <Badge 
+                            key={vote.id}
+                            variant="default"
+                            className="text-xs px-2 py-1"
+                          >
+                            {getParticipantName(vote.participant_id)}
+                            <span className="ml-1 opacity-70">• {vote.value} pts</span>
+                          </Badge>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  <div className="rounded-md border border-dashed border-gray-200 px-4 py-3 text-sm text-gray-600">
+                    <p className="font-medium text-gray-900">Completion Details</p>
+                    <div className="mt-2 space-y-1">
+                      <p>Logged on <span className="font-medium">{completedDate.toLocaleDateString()}</span></p>
+                      <p>Created at <span className="font-medium">{completedDate.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span></p>
+                      {selectedTask.voting_duration_seconds && (
+                        <p>Voting duration: <span className="font-medium">
+                          {Math.floor(selectedTask.voting_duration_seconds / 60)}:{(selectedTask.voting_duration_seconds % 60).toString().padStart(2, '0')}
+                        </span></p>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              )
+            })()}
+          </SheetContent>
+        )}
+      </Sheet>
     </div>
   )
 }
 
 // Backlog Column Component
-function BacklogColumn({ tasks }: { tasks: Task[] }) {
+function BacklogColumn({ tasks, onTaskExpand }: { tasks: Task[], onTaskExpand?: (task: Task) => void }) {
   const { setNodeRef, isOver } = useDroppable({
     id: 'backlog',
     data: {
@@ -391,7 +558,7 @@ function BacklogColumn({ tasks }: { tasks: Task[] }) {
         <div className="flex-1 overflow-y-auto space-y-2">
           <SortableContext items={tasks.map(t => t.id)} strategy={verticalListSortingStrategy}>
             {tasks.map((task) => (
-              <TaskCard key={task.id} task={task} isOver={isOver} />
+              <TaskCard key={task.id} task={task} isOver={isOver} onExpand={onTaskExpand} />
             ))}
           </SortableContext>
           {tasks.length === 0 && (

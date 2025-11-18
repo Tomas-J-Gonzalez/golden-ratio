@@ -30,6 +30,7 @@ export interface Session {
   sequencing_quarter?: string
   sequencing_starting_sprint?: number
   sequencing_sprints_per_quarter?: number
+  sequencing_initiation_date?: string
 }
 
 export interface Participant {

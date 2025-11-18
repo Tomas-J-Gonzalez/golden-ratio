@@ -11,9 +11,11 @@ interface SprintColumnProps {
   sprintNumber: number
   tasks: Task[]
   maxCapacity?: number
+  onTaskExpand?: (task: Task) => void
+  sprintStartDate?: Date | null
 }
 
-export function SprintColumn({ sprintNumber, tasks, maxCapacity = 40 }: SprintColumnProps) {
+export function SprintColumn({ sprintNumber, tasks, maxCapacity = 40, onTaskExpand, sprintStartDate }: SprintColumnProps) {
   const { setNodeRef, isOver } = useDroppable({
     id: `sprint-${sprintNumber}`,
     data: {
@@ -44,9 +46,16 @@ export function SprintColumn({ sprintNumber, tasks, maxCapacity = 40 }: SprintCo
     >
       <div className="mb-3">
         <div className="flex items-center justify-between mb-2">
-          <h3 className="font-semibold text-sm text-gray-900">
-            Sprint {sprintNumber}
-          </h3>
+          <div>
+            <h3 className="font-semibold text-sm text-gray-900">
+              Sprint {sprintNumber}
+            </h3>
+            {sprintStartDate && (
+              <p className="text-xs text-gray-500 mt-0.5">
+                {sprintStartDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
+              </p>
+            )}
+          </div>
           <Badge variant={isOverCapacity ? 'destructive' : 'secondary'} className="text-xs">
             {totalPoints} / {maxCapacity} pts
           </Badge>
@@ -82,7 +91,7 @@ export function SprintColumn({ sprintNumber, tasks, maxCapacity = 40 }: SprintCo
         <SortableContext items={tasks.map(t => t.id)} strategy={verticalListSortingStrategy}>
           {tasks.length > 0 ? (
             tasks.map((task) => (
-              <TaskCard key={task.id} task={task} isOver={isOver} />
+              <TaskCard key={task.id} task={task} isOver={isOver} onExpand={onTaskExpand} />
             ))
           ) : (
             <div className="text-center text-xs text-gray-400 py-8 border-2 border-dashed border-gray-300 rounded">

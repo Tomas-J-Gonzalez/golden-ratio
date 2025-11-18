@@ -196,6 +196,7 @@ export default function SessionReviewPage({ params }: SessionReviewPageProps) {
     quarter: string
     startingSprint: number
     sprintsPerQuarter: number
+    initiationDate: string
   }) => {
     try {
       const { error } = await supabase
@@ -204,7 +205,8 @@ export default function SessionReviewPage({ params }: SessionReviewPageProps) {
           sequencing_enabled: true,
           sequencing_quarter: config.quarter,
           sequencing_starting_sprint: config.startingSprint,
-          sequencing_sprints_per_quarter: config.sprintsPerQuarter
+          sequencing_sprints_per_quarter: config.sprintsPerQuarter,
+          sequencing_initiation_date: config.initiationDate
         })
         .eq('id', session?.id)
 
@@ -224,7 +226,7 @@ export default function SessionReviewPage({ params }: SessionReviewPageProps) {
     <>
       <TopNavigation />
       <div className="min-h-screen bg-gray-50 pt-16">
-        <div className={`container mx-auto px-4 py-8 ${showSequencing ? 'max-w-full' : 'max-w-5xl'}`}>
+        <div className={`container mx-auto px-4 py-8 ${showSequencing ? 'max-w-[calc(100vw-2rem)]' : 'max-w-5xl'}`}>
           {/* Header */}
           <div className="mb-8">
             <div className="flex items-start justify-between mb-4">
@@ -281,9 +283,11 @@ export default function SessionReviewPage({ params }: SessionReviewPageProps) {
                 sequencingConfig={{
                   quarter: session?.sequencing_quarter || '',
                   startingSprint: session?.sequencing_starting_sprint || 154,
-                  sprintsPerQuarter: session?.sequencing_sprints_per_quarter || 6
+                  sprintsPerQuarter: session?.sequencing_sprints_per_quarter || 6,
+                  initiationDate: session?.sequencing_initiation_date
                 }}
                 onConfigUpdate={loadSessionData}
+                participants={participants}
               />
             </div>
           )}

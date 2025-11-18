@@ -43,6 +43,10 @@ export function VotingTimer({ isVotingActive, onDurationChange }: VotingTimerPro
         intervalRef.current = null
       }
       startTimeRef.current = null
+      setElapsedSeconds(0)
+      if (onDurationChange) {
+        onDurationChange(0)
+      }
     }
 
     return () => {
@@ -53,19 +57,12 @@ export function VotingTimer({ isVotingActive, onDurationChange }: VotingTimerPro
     }
   }, [isVotingActive, onDurationChange])
 
-  // Reset timer when voting becomes inactive
-  useEffect(() => {
-    if (!isVotingActive) {
-      setElapsedSeconds(0)
-    }
-  }, [isVotingActive])
-
   if (!isVotingActive) {
     return null
   }
 
   return (
-    <div className="flex items-center gap-2 rounded-full border border-transparent bg-white/70 px-3 py-1 shadow-sm ring-1 ring-gray-200 backdrop-blur">
+    <div className="flex items-center gap-2 rounded-full border border-transparent bg-white/70 px-2 py-1 shadow-sm ring-1 ring-gray-200 backdrop-blur">
       <Clock className="w-4 h-4 text-gray-600" />
       <span className="text-xs font-medium text-gray-600">Timer</span>
       <span className="text-xs font-mono font-semibold text-gray-900">

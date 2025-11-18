@@ -65,7 +65,6 @@ function SortableTaskItem({
   onStartVoting, 
   onStopVoting,
   onDeleteClick,
-  onTagsUpdate,
   hasActiveVoting,
   hasVotingCompleted
 }: { 
@@ -75,7 +74,6 @@ function SortableTaskItem({
   onStartVoting: (taskId: string) => void
   onStopVoting: (taskId: string) => void
   onDeleteClick: (taskId: string) => void
-  onTagsUpdate: (taskId: string, tags: TaskTag[]) => void
   hasActiveVoting: boolean
   hasVotingCompleted: boolean
 }) {
@@ -152,17 +150,8 @@ function SortableTaskItem({
             </Badge>
           )}
         </div>
-        {/* Tags */}
-        {isModerator && task.status === 'pending' && (
-          <div className="mt-2">
-            <TagPicker
-              tags={task.tags || []}
-              onTagsChange={(tags) => onTagsUpdate(task.id, tags)}
-              disabled={false}
-            />
-          </div>
-        )}
-        {task.tags && task.tags.length > 0 && task.status !== 'pending' && (
+        {/* Tags - Display only, no editing */}
+        {task.tags && task.tags.length > 0 && (
           <div className="mt-2 flex flex-wrap gap-1">
             {task.tags.map((tag, index) => {
               const colorClasses = getTagColorClasses(tag.color)
@@ -316,21 +305,6 @@ export default function TaskManagement({ sessionId, tasks, onTaskUpdate, isModer
       toast.error('Failed to add task. Please try again.')
     } finally {
       setIsAdding(false)
-    }
-  }
-
-  const updateTaskTags = async (taskId: string, tags: TaskTag[]) => {
-    try {
-      const { error } = await supabase
-        .from('tasks')
-        .update({ tags: tags.length > 0 ? tags : null })
-        .eq('id', taskId)
-
-      if (error) throw error
-      onTaskUpdate()
-    } catch (error) {
-      console.error('Error updating task tags:', error)
-      toast.error('Failed to update tags. Please try again.')
     }
   }
 
@@ -598,7 +572,6 @@ export default function TaskManagement({ sessionId, tasks, onTaskUpdate, isModer
                       setTaskToDelete(taskId)
                       setDeleteDialogOpen(true)
                     }}
-                    onTagsUpdate={updateTaskTags}
                     hasActiveVoting={hasActiveVoting}
                     hasVotingCompleted={hasVotingCompleted}
                   />

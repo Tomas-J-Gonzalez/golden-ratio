@@ -243,34 +243,16 @@ export default function TaskHistory({ tasks, sessionId, participants }: TaskHist
                 return (
                   <TableRow key={task.id}>
                     <TableCell>
-                      <div className="space-y-1">
-                        <button
-                          type="button"
-                          onClick={() => {
-                            setSelectedTask(task)
-                            setTaskDialogOpen(true)
-                          }}
-                          className="font-medium text-blue-600 hover:underline focus:outline-none focus:ring-2 focus:ring-blue-300 rounded block"
-                        >
-                          {task.title}
-                        </button>
-                        {task.tags && task.tags.length > 0 && (
-                          <div className="flex flex-wrap gap-1">
-                            {task.tags.map((tag, tagIndex) => {
-                              const colorClasses = getTagColorClasses(tag.color)
-                              return (
-                                <Badge
-                                  key={tagIndex}
-                                  variant="outline"
-                                  className={`${colorClasses} border px-1.5 py-0 text-[10px] font-medium`}
-                                >
-                                  {tag.label}
-                                </Badge>
-                              )
-                            })}
-                          </div>
-                        )}
-                      </div>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setSelectedTask(task)
+                          setTaskDialogOpen(true)
+                        }}
+                        className="font-medium text-blue-600 hover:underline focus:outline-none focus:ring-2 focus:ring-blue-300 rounded text-left"
+                      >
+                        {task.title}
+                      </button>
                     </TableCell>
                     <TableCell>
                       <Badge variant="outline">{baseEstimate} pts</Badge>
