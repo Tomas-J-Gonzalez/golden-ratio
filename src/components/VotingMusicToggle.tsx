@@ -66,16 +66,13 @@ export function VotingMusicToggle({ isVotingActive }: VotingMusicToggleProps) {
     }
   }, [isEnabled, isVotingActive, volume])
 
+  // Reset music state when voting ends (transitions from active to inactive)
   useEffect(() => {
     if (!isVotingActive) {
-      if (isEnabled) {
-        setIsEnabled(false)
-      }
-      if (showVolumeControl) {
-        setShowVolumeControl(false)
-      }
+      setIsEnabled(false)
+      setShowVolumeControl(false)
     }
-  }, [isVotingActive, isEnabled, showVolumeControl])
+  }, [isVotingActive])
 
   const toggleLabel = useMemo(() => {
     if (!isVotingActive) return 'Music available when voting starts'

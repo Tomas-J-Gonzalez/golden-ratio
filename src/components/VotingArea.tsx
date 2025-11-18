@@ -19,7 +19,8 @@ import {
   MEETING_BUFFER_OPTIONS,
   ITERATION_MULTIPLIER_OPTIONS,
   calculateEstimate,
-  estimateToTShirtSize
+  estimateToTShirtSize,
+  MAX_POINTS
 } from '@/lib/constants'
 
 interface VotingAreaProps {
@@ -39,7 +40,6 @@ interface EstimationFactors {
   fidelity: number | null
   meetingBuffer: number | null
   iterationMultiplier: number | null
-  finalEstimate: number | null
 }
 
 export default function VotingArea({ 
@@ -57,8 +57,7 @@ export default function VotingArea({
     breakpoints: null,
     fidelity: null,
     meetingBuffer: null,
-    iterationMultiplier: null,
-    finalEstimate: null
+    iterationMultiplier: null
   })
   const [hasVoted, setHasVoted] = useState(false)
   const [isSubmitting, setIsSubmitting] = useState(false)
@@ -193,7 +192,9 @@ export default function VotingArea({
       designerCount: factors.designerCount!,
       designerLevels: factors.designerLevels,
       breakpoints: factors.breakpoints!,
-      fidelity: factors.fidelity!
+      fidelity: factors.fidelity!,
+      meetingBuffer: factors.meetingBuffer || 0,
+      iterationMultiplier: factors.iterationMultiplier || 1
     })
   }
 
@@ -370,7 +371,7 @@ export default function VotingArea({
             <div><strong>Fidelity:</strong> {FIDELITY_OPTIONS.find(o => o.value === factors.fidelity)?.label}</div>
             <div><strong>Meeting Buffer:</strong> {MEETING_BUFFER_OPTIONS.find(o => o.value === factors.meetingBuffer)?.label}</div>
             <div><strong>Design Iterations:</strong> {ITERATION_MULTIPLIER_OPTIONS.find(o => o.value === factors.iterationMultiplier)?.label}</div>
-            <div><strong>Final Estimate:</strong> {factors.finalEstimate ? estimateToTShirtSize(factors.finalEstimate) : 'Not set'}</div>
+            <div><strong>Final Estimate:</strong> {finalEstimate ? estimateToTShirtSize(finalEstimate) : 'Not set'}</div>
           </div>
           
         </CardContent>
@@ -401,46 +402,24 @@ export default function VotingArea({
           <div className="text-xs text-blue-700 mt-1">
             {currentEstimate ? 'points' : ''}
           </div>
+          {currentEstimate && currentEstimate >= MAX_POINTS && (
+            <div className="text-xs text-amber-600 mt-1 font-medium">
+              (Capped at {MAX_POINTS} points)
+            </div>
+          )}
           <div className="text-sm font-medium text-blue-800 mt-2">{hoursEstimate}</div>
         </div>
 
-        {/* Final Estimate Input - Only show when estimation is complete */}
+        {/* Submit Button - Only show when estimation is complete */}
         {isEstimationComplete() && (
-          <>
-            <div className="space-y-2">
-              <Label htmlFor="final-estimate-sidebar" className="text-xs text-blue-900">
-                Manual Final Estimate (t-shirt size)
-              </Label>
-              <Input
-                id="final-estimate-sidebar"
-                type="number"
-                min="1"
-                value={factors.finalEstimate || ''}
-                onChange={(e) => setFactors(prev => ({ ...prev, finalEstimate: Number(e.target.value) || null }))}
-                placeholder="Enter final estimate"
-                className="bg-white border-blue-300 text-center"
-                autoComplete="off"
-                autoCorrect="off"
-                autoCapitalize="off"
-                spellCheck="false"
-              />
-              {factors.finalEstimate && factors.finalEstimate > 0 && (
-                <div className="text-center text-xs text-blue-800">
-                  <strong>{estimateToTShirtSize(factors.finalEstimate)}</strong> ({factors.finalEstimate} points)
-                </div>
-              )}
-            </div>
-
-            {/* Submit Button */}
-            <Button 
-              onClick={submitVote} 
-              disabled={isSubmitting}
-              className="w-full bg-blue-600 hover:bg-blue-700"
-              size="sm"
-            >
-              {isSubmitting ? 'Submitting...' : 'Submit Estimate'}
-            </Button>
-          </>
+          <Button 
+            onClick={submitVote} 
+            disabled={isSubmitting}
+            className="w-full bg-blue-600 hover:bg-blue-700"
+            size="sm"
+          >
+            {isSubmitting ? 'Submitting...' : 'Submit Estimate'}
+          </Button>
         )}
       </CardContent>
     </Card>

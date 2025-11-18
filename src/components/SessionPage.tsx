@@ -14,6 +14,7 @@ import TaskHistory from './TaskHistory'
 import { EmojiPicker } from './EmojiPicker'
 import { ConfirmDialog } from './ui/confirm-dialog'
 import { VotingMusicToggle } from './VotingMusicToggle'
+import { VotingTimer } from './VotingTimer'
 import { Users, Copy, Check, LogOut } from 'lucide-react'
 import { toast } from 'sonner'
 
@@ -35,6 +36,7 @@ export default function SessionPage({ sessionCode }: SessionPageProps) {
   const [selectedParticipantForEmoji, setSelectedParticipantForEmoji] = useState<Participant | null>(null)
   const [nickname, setNickname] = useState('')
   const [isJoining, setIsJoining] = useState(false)
+  const [votingDuration, setVotingDuration] = useState<number>(0)
 
   const loadSessionData = useCallback(async () => {
     try {
@@ -412,14 +414,26 @@ export default function SessionPage({ sessionCode }: SessionPageProps) {
     }
   }
 
-  const updateTaskStatusToVotingCompleted = useCallback(async (taskId: string) => {
+  const updateTaskStatusToVotingCompleted = useCallback(async (taskId: string, durationSeconds?: number) => {
     try {
+      const updateData: { status: string; voting_duration_seconds?: number } = {
+        status: 'voting_completed'
+      }
+      
+      // Save the voting duration if provided
+      if (durationSeconds !== undefined && durationSeconds > 0) {
+        updateData.voting_duration_seconds = durationSeconds
+      }
+
       const { error } = await supabase
         .from('tasks')
-        .update({ status: 'voting_completed' })
+        .update(updateData)
         .eq('id', taskId)
 
       if (error) throw error
+      
+      // Reset duration state
+      setVotingDuration(0)
       loadSessionData()
     } catch (error) {
       console.error('Error updating task status:', error)
@@ -442,9 +456,16 @@ export default function SessionPage({ sessionCode }: SessionPageProps) {
   // Update task status to voting_completed when all participants have voted
   useEffect(() => {
     if (currentTask && allParticipantsVoted && currentTask.status === 'voting') {
-      updateTaskStatusToVotingCompleted(currentTask.id)
+      updateTaskStatusToVotingCompleted(currentTask.id, votingDuration)
     }
-  }, [currentTask, allParticipantsVoted, updateTaskStatusToVotingCompleted])
+  }, [currentTask, allParticipantsVoted, updateTaskStatusToVotingCompleted, votingDuration])
+
+  // Reset voting duration when a new voting task starts
+  useEffect(() => {
+    if (currentTask?.status === 'voting') {
+      setVotingDuration(0)
+    }
+  }, [currentTask?.id, currentTask?.status])
 
   if (isLoading) {
     return (
@@ -549,6 +570,7 @@ export default function SessionPage({ sessionCode }: SessionPageProps) {
             </div>
             <div className="flex items-center gap-3">
               {session && <VotingMusicToggle key={sessionCode} isVotingActive={isVotingInProgress} />}
+              {session && <VotingTimer isVotingActive={isVotingInProgress} onDurationChange={setVotingDuration} />}
               {currentParticipant && (
                 <Button onClick={() => setLeaveDialogOpen(true)} variant="outline" size="sm" className="border-black text-black hover:bg-black hover:text-white">
                   <LogOut className="w-4 h-4 mr-2" />

@@ -6,10 +6,28 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Badge } from '@/components/ui/badge'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogClose } from '@/components/ui/dialog'
-import { Task, Participant, Vote, supabase } from '@/lib/supabase'
+import { Task, Participant, Vote, supabase, TaskTag } from '@/lib/supabase'
 import { Download, FileText, ChevronDown, Copy, Check } from 'lucide-react'
 import { toast } from 'sonner'
 import { estimateToTShirtSize } from '@/lib/constants'
+
+// Helper function to get tag color classes
+const getTagColorClasses = (colorName: string) => {
+  const colorMap: Record<string, { bg: string; text: string; border: string }> = {
+    'pastel-blue': { bg: 'bg-blue-100', text: 'text-blue-700', border: 'border-blue-300' },
+    'pastel-pink': { bg: 'bg-pink-100', text: 'text-pink-700', border: 'border-pink-300' },
+    'pastel-green': { bg: 'bg-green-100', text: 'text-green-700', border: 'border-green-300' },
+    'pastel-purple': { bg: 'bg-purple-100', text: 'text-purple-700', border: 'border-purple-300' },
+    'pastel-yellow': { bg: 'bg-yellow-100', text: 'text-yellow-700', border: 'border-yellow-300' },
+    'pastel-orange': { bg: 'bg-orange-100', text: 'text-orange-700', border: 'border-orange-300' },
+    'pastel-teal': { bg: 'bg-teal-100', text: 'text-teal-700', border: 'border-teal-300' },
+    'pastel-rose': { bg: 'bg-rose-100', text: 'text-rose-700', border: 'border-rose-300' },
+    'pastel-indigo': { bg: 'bg-indigo-100', text: 'text-indigo-700', border: 'border-indigo-300' },
+    'pastel-cyan': { bg: 'bg-cyan-100', text: 'text-cyan-700', border: 'border-cyan-300' },
+  }
+  const color = colorMap[colorName] || colorMap['pastel-blue']
+  return `${color.bg} ${color.text} ${color.border}`
+}
 
 interface TaskHistoryProps {
   tasks: Task[]
@@ -69,6 +87,9 @@ export default function TaskHistory({ tasks, sessionId, participants }: TaskHist
         'Total Points': task.final_estimate 
           ? Math.round((task.final_estimate + (task.final_estimate * (task.meeting_buffer || 0))) * (task.iteration_multiplier || 1))
           : 0,
+        'Voting Duration': task.voting_duration_seconds 
+          ? `${Math.floor(task.voting_duration_seconds / 60)}:${(task.voting_duration_seconds % 60).toString().padStart(2, '0')}`
+          : 'N/A',
         'Created At': new Date(task.created_at).toLocaleDateString()
       }))
 
@@ -132,6 +153,11 @@ export default function TaskHistory({ tasks, sessionId, participants }: TaskHist
     }
     
     jiraText += `* *Total Effort:* *${finalTotal} points*\n`
+    if (task.voting_duration_seconds) {
+      const minutes = Math.floor(task.voting_duration_seconds / 60)
+      const seconds = task.voting_duration_seconds % 60
+      jiraText += `* *Voting Duration:* ${minutes}:${seconds.toString().padStart(2, '0')}\n`
+    }
     jiraText += `* *Completed:* ${new Date(task.created_at).toLocaleDateString()}\n`
     
     navigator.clipboard.writeText(jiraText)
@@ -202,6 +228,7 @@ export default function TaskHistory({ tasks, sessionId, participants }: TaskHist
                 <TableHead>Buffer</TableHead>
                 <TableHead>Iterations</TableHead>
                 <TableHead>Total Points</TableHead>
+                <TableHead>Duration</TableHead>
                 <TableHead>Date</TableHead>
                 <TableHead className="w-20"></TableHead>
               </TableRow>
@@ -216,16 +243,34 @@ export default function TaskHistory({ tasks, sessionId, participants }: TaskHist
                 return (
                   <TableRow key={task.id}>
                     <TableCell>
-                      <button
-                        type="button"
-                        onClick={() => {
-                          setSelectedTask(task)
-                          setTaskDialogOpen(true)
-                        }}
-                        className="font-medium text-blue-600 hover:underline focus:outline-none focus:ring-2 focus:ring-blue-300 rounded"
-                      >
-                        {task.title}
-                      </button>
+                      <div className="space-y-1">
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setSelectedTask(task)
+                            setTaskDialogOpen(true)
+                          }}
+                          className="font-medium text-blue-600 hover:underline focus:outline-none focus:ring-2 focus:ring-blue-300 rounded block"
+                        >
+                          {task.title}
+                        </button>
+                        {task.tags && task.tags.length > 0 && (
+                          <div className="flex flex-wrap gap-1">
+                            {task.tags.map((tag, tagIndex) => {
+                              const colorClasses = getTagColorClasses(tag.color)
+                              return (
+                                <Badge
+                                  key={tagIndex}
+                                  variant="outline"
+                                  className={`${colorClasses} border px-1.5 py-0 text-[10px] font-medium`}
+                                >
+                                  {tag.label}
+                                </Badge>
+                              )
+                            })}
+                          </div>
+                        )}
+                      </div>
                     </TableCell>
                     <TableCell>
                       <Badge variant="outline">{baseEstimate} pts</Badge>
@@ -248,6 +293,15 @@ export default function TaskHistory({ tasks, sessionId, participants }: TaskHist
                       <Badge className="bg-blue-600 text-white">
                         {Math.round(finalTotal)} pts
                       </Badge>
+                    </TableCell>
+                    <TableCell>
+                      {task.voting_duration_seconds ? (
+                        <span className="text-sm text-gray-600 font-mono">
+                          {Math.floor(task.voting_duration_seconds / 60)}:{(task.voting_duration_seconds % 60).toString().padStart(2, '0')}
+                        </span>
+                      ) : (
+                        <span className="text-sm text-gray-400">N/A</span>
+                      )}
                     </TableCell>
                     <TableCell>
                       <span className="text-sm text-gray-600">
@@ -339,6 +393,29 @@ export default function TaskHistory({ tasks, sessionId, participants }: TaskHist
                     </div>
                   </div>
 
+                  {/* Tags Section */}
+                  {selectedTask.tags && selectedTask.tags.length > 0 && (
+                    <div className="rounded-md border border-gray-200 bg-gray-50 px-4 py-3">
+                      <p className="font-medium text-gray-900 text-sm mb-2">
+                        Tags
+                      </p>
+                      <div className="flex flex-wrap gap-2">
+                        {selectedTask.tags.map((tag, index) => {
+                          const colorClasses = getTagColorClasses(tag.color)
+                          return (
+                            <Badge
+                              key={index}
+                              variant="outline"
+                              className={`${colorClasses} border px-2 py-1 text-xs font-medium`}
+                            >
+                              {tag.label}
+                            </Badge>
+                          )
+                        })}
+                      </div>
+                    </div>
+                  )}
+
                   {/* Voters Section */}
                   {taskVotes.length > 0 && (
                     <div className="rounded-md border border-gray-200 bg-gray-50 px-4 py-3">
@@ -365,6 +442,13 @@ export default function TaskHistory({ tasks, sessionId, participants }: TaskHist
                     <div className="mt-2 space-y-1">
                       <p>Logged on <span className="font-medium">{completedDate.toLocaleDateString()}</span></p>
                       <p>Created at <span className="font-medium">{completedDate.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span></p>
+                      {selectedTask.voting_duration_seconds && (
+                        <p>
+                          Voting duration: <span className="font-medium font-mono">
+                            {Math.floor(selectedTask.voting_duration_seconds / 60)}:{(selectedTask.voting_duration_seconds % 60).toString().padStart(2, '0')}
+                          </span>
+                        </p>
+                      )}
                     </div>
                   </div>
                 </div>

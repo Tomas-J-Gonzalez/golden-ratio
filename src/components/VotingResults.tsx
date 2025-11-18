@@ -17,7 +17,8 @@ import {
   FIDELITY_OPTIONS,
   MEETING_BUFFER_OPTIONS,
   ITERATION_MULTIPLIER_OPTIONS,
-  estimateToTShirtSize
+  estimateToTShirtSize,
+  calculateEstimate
 } from '@/lib/constants'
 
 // Support both old and new factor structures for backward compatibility
@@ -159,15 +160,23 @@ export default function VotingResults({ taskTitle, taskId, votes, participants, 
     
     setIsCompleting(true)
     try {
-      // Calculate the average estimate to store as final estimate
+      // Calculate the average estimate using the improved calculateEstimate function
       const estimates = votes.map(vote => {
         if (vote.factors && typeof vote.factors === 'object') {
-          const factors = vote.factors as Record<string, number>
-          const baseEstimate = factors.time || 1
-          const complexityMultiplier = (factors.effort + factors.sprints + (factors.designerCount || 1) + factors.breakpoints + factors.fidelity) / 5
-          return Math.round(baseEstimate * complexityMultiplier)
+          const factors = vote.factors as Record<string, any>
+          // Use the same calculation as VotingArea
+          return calculateEstimate({
+            effort: factors.effort || 1,
+            sprints: factors.sprints || 0.1,
+            designerCount: factors.designerCount || 1,
+            designerLevels: factors.designerLevels || [1],
+            breakpoints: factors.breakpoints || 1,
+            fidelity: factors.fidelity || 1,
+            meetingBuffer: factors.meetingBuffer || 0,
+            iterationMultiplier: factors.iterationMultiplier || 1
+          })
         }
-        return 0
+        return vote.value || 0
       })
       const averageEstimate = estimates.length > 0 ? Math.round(estimates.reduce((sum, est) => sum + est, 0) / estimates.length) : 0
 
@@ -195,16 +204,23 @@ export default function VotingResults({ taskTitle, taskId, votes, participants, 
     }
   }
 
-  // Calculate statistics
+  // Calculate statistics using the improved calculateEstimate function
   const estimates = votes.map(vote => {
     if (vote.factors && typeof vote.factors === 'object') {
-      const factors = vote.factors as Record<string, number>
-      // Simple calculation for display - you might want to use the actual calculateEstimate function
-      const baseEstimate = factors.time || 1
-      const complexityMultiplier = (factors.effort + factors.sprints + (factors.designerCount || 1) + factors.breakpoints + factors.fidelity) / 5
-      return Math.round(baseEstimate * complexityMultiplier)
+      const factors = vote.factors as Record<string, any>
+      // Use the same calculation as VotingArea
+      return calculateEstimate({
+        effort: factors.effort || 1,
+        sprints: factors.sprints || 0.1,
+        designerCount: factors.designerCount || 1,
+        designerLevels: factors.designerLevels || [1],
+        breakpoints: factors.breakpoints || 1,
+        fidelity: factors.fidelity || 1,
+        meetingBuffer: factors.meetingBuffer || 0,
+        iterationMultiplier: factors.iterationMultiplier || 1
+      })
     }
-    return 0
+    return vote.value || 0
   })
 
   const averageEstimate = estimates.length > 0 ? Math.round(estimates.reduce((sum, est) => sum + est, 0) / estimates.length) : 0

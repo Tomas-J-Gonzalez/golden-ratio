@@ -74,23 +74,50 @@ export const FIDELITY_OPTIONS = [
   { value: 8, label: 'Production-ready', description: 'All designs dev-ready with final specifications' }
 ]
 
+// Maximum points that can be assigned to a task
+export const MAX_POINTS = 100
+
 // Calculate total estimate based on individual factors
+// This is a more realistic calculation that properly weights all factors
 export const calculateEstimate = (factors: {
   effort: number;
-  time?: number;
   sprints: number;
   designerCount: number;
   designerLevels: number[]; // Array of designer levels
   breakpoints: number;
   fidelity: number;
+  meetingBuffer?: number; // Optional, defaults to 0
+  iterationMultiplier?: number; // Optional, defaults to 1
 }) => {
-  // Calculate base estimate from all factors if time is not provided
-  const baseEstimate = factors.time || (factors.effort + factors.sprints + factors.fidelity) / 3;
+  // Calculate average designer level (higher level = more efficient, so lower multiplier)
+  // We invert this: higher level designers are more efficient, so they reduce the estimate
   const averageDesignerLevel = factors.designerLevels.length > 0 
     ? factors.designerLevels.reduce((sum, level) => sum + level, 0) / factors.designerLevels.length
     : 1;
-  const complexityMultiplier = (factors.effort + factors.sprints + factors.designerCount + averageDesignerLevel + factors.breakpoints + factors.fidelity) / 6;
-  return Math.round(baseEstimate * complexityMultiplier);
+  
+  // Base complexity score from core factors
+  // Effort (1-16), Sprints (0.1-3), Breakpoints (1-3), Fidelity (1-8)
+  const baseComplexity = (factors.effort + factors.sprints * 5 + factors.breakpoints * 2 + factors.fidelity) / 4;
+  
+  // Designer count multiplier (more designers = more coordination overhead)
+  // But higher level designers are more efficient
+  const designerEfficiency = averageDesignerLevel > 1 ? 1 / (1 + (averageDesignerLevel - 1) * 0.2) : 1;
+  const designerMultiplier = 1 + (factors.designerCount - 1) * 0.15 * designerEfficiency;
+  
+  // Calculate base points
+  let basePoints = baseComplexity * designerMultiplier;
+  
+  // Apply meeting buffer (adds percentage to base)
+  const meetingBuffer = factors.meetingBuffer || 0;
+  basePoints = basePoints * (1 + meetingBuffer);
+  
+  // Apply iteration multiplier
+  const iterationMultiplier = factors.iterationMultiplier || 1;
+  basePoints = basePoints * iterationMultiplier;
+  
+  // Round to nearest integer and cap at MAX_POINTS
+  const finalPoints = Math.round(basePoints);
+  return Math.min(finalPoints, MAX_POINTS);
 }
 
 // Convert estimate to t-shirt size and hours range
@@ -100,7 +127,8 @@ export const estimateToTShirtSize = (estimate: number) => {
   if (estimate <= 8) return 'M (1-2 days)';
   if (estimate <= 16) return 'L (3-5 days)';
   if (estimate <= 32) return 'XL (1+ weeks)';
-  return 'XXL (2+ weeks)';
+  if (estimate <= 64) return 'XXL (2+ weeks)';
+  return `XXL+ (${estimate} points)`;
 }
 
 // Legacy function for backward compatibility

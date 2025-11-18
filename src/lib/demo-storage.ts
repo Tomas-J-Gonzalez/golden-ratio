@@ -133,7 +133,9 @@ export class DemoStorage {
       final_estimate: data.final_estimate || null,
       meeting_buffer: data.meeting_buffer || null,
       iteration_multiplier: data.iteration_multiplier || null,
-      votes_revealed: data.votes_revealed || false
+      votes_revealed: data.votes_revealed || false,
+      voting_duration_seconds: data.voting_duration_seconds || null,
+      tags: data.tags || null
     }
     this.save('task', id, task)
     return task

@@ -8,6 +8,7 @@ import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
 import { Badge } from '@/components/ui/badge'
 import { ConfirmDialog } from './ui/confirm-dialog'
+import { TagPicker, TaskTag } from './TagPicker'
 import { supabase, Task } from '@/lib/supabase'
 import { Plus, Trash2, Play, GripVertical, Square, ChevronDown } from 'lucide-react'
 import { toast } from 'sonner'
@@ -38,6 +39,24 @@ interface TaskManagementProps {
   hasActiveVoting: boolean
 }
 
+// Helper function to get tag color classes
+const getTagColorClasses = (colorName: string) => {
+  const colorMap: Record<string, { bg: string; text: string; border: string }> = {
+    'pastel-blue': { bg: 'bg-blue-100', text: 'text-blue-700', border: 'border-blue-300' },
+    'pastel-pink': { bg: 'bg-pink-100', text: 'text-pink-700', border: 'border-pink-300' },
+    'pastel-green': { bg: 'bg-green-100', text: 'text-green-700', border: 'border-green-300' },
+    'pastel-purple': { bg: 'bg-purple-100', text: 'text-purple-700', border: 'border-purple-300' },
+    'pastel-yellow': { bg: 'bg-yellow-100', text: 'text-yellow-700', border: 'border-yellow-300' },
+    'pastel-orange': { bg: 'bg-orange-100', text: 'text-orange-700', border: 'border-orange-300' },
+    'pastel-teal': { bg: 'bg-teal-100', text: 'text-teal-700', border: 'border-teal-300' },
+    'pastel-rose': { bg: 'bg-rose-100', text: 'text-rose-700', border: 'border-rose-300' },
+    'pastel-indigo': { bg: 'bg-indigo-100', text: 'text-indigo-700', border: 'border-indigo-300' },
+    'pastel-cyan': { bg: 'bg-cyan-100', text: 'text-cyan-700', border: 'border-cyan-300' },
+  }
+  const color = colorMap[colorName] || colorMap['pastel-blue']
+  return `${color.bg} ${color.text} ${color.border}`
+}
+
 // Sortable Task Item Component
 function SortableTaskItem({ 
   task, 
@@ -46,6 +65,7 @@ function SortableTaskItem({
   onStartVoting, 
   onStopVoting,
   onDeleteClick,
+  onTagsUpdate,
   hasActiveVoting,
   hasVotingCompleted
 }: { 
@@ -55,6 +75,7 @@ function SortableTaskItem({
   onStartVoting: (taskId: string) => void
   onStopVoting: (taskId: string) => void
   onDeleteClick: (taskId: string) => void
+  onTagsUpdate: (taskId: string, tags: TaskTag[]) => void
   hasActiveVoting: boolean
   hasVotingCompleted: boolean
 }) {
@@ -131,6 +152,32 @@ function SortableTaskItem({
             </Badge>
           )}
         </div>
+        {/* Tags */}
+        {isModerator && task.status === 'pending' && (
+          <div className="mt-2">
+            <TagPicker
+              tags={task.tags || []}
+              onTagsChange={(tags) => onTagsUpdate(task.id, tags)}
+              disabled={false}
+            />
+          </div>
+        )}
+        {task.tags && task.tags.length > 0 && task.status !== 'pending' && (
+          <div className="mt-2 flex flex-wrap gap-1">
+            {task.tags.map((tag, index) => {
+              const colorClasses = getTagColorClasses(tag.color)
+              return (
+                <Badge
+                  key={index}
+                  variant="outline"
+                  className={`${colorClasses} border px-2 py-0.5 text-xs font-medium`}
+                >
+                  {tag.label}
+                </Badge>
+              )
+            })}
+          </div>
+        )}
       </div>
 
       {/* Action Buttons */}
@@ -185,6 +232,7 @@ function SortableTaskItem({
 export default function TaskManagement({ sessionId, tasks, onTaskUpdate, isModerator, hasActiveVoting }: TaskManagementProps) {
   const [newTaskTitle, setNewTaskTitle] = useState('')
   const [newTaskDescription, setNewTaskDescription] = useState('')
+  const [newTaskTags, setNewTaskTags] = useState<TaskTag[]>([])
   const [isAdding, setIsAdding] = useState(false)
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false)
   const [taskToDelete, setTaskToDelete] = useState<string | null>(null)
@@ -252,13 +300,15 @@ export default function TaskManagement({ sessionId, tasks, onTaskUpdate, isModer
           session_id: sessionId,
           title: newTaskTitle,
           description: newTaskDescription || null,
-          status: 'pending'
+          status: 'pending',
+          tags: newTaskTags.length > 0 ? newTaskTags : null
         })
 
       if (error) throw error
 
       setNewTaskTitle('')
       setNewTaskDescription('')
+      setNewTaskTags([])
       toast.success('Task added successfully')
       onTaskUpdate()
     } catch (error) {
@@ -266,6 +316,21 @@ export default function TaskManagement({ sessionId, tasks, onTaskUpdate, isModer
       toast.error('Failed to add task. Please try again.')
     } finally {
       setIsAdding(false)
+    }
+  }
+
+  const updateTaskTags = async (taskId: string, tags: TaskTag[]) => {
+    try {
+      const { error } = await supabase
+        .from('tasks')
+        .update({ tags: tags.length > 0 ? tags : null })
+        .eq('id', taskId)
+
+      if (error) throw error
+      onTaskUpdate()
+    } catch (error) {
+      console.error('Error updating task tags:', error)
+      toast.error('Failed to update tags. Please try again.')
     }
   }
 
@@ -479,6 +544,16 @@ export default function TaskManagement({ sessionId, tasks, onTaskUpdate, isModer
                   </div>
                 )}
 
+                {/* Tags */}
+                <div className="space-y-2">
+                  <Label>Tags (Optional)</Label>
+                  <TagPicker
+                    tags={newTaskTags}
+                    onTagsChange={setNewTaskTags}
+                    disabled={false}
+                  />
+                </div>
+
                 <Button 
                   onClick={addTask} 
                   disabled={!newTaskTitle.trim() || isAdding || hasActiveVoting}
@@ -523,6 +598,7 @@ export default function TaskManagement({ sessionId, tasks, onTaskUpdate, isModer
                       setTaskToDelete(taskId)
                       setDeleteDialogOpen(true)
                     }}
+                    onTagsUpdate={updateTaskTags}
                     hasActiveVoting={hasActiveVoting}
                     hasVotingCompleted={hasVotingCompleted}
                   />

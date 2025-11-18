@@ -37,6 +37,11 @@ export interface Participant {
   avatar_emoji?: string
 }
 
+export interface TaskTag {
+  label: string
+  color: string
+}
+
 export interface Task {
   id: string
   session_id: string
@@ -48,6 +53,8 @@ export interface Task {
   meeting_buffer?: number
   iteration_multiplier?: number
   votes_revealed?: boolean
+  voting_duration_seconds?: number
+  tags?: TaskTag[]
 }
 
 export interface Vote {
