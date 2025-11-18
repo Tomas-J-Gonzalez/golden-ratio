@@ -1,18 +1,36 @@
 'use client'
 
+import { useState, useEffect } from 'react'
 import { Task } from '@/lib/supabase'
 import { Badge } from '@/components/ui/badge'
 import { useDraggable } from '@dnd-kit/core'
 import { CSS } from '@dnd-kit/utilities'
-import { Expand } from 'lucide-react'
+import { Expand, Edit2, Check, X } from 'lucide-react'
+import { Input } from '@/components/ui/input'
+import { Textarea } from '@/components/ui/textarea'
+import { Button } from '@/components/ui/button'
 
 interface TaskCardProps {
   task: Task
   isOver?: boolean
   onExpand?: (task: Task) => void
+  isModerator?: boolean
+  onUpdate?: (taskId: string, updates: { title?: string; description?: string }) => Promise<void>
 }
 
-export function TaskCard({ task, isOver, onExpand }: TaskCardProps) {
+export function TaskCard({ task, isOver, onExpand, isModerator = false, onUpdate }: TaskCardProps) {
+  const [isEditing, setIsEditing] = useState(false)
+  const [editTitle, setEditTitle] = useState(task.title)
+  const [editDescription, setEditDescription] = useState(task.description || '')
+  const [isSaving, setIsSaving] = useState(false)
+
+  // Update local state when task prop changes (but not when editing)
+  useEffect(() => {
+    if (!isEditing) {
+      setEditTitle(task.title)
+      setEditDescription(task.description || '')
+    }
+  }, [task.title, task.description, isEditing])
   const {
     attributes,
     listeners,
@@ -63,13 +81,51 @@ export function TaskCard({ task, isOver, onExpand }: TaskCardProps) {
   }
 
   const handleCardClick = (e: React.MouseEvent) => {
+    // Don't expand if editing
+    if (isEditing) return
+    
     // Only expand if not dragging (dnd-kit handles drag detection)
     if (!isDragging && onExpand) {
-      // Check if click is on the card content, not on drag handles
+      // Check if click is on the card content, not on drag handles or buttons
       const target = e.target as HTMLElement
-      if (!target.closest('[data-sensor-instance]')) {
+      if (!target.closest('[data-sensor-instance]') && 
+          !target.closest('button') && 
+          !target.closest('input') && 
+          !target.closest('textarea')) {
         onExpand(task)
       }
+    }
+  }
+
+  const handleEditClick = (e: React.MouseEvent) => {
+    e.stopPropagation()
+    setIsEditing(true)
+    setEditTitle(task.title)
+    setEditDescription(task.description || '')
+  }
+
+  const handleCancelEdit = (e: React.MouseEvent) => {
+    e.stopPropagation()
+    setIsEditing(false)
+    setEditTitle(task.title)
+    setEditDescription(task.description || '')
+  }
+
+  const handleSaveEdit = async (e: React.MouseEvent) => {
+    e.stopPropagation()
+    if (!onUpdate) return
+
+    setIsSaving(true)
+    try {
+      await onUpdate(task.id, {
+        title: editTitle.trim(),
+        description: editDescription.trim() || undefined
+      })
+      setIsEditing(false)
+    } catch (error) {
+      console.error('Error updating task:', error)
+    } finally {
+      setIsSaving(false)
     }
   }
 
@@ -85,25 +141,84 @@ export function TaskCard({ task, isOver, onExpand }: TaskCardProps) {
       `}
       onClick={handleCardClick}
     >
-      {/* Expand button in top right */}
-      {onExpand && (
-        <button
-          onClick={handleExpandClick}
-          className="absolute top-2 right-2 p-1 rounded hover:bg-gray-100 transition-colors z-10"
-          aria-label="Expand task details"
-          title="View task details"
-        >
-          <Expand className="w-3.5 h-3.5 text-gray-500 hover:text-gray-700" />
-        </button>
-      )}
+      {/* Action buttons in top right */}
+      <div className="absolute top-2 right-2 flex gap-1 z-10">
+        {isModerator && (
+          <button
+            onClick={isEditing ? handleCancelEdit : handleEditClick}
+            className="p-1 rounded hover:bg-gray-100 transition-colors"
+            aria-label={isEditing ? "Cancel edit" : "Edit task"}
+            title={isEditing ? "Cancel edit" : "Edit task"}
+          >
+            {isEditing ? (
+              <X className="w-3.5 h-3.5 text-gray-500 hover:text-gray-700" />
+            ) : (
+              <Edit2 className="w-3.5 h-3.5 text-gray-500 hover:text-gray-700" />
+            )}
+          </button>
+        )}
+        {onExpand && (
+          <button
+            onClick={handleExpandClick}
+            className="p-1 rounded hover:bg-gray-100 transition-colors"
+            aria-label="Expand task details"
+            title="View task details"
+          >
+            <Expand className="w-3.5 h-3.5 text-gray-500 hover:text-gray-700" />
+          </button>
+        )}
+      </div>
       
-      {/* Drag handle area - exclude expand button */}
-      <div {...listeners} {...attributes} className="pr-6">
-        <div className="font-medium text-sm mb-1 line-clamp-2">{task.title}</div>
-      
-      {task.description && (
-        <div className="text-xs text-gray-600 mb-2 line-clamp-2">{task.description}</div>
-      )}
+      {/* Drag handle area - exclude buttons */}
+      <div {...listeners} {...attributes} className={isModerator && onExpand ? "pr-14" : onExpand ? "pr-10" : isModerator ? "pr-10" : ""}>
+        {isEditing ? (
+          <div className="space-y-2">
+            <Input
+              value={editTitle}
+              onChange={(e) => setEditTitle(e.target.value)}
+              placeholder="Task title"
+              className="text-sm font-medium h-8"
+              onClick={(e) => e.stopPropagation()}
+              onKeyDown={(e: React.KeyboardEvent<HTMLInputElement>) => {
+                if (e.key === 'Enter' && !e.shiftKey) {
+                  e.preventDefault()
+                  handleSaveEdit(e as unknown as React.MouseEvent)
+                } else if (e.key === 'Escape') {
+                  handleCancelEdit(e as unknown as React.MouseEvent)
+                }
+              }}
+            />
+            <Textarea
+              value={editDescription}
+              onChange={(e) => setEditDescription(e.target.value)}
+              placeholder="Task description (optional)"
+              className="text-xs min-h-[60px] resize-none"
+              onClick={(e) => e.stopPropagation()}
+              onKeyDown={(e: React.KeyboardEvent<HTMLTextAreaElement>) => {
+                if (e.key === 'Escape') {
+                  handleCancelEdit(e as unknown as React.MouseEvent)
+                }
+              }}
+            />
+            <Button
+              size="sm"
+              onClick={handleSaveEdit}
+              disabled={isSaving || !editTitle.trim()}
+              className="w-full h-7 text-xs"
+            >
+              <Check className="w-3 h-3 mr-1" />
+              {isSaving ? 'Saving...' : 'Save'}
+            </Button>
+          </div>
+        ) : (
+          <>
+            <div className="font-medium text-sm mb-1 line-clamp-2">{task.title}</div>
+          
+            {task.description && (
+              <div className="text-xs text-gray-600 mb-2 line-clamp-2">{task.description}</div>
+            )}
+          </>
+        )}
 
       <div className="flex items-center justify-between mb-2">
         <Badge variant="outline" className="text-xs font-semibold">

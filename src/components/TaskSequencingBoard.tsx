@@ -27,6 +27,7 @@ interface TaskSequencingBoardProps {
   }
   onConfigUpdate: () => void
   participants?: Participant[]
+  isModerator?: boolean
 }
 
 export function TaskSequencingBoard({
@@ -34,7 +35,8 @@ export function TaskSequencingBoard({
   tasks,
   sequencingConfig,
   onConfigUpdate,
-  participants = []
+  participants = [],
+  isModerator = false
 }: TaskSequencingBoardProps) {
   const [organizedTasks, setOrganizedTasks] = useState<Record<number, Task[]>>({})
   const [backlogTasks, setBacklogTasks] = useState<Task[]>([])
@@ -314,6 +316,28 @@ export function TaskSequencingBoard({
     setTaskDialogOpen(true)
   }
 
+  const handleTaskUpdate = async (taskId: string, updates: { title?: string; description?: string }) => {
+    try {
+      const updateData: { title?: string; description?: string } = {}
+      if (updates.title !== undefined) updateData.title = updates.title
+      if (updates.description !== undefined) updateData.description = updates.description
+
+      const { error } = await supabase
+        .from('tasks')
+        .update(updateData)
+        .eq('id', taskId)
+
+      if (error) throw error
+
+      toast.success('Task updated successfully')
+      onConfigUpdate()
+    } catch (error) {
+      console.error('Error updating task:', error)
+      toast.error('Failed to update task. Please try again.')
+      throw error
+    }
+  }
+
   const sprintNumbers = Array.from(
     { length: sequencingConfig.sprintsPerQuarter },
     (_, i) => sequencingConfig.startingSprint + i
@@ -365,9 +389,14 @@ export function TaskSequencingBoard({
         onDragStart={handleDragStart}
         onDragEnd={handleDragEnd}
       >
-        <div className="flex gap-4 overflow-x-auto pb-4 -mx-4 px-4" style={{ scrollbarWidth: 'thin' }}>
+        <div className="flex gap-4 overflow-x-auto pb-4" style={{ scrollbarWidth: 'thin' }}>
           {/* Backlog Column */}
-          <BacklogColumn tasks={backlogTasks} onTaskExpand={handleTaskExpand} />
+          <BacklogColumn 
+            tasks={backlogTasks} 
+            onTaskExpand={handleTaskExpand}
+            isModerator={isModerator}
+            onTaskUpdate={handleTaskUpdate}
+          />
 
           {/* Sprint Columns */}
           <SortableContext items={sprintNumbers.map(n => `sprint-${n}`)} strategy={horizontalListSortingStrategy}>
@@ -391,6 +420,8 @@ export function TaskSequencingBoard({
                     maxCapacity={40}
                     onTaskExpand={handleTaskExpand}
                     sprintStartDate={sprintStartDate}
+                    isModerator={isModerator}
+                    onTaskUpdate={handleTaskUpdate}
                   />
                 </div>
               )
@@ -537,7 +568,17 @@ export function TaskSequencingBoard({
 }
 
 // Backlog Column Component
-function BacklogColumn({ tasks, onTaskExpand }: { tasks: Task[], onTaskExpand?: (task: Task) => void }) {
+function BacklogColumn({ 
+  tasks, 
+  onTaskExpand,
+  isModerator = false,
+  onTaskUpdate
+}: { 
+  tasks: Task[]
+  onTaskExpand?: (task: Task) => void
+  isModerator?: boolean
+  onTaskUpdate?: (taskId: string, updates: { title?: string; description?: string }) => Promise<void>
+}) {
   const { setNodeRef, isOver } = useDroppable({
     id: 'backlog',
     data: {
@@ -558,7 +599,14 @@ function BacklogColumn({ tasks, onTaskExpand }: { tasks: Task[], onTaskExpand?: 
         <div className="flex-1 overflow-y-auto space-y-2">
           <SortableContext items={tasks.map(t => t.id)} strategy={verticalListSortingStrategy}>
             {tasks.map((task) => (
-              <TaskCard key={task.id} task={task} isOver={isOver} onExpand={onTaskExpand} />
+              <TaskCard 
+                key={task.id} 
+                task={task} 
+                isOver={isOver} 
+                onExpand={onTaskExpand}
+                isModerator={isModerator}
+                onUpdate={onTaskUpdate}
+              />
             ))}
           </SortableContext>
           {tasks.length === 0 && (

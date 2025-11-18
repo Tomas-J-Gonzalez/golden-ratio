@@ -14,7 +14,7 @@ import TaskHistory from './TaskHistory'
 import { EmojiPicker } from './EmojiPicker'
 import { ConfirmDialog } from './ui/confirm-dialog'
 import { VotingMusicToggle } from './VotingMusicToggle'
-import { VotingTimer } from './VotingTimer'
+// import { VotingTimer } from './VotingTimer' // Temporarily hidden
 import { Users, Copy, Check, LogOut } from 'lucide-react'
 import { toast } from 'sonner'
 
@@ -570,7 +570,8 @@ export default function SessionPage({ sessionCode }: SessionPageProps) {
             </div>
             <div className="flex items-center gap-3">
               {session && <VotingMusicToggle key={`music-${currentTask?.id || 'none'}`} isVotingActive={isVotingInProgress} />}
-              {session && <VotingTimer key={`timer-${currentTask?.id || 'none'}`} isVotingActive={isVotingInProgress} onDurationChange={setVotingDuration} />}
+              {/* Timer temporarily hidden */}
+              {/* {session && <VotingTimer key={`timer-${currentTask?.id || 'none'}`} isVotingActive={isVotingInProgress} onDurationChange={setVotingDuration} />} */}
               {currentParticipant && (
                 <Button onClick={() => setLeaveDialogOpen(true)} variant="outline" size="sm" className="border-black text-black hover:bg-black hover:text-white">
                   <LogOut className="w-4 h-4 mr-2" />

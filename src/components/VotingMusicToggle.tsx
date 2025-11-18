@@ -29,12 +29,26 @@ export function VotingMusicToggle({ isVotingActive }: VotingMusicToggleProps) {
       setIsLoadingAudio(false)
     }
 
+    const handleLoadedData = () => {
+      setIsLoadingAudio(false)
+    }
+
+    // Try multiple events to ensure we catch when audio is ready
     audioElement.addEventListener('canplaythrough', handleCanPlayThrough)
+    audioElement.addEventListener('loadeddata', handleLoadedData)
+    
+    // Also set a timeout fallback in case events don't fire
+    const timeoutId = setTimeout(() => {
+      setIsLoadingAudio(false)
+    }, 1000)
+
     audioRef.current = audioElement
 
     return () => {
+      clearTimeout(timeoutId)
       audioElement.pause()
       audioElement.removeEventListener('canplaythrough', handleCanPlayThrough)
+      audioElement.removeEventListener('loadeddata', handleLoadedData)
       audioRef.current = null
     }
   }, [])
@@ -67,10 +81,42 @@ export function VotingMusicToggle({ isVotingActive }: VotingMusicToggleProps) {
   }, [isEnabled, isVotingActive, volume])
 
   // Reset music state when voting ends (transitions from active to inactive)
+  // Also ensure audio is ready when voting becomes active again
   useEffect(() => {
     if (!isVotingActive) {
       setIsEnabled(false)
       setShowVolumeControl(false)
+      // Pause and reset audio when voting ends
+      if (audioRef.current) {
+        audioRef.current.pause()
+        audioRef.current.currentTime = 0
+      }
+    } else {
+      // When voting becomes active, ensure audio is ready
+      if (audioRef.current) {
+        // Check if audio is already loaded
+        if (audioRef.current.readyState >= 2) {
+          setIsLoadingAudio(false)
+        } else {
+          // Wait for audio to be ready
+          const handleReady = () => {
+            setIsLoadingAudio(false)
+          }
+          audioRef.current.addEventListener('canplaythrough', handleReady, { once: true })
+          audioRef.current.addEventListener('loadeddata', handleReady, { once: true })
+          
+          // Fallback timeout
+          const timeoutId = setTimeout(() => {
+            setIsLoadingAudio(false)
+          }, 500)
+          
+          return () => {
+            clearTimeout(timeoutId)
+            audioRef.current?.removeEventListener('canplaythrough', handleReady)
+            audioRef.current?.removeEventListener('loadeddata', handleReady)
+          }
+        }
+      }
     }
   }, [isVotingActive])
 

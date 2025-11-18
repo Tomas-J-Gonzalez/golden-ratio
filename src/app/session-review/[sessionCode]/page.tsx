@@ -30,6 +30,7 @@ export default function SessionReviewPage({ params }: SessionReviewPageProps) {
   const [taskVotes, setTaskVotes] = useState<Vote[]>([])
   const [showSequencing, setShowSequencing] = useState(false)
   const [setupDialogOpen, setSetupDialogOpen] = useState(false)
+  const [currentParticipantId, setCurrentParticipantId] = useState<string | null>(null)
 
   useEffect(() => {
     loadSessionData()
@@ -100,6 +101,10 @@ export default function SessionReviewPage({ params }: SessionReviewPageProps) {
 
       if (participantsError) throw participantsError
       setParticipants(participantsData || [])
+
+      // Get current participant ID from localStorage
+      const storedParticipantId = localStorage.getItem(`participant_${sessionCode}`)
+      setCurrentParticipantId(storedParticipantId)
 
     } catch (error) {
       console.error('Error loading session data:', error)
@@ -226,7 +231,7 @@ export default function SessionReviewPage({ params }: SessionReviewPageProps) {
     <>
       <TopNavigation />
       <div className="min-h-screen bg-gray-50 pt-16">
-        <div className={`container mx-auto px-4 py-8 ${showSequencing ? 'max-w-[calc(100vw-2rem)]' : 'max-w-5xl'}`}>
+        <div className={`container mx-auto px-4 py-8 ${showSequencing ? 'max-w-full' : 'max-w-5xl'}`}>
           {/* Header */}
           <div className="mb-8">
             <div className="flex items-start justify-between mb-4">
@@ -288,6 +293,7 @@ export default function SessionReviewPage({ params }: SessionReviewPageProps) {
                 }}
                 onConfigUpdate={loadSessionData}
                 participants={participants}
+                isModerator={currentParticipantId ? participants.find(p => p.id === currentParticipantId)?.is_moderator || false : false}
               />
             </div>
           )}

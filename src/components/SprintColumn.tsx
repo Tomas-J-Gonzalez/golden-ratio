@@ -13,9 +13,11 @@ interface SprintColumnProps {
   maxCapacity?: number
   onTaskExpand?: (task: Task) => void
   sprintStartDate?: Date | null
+  isModerator?: boolean
+  onTaskUpdate?: (taskId: string, updates: { title?: string; description?: string }) => Promise<void>
 }
 
-export function SprintColumn({ sprintNumber, tasks, maxCapacity = 40, onTaskExpand, sprintStartDate }: SprintColumnProps) {
+export function SprintColumn({ sprintNumber, tasks, maxCapacity = 40, onTaskExpand, sprintStartDate, isModerator = false, onTaskUpdate }: SprintColumnProps) {
   const { setNodeRef, isOver } = useDroppable({
     id: `sprint-${sprintNumber}`,
     data: {
@@ -91,7 +93,14 @@ export function SprintColumn({ sprintNumber, tasks, maxCapacity = 40, onTaskExpa
         <SortableContext items={tasks.map(t => t.id)} strategy={verticalListSortingStrategy}>
           {tasks.length > 0 ? (
             tasks.map((task) => (
-              <TaskCard key={task.id} task={task} isOver={isOver} onExpand={onTaskExpand} />
+              <TaskCard 
+                key={task.id} 
+                task={task} 
+                isOver={isOver} 
+                onExpand={onTaskExpand}
+                isModerator={isModerator}
+                onUpdate={onTaskUpdate}
+              />
             ))
           ) : (
             <div className="text-center text-xs text-gray-400 py-8 border-2 border-dashed border-gray-300 rounded">
