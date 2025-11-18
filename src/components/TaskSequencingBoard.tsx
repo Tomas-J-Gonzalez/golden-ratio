@@ -444,14 +444,15 @@ export function TaskSequencingBoard({
             <Download className="w-4 h-4 mr-2" />
             Export CSV
           </Button>
-          <Button
+          {/* Miro export temporarily hidden */}
+          {/* <Button
             variant="outline"
             size="sm"
             onClick={exportToMiro}
           >
             <ExternalLink className="w-4 h-4 mr-2" />
             Copy to Miro
-          </Button>
+          </Button> */}
           <Button
             variant="outline"
             size="sm"
