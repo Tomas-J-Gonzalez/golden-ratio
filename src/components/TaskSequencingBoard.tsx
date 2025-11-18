@@ -9,7 +9,7 @@ import { supabase } from '@/lib/supabase'
 import { SprintColumn } from './SprintColumn'
 import { TaskCard } from './TaskCard'
 import { Button } from '@/components/ui/button'
-import { Download, Settings, RotateCcw } from 'lucide-react'
+import { Download, Settings, RotateCcw, ExternalLink } from 'lucide-react'
 import { toast } from 'sonner'
 import { SequencingSetupDialog } from './SequencingSetupDialog'
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from '@/components/ui/sheet'
@@ -253,6 +253,80 @@ export function TaskSequencingBoard({
     toast.success('Sequencing exported to CSV!')
   }
 
+  const exportToMiro = async () => {
+    try {
+      const sprintNumbers = Array.from(
+        { length: sequencingConfig.sprintsPerQuarter },
+        (_, i) => sequencingConfig.startingSprint + i
+      )
+
+      // Create Miro-compatible format (tab-separated for easy paste into Miro)
+      // Miro converts tab-separated data into sticky notes when pasted
+      const miroRows: string[] = []
+      
+      // Header row (optional, Miro will use first row as headers if detected)
+      miroRows.push('Sprint\tTask Title\tPoints\tDescription\tTags\tStart Date')
+
+      sprintNumbers.forEach(sprintNum => {
+        const sprintTasks = organizedTasks[sprintNum] || []
+        
+        // Calculate sprint start date
+        let sprintStartDate = ''
+        if (sequencingConfig.initiationDate) {
+          const initiationDate = new Date(sequencingConfig.initiationDate)
+          const sprintIndex = sprintNum - sequencingConfig.startingSprint
+          const sprintStart = new Date(initiationDate)
+          sprintStart.setDate(sprintStart.getDate() + (sprintIndex * 14)) // 2 weeks per sprint
+          sprintStartDate = sprintStart.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
+        }
+
+        sprintTasks.forEach((task, index) => {
+          const baseEstimate = task.final_estimate || 0
+          const bufferAmount = baseEstimate * (task.meeting_buffer || 0)
+          const totalWithBuffer = baseEstimate + bufferAmount
+          const finalTotal = Math.round(totalWithBuffer * (task.iteration_multiplier || 1))
+          
+          const description = task.description || ''
+          const tags = task.tags?.map(t => t.label).join(', ') || ''
+          
+          miroRows.push(
+            `Sprint ${sprintNum}\t${task.title}\t${finalTotal} pts\t${description}\t${tags}\t${sprintStartDate}`
+          )
+        })
+      })
+
+      // Add backlog tasks
+      backlogTasks.forEach(task => {
+        const baseEstimate = task.final_estimate || 0
+        const bufferAmount = baseEstimate * (task.meeting_buffer || 0)
+        const totalWithBuffer = baseEstimate + bufferAmount
+        const finalTotal = Math.round(totalWithBuffer * (task.iteration_multiplier || 1))
+        const description = task.description || ''
+        const tags = task.tags?.map(t => t.label).join(', ') || ''
+        
+        miroRows.push(`Backlog\t${task.title}\t${finalTotal} pts\t${description}\t${tags}\t`)
+      })
+
+      const miroContent = miroRows.join('\n')
+      
+      // Copy to clipboard
+      await navigator.clipboard.writeText(miroContent)
+      
+      toast.success(
+        <div className="space-y-1">
+          <div className="font-medium">Data copied to clipboard!</div>
+          <div className="text-xs text-gray-600">
+            Open Miro, create a new board, and paste (Cmd/Ctrl+V) to create sticky notes
+          </div>
+        </div>,
+        { duration: 5000 }
+      )
+    } catch (error) {
+      console.error('Error exporting to Miro:', error)
+      toast.error('Failed to copy to clipboard. Please try again.')
+    }
+  }
+
   const clearSequencing = async () => {
     if (!confirm('Are you sure you want to clear all task sequencing? This will remove all sprint assignments.')) {
       return
@@ -369,6 +443,14 @@ export function TaskSequencingBoard({
           >
             <Download className="w-4 h-4 mr-2" />
             Export CSV
+          </Button>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={exportToMiro}
+          >
+            <ExternalLink className="w-4 h-4 mr-2" />
+            Copy to Miro
           </Button>
           <Button
             variant="outline"
