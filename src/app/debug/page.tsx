@@ -78,28 +78,37 @@ export default function DebugPage() {
   }
 
   const getSystemInfo = useCallback(() => {
+    // Check if we're in browser environment
+    if (typeof window === 'undefined') {
+      addLog('System info not available (server-side)')
+      return
+    }
+
     const info = {
-      userAgent: navigator.userAgent,
+      userAgent: typeof navigator !== 'undefined' ? navigator.userAgent : 'N/A',
       timestamp: new Date().toISOString(),
-      url: window.location.href,
-      localStorage: Object.keys(localStorage),
-      sessionStorage: Object.keys(sessionStorage),
-      screen: {
+      url: typeof window !== 'undefined' ? window.location.href : 'N/A',
+      localStorage: typeof localStorage !== 'undefined' ? Object.keys(localStorage) : [],
+      sessionStorage: typeof sessionStorage !== 'undefined' ? Object.keys(sessionStorage) : [],
+      screen: typeof window !== 'undefined' && window.screen ? {
         width: window.screen.width,
         height: window.screen.height,
         availWidth: window.screen.availWidth,
         availHeight: window.screen.availHeight
-      },
-      window: {
+      } : undefined,
+      window: typeof window !== 'undefined' ? {
         innerWidth: window.innerWidth,
         innerHeight: window.innerHeight
-      }
+      } : undefined
     }
     setDebugInfo(info)
     addLog('System info collected')
   }, [])
 
   useEffect(() => {
+    // Only run in browser environment
+    if (typeof window === 'undefined') return
+    
     testSupabaseConnection()
     getSystemInfo()
     addLog('Debug page initialized')
