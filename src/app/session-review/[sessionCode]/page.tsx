@@ -7,10 +7,12 @@ import { Badge } from '@/components/ui/badge'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogClose } from '@/components/ui/dialog'
 import { supabase, Session, Task, Participant, Vote } from '@/lib/supabase'
-import { Copy, Check, Home, Users, Calendar, Clock } from 'lucide-react'
+import { Copy, Check, Home, Users, Calendar, Clock, Kanban } from 'lucide-react'
 import { toast } from 'sonner'
 import TopNavigation from '@/components/TopNavigation'
 import { estimateToTShirtSize } from '@/lib/constants'
+import { TaskSequencingBoard } from '@/components/TaskSequencingBoard'
+import { SequencingSetupDialog } from '@/components/SequencingSetupDialog'
 
 interface SessionReviewPageProps {
   params: Promise<{ sessionCode: string }>
@@ -26,6 +28,8 @@ export default function SessionReviewPage({ params }: SessionReviewPageProps) {
   const [selectedTask, setSelectedTask] = useState<Task | null>(null)
   const [taskDialogOpen, setTaskDialogOpen] = useState(false)
   const [taskVotes, setTaskVotes] = useState<Vote[]>([])
+  const [showSequencing, setShowSequencing] = useState(false)
+  const [setupDialogOpen, setSetupDialogOpen] = useState(false)
 
   useEffect(() => {
     loadSessionData()
@@ -183,12 +187,44 @@ export default function SessionReviewPage({ params }: SessionReviewPageProps) {
   }
 
   const completedTasks = tasks.filter(t => t.status === 'completed')
+  const hasSequencing = session?.sequencing_enabled && 
+                        session?.sequencing_quarter && 
+                        session?.sequencing_starting_sprint &&
+                        session?.sequencing_sprints_per_quarter
+
+  const handleStartSequencing = async (config: {
+    quarter: string
+    startingSprint: number
+    sprintsPerQuarter: number
+  }) => {
+    try {
+      const { error } = await supabase
+        .from('sessions')
+        .update({
+          sequencing_enabled: true,
+          sequencing_quarter: config.quarter,
+          sequencing_starting_sprint: config.startingSprint,
+          sequencing_sprints_per_quarter: config.sprintsPerQuarter
+        })
+        .eq('id', session?.id)
+
+      if (error) throw error
+
+      toast.success('Sequencing started!')
+      setSetupDialogOpen(false)
+      setShowSequencing(true)
+      loadSessionData()
+    } catch (error) {
+      console.error('Error starting sequencing:', error)
+      toast.error('Failed to start sequencing. Please try again.')
+    }
+  }
 
   return (
     <>
       <TopNavigation />
       <div className="min-h-screen bg-gray-50 pt-16">
-        <div className="container mx-auto px-4 py-8 max-w-5xl">
+        <div className={`container mx-auto px-4 py-8 ${showSequencing ? 'max-w-full' : 'max-w-5xl'}`}>
           {/* Header */}
           <div className="mb-8">
             <div className="flex items-start justify-between mb-4">
@@ -199,6 +235,31 @@ export default function SessionReviewPage({ params }: SessionReviewPageProps) {
                 </p>
               </div>
               <div className="flex gap-2">
+                {completedTasks.length > 0 && !showSequencing && (
+                  <Button 
+                    onClick={() => {
+                      if (hasSequencing) {
+                        setShowSequencing(true)
+                      } else {
+                        setSetupDialogOpen(true)
+                      }
+                    }} 
+                    variant="default" 
+                    size="sm"
+                  >
+                    <Kanban className="w-4 h-4 mr-2" />
+                    {hasSequencing ? 'View Sequencing' : 'Start Sequencing'}
+                  </Button>
+                )}
+                {showSequencing && (
+                  <Button 
+                    onClick={() => setShowSequencing(false)} 
+                    variant="outline" 
+                    size="sm"
+                  >
+                    View Summary
+                  </Button>
+                )}
                 <Button onClick={copySummary} variant="outline" size="sm">
                   {copied ? <Check className="w-4 h-4 mr-2" /> : <Copy className="w-4 h-4 mr-2" />}
                   {copied ? 'Copied!' : 'Copy Summary'}
@@ -211,8 +272,25 @@ export default function SessionReviewPage({ params }: SessionReviewPageProps) {
             </div>
           </div>
 
+          {/* Task Sequencing Board */}
+          {showSequencing && hasSequencing && (
+            <div className="mb-8">
+              <TaskSequencingBoard
+                sessionId={session?.id || ''}
+                tasks={completedTasks}
+                sequencingConfig={{
+                  quarter: session?.sequencing_quarter || '',
+                  startingSprint: session?.sequencing_starting_sprint || 154,
+                  sprintsPerQuarter: session?.sequencing_sprints_per_quarter || 6
+                }}
+                onConfigUpdate={loadSessionData}
+              />
+            </div>
+          )}
+
           {/* Session Stats */}
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
+          {!showSequencing && (
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
             <Card>
               <CardHeader className="pb-3">
                 <CardTitle className="text-sm font-medium text-gray-600 flex items-center gap-2">
@@ -268,8 +346,10 @@ export default function SessionReviewPage({ params }: SessionReviewPageProps) {
               </CardContent>
             </Card>
           </div>
+          )}
 
           {/* Participants List */}
+          {!showSequencing && (
           <Card className="mb-8">
             <CardHeader>
               <CardTitle>Participants</CardTitle>
@@ -292,8 +372,10 @@ export default function SessionReviewPage({ params }: SessionReviewPageProps) {
               </div>
             </CardContent>
           </Card>
+          )}
 
           {/* Completed Tasks */}
+          {!showSequencing && (
           <Card>
             <CardHeader>
               <CardTitle>Tasks Completed</CardTitle>
@@ -376,9 +458,10 @@ export default function SessionReviewPage({ params }: SessionReviewPageProps) {
               )}
             </CardContent>
           </Card>
+          )}
 
           {/* All Tasks (including pending/voting) */}
-          {tasks.filter(t => t.status !== 'completed').length > 0 && (
+          {!showSequencing && tasks.filter(t => t.status !== 'completed').length > 0 && (
             <Card className="mt-8">
               <CardHeader>
                 <CardTitle>Other Tasks</CardTitle>
@@ -403,6 +486,13 @@ export default function SessionReviewPage({ params }: SessionReviewPageProps) {
               </CardContent>
             </Card>
           )}
+
+          {/* Sequencing Setup Dialog */}
+          <SequencingSetupDialog
+            open={setupDialogOpen}
+            onOpenChange={setSetupDialogOpen}
+            onConfirm={handleStartSequencing}
+          />
         </div>
       </div>
 

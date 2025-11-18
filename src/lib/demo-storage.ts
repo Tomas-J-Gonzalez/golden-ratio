@@ -135,7 +135,10 @@ export class DemoStorage {
       iteration_multiplier: data.iteration_multiplier || null,
       votes_revealed: data.votes_revealed || false,
       voting_duration_seconds: data.voting_duration_seconds || null,
-      tags: data.tags || null
+      tags: data.tags || null,
+      quarter: data.quarter || null,
+      sprint_number: data.sprint_number || null,
+      sequence_order: data.sequence_order || null
     }
     this.save('task', id, task)
     return task

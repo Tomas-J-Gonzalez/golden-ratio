@@ -163,17 +163,17 @@ export default function VotingResults({ taskTitle, taskId, votes, participants, 
       // Calculate the average estimate using the improved calculateEstimate function
       const estimates = votes.map(vote => {
         if (vote.factors && typeof vote.factors === 'object') {
-          const factors = vote.factors as Record<string, any>
+          const factors = vote.factors as Record<string, number | number[]>
           // Use the same calculation as VotingArea
           return calculateEstimate({
-            effort: factors.effort || 1,
-            sprints: factors.sprints || 0.1,
-            designerCount: factors.designerCount || 1,
-            designerLevels: factors.designerLevels || [1],
-            breakpoints: factors.breakpoints || 1,
-            fidelity: factors.fidelity || 1,
-            meetingBuffer: factors.meetingBuffer || 0,
-            iterationMultiplier: factors.iterationMultiplier || 1
+            effort: (typeof factors.effort === 'number' ? factors.effort : 1),
+            sprints: (typeof factors.sprints === 'number' ? factors.sprints : 0.1),
+            designerCount: (typeof factors.designerCount === 'number' ? factors.designerCount : 1),
+            designerLevels: (Array.isArray(factors.designerLevels) ? factors.designerLevels : [1]),
+            breakpoints: (typeof factors.breakpoints === 'number' ? factors.breakpoints : 1),
+            fidelity: (typeof factors.fidelity === 'number' ? factors.fidelity : 1),
+            meetingBuffer: (typeof factors.meetingBuffer === 'number' ? factors.meetingBuffer : 0),
+            iterationMultiplier: (typeof factors.iterationMultiplier === 'number' ? factors.iterationMultiplier : 1)
           })
         }
         return vote.value || 0
@@ -207,17 +207,17 @@ export default function VotingResults({ taskTitle, taskId, votes, participants, 
   // Calculate statistics using the improved calculateEstimate function
   const estimates = votes.map(vote => {
     if (vote.factors && typeof vote.factors === 'object') {
-      const factors = vote.factors as Record<string, any>
+      const factors = vote.factors as Record<string, number | number[]>
       // Use the same calculation as VotingArea
       return calculateEstimate({
-        effort: factors.effort || 1,
-        sprints: factors.sprints || 0.1,
-        designerCount: factors.designerCount || 1,
-        designerLevels: factors.designerLevels || [1],
-        breakpoints: factors.breakpoints || 1,
-        fidelity: factors.fidelity || 1,
-        meetingBuffer: factors.meetingBuffer || 0,
-        iterationMultiplier: factors.iterationMultiplier || 1
+        effort: (typeof factors.effort === 'number' ? factors.effort : 1),
+        sprints: (typeof factors.sprints === 'number' ? factors.sprints : 0.1),
+        designerCount: (typeof factors.designerCount === 'number' ? factors.designerCount : 1),
+        designerLevels: (Array.isArray(factors.designerLevels) ? factors.designerLevels : [1]),
+        breakpoints: (typeof factors.breakpoints === 'number' ? factors.breakpoints : 1),
+        fidelity: (typeof factors.fidelity === 'number' ? factors.fidelity : 1),
+        meetingBuffer: (typeof factors.meetingBuffer === 'number' ? factors.meetingBuffer : 0),
+        iterationMultiplier: (typeof factors.iterationMultiplier === 'number' ? factors.iterationMultiplier : 1)
       })
     }
     return vote.value || 0

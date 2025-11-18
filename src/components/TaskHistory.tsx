@@ -6,7 +6,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Badge } from '@/components/ui/badge'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogClose } from '@/components/ui/dialog'
-import { Task, Participant, Vote, supabase, TaskTag } from '@/lib/supabase'
+import { Task, Participant, Vote, supabase } from '@/lib/supabase'
 import { Download, FileText, ChevronDown, Copy, Check } from 'lucide-react'
 import { toast } from 'sonner'
 import { estimateToTShirtSize } from '@/lib/constants'

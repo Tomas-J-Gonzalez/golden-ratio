@@ -26,6 +26,10 @@ export interface Session {
   created_at: string
   moderator_id: string
   is_active: boolean
+  sequencing_enabled?: boolean
+  sequencing_quarter?: string
+  sequencing_starting_sprint?: number
+  sequencing_sprints_per_quarter?: number
 }
 
 export interface Participant {
@@ -55,6 +59,9 @@ export interface Task {
   votes_revealed?: boolean
   voting_duration_seconds?: number
   tags?: TaskTag[]
+  quarter?: string
+  sprint_number?: number
+  sequence_order?: number
 }
 
 export interface Vote {
