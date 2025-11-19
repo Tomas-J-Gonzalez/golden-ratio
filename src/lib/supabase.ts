@@ -71,12 +71,20 @@ export interface Vote {
   participant_id: string
   value: number
   factors?: {
-    effort: number
-    sprints: number
-    designers: number
-    breakpoints: number
-    prototypes: number
-    fidelity: number
+    effort?: number
+    time?: number
+    sprints?: number
+    designerCount?: number
+    designers?: number
+    designerLevels?: number[]
+    breakpoints?: number
+    fidelity?: number
+    meetingBuffer?: number
+    iterationMultiplier?: number
+    prototypes?: number
+    discoveryActivities?: string[]
+    designActivities?: string[]
+    [key: string]: unknown
   }
   created_at: string
 }

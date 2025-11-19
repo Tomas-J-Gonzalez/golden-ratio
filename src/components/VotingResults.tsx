@@ -18,7 +18,9 @@ import {
   MEETING_BUFFER_OPTIONS,
   ITERATION_MULTIPLIER_OPTIONS,
   estimateToTShirtSize,
-  calculateEstimate
+  calculateEstimate,
+  DISCOVERY_ACTIVITY_MAP,
+  DESIGN_TESTING_ACTIVITY_MAP
 } from '@/lib/constants'
 
 // Support both old and new factor structures for backward compatibility
@@ -35,6 +37,8 @@ interface VoteFactors {
   iterationMultiplier?: number
   finalEstimate?: number
   prototypes?: number // Legacy field
+  discoveryActivities?: string[]
+  designActivities?: string[]
 }
 
 interface VotingResultsProps {
@@ -87,12 +91,29 @@ export default function VotingResults({ taskTitle, taskId, votes, participants, 
     ).join(', ')
   }
 
+  const formatActivities = (activityIds?: string[], map?: Record<string, { label: string }>) => {
+    if (!activityIds || !activityIds.length || !map) return ''
+    return activityIds.map(id => map[id]?.label || id).join(', ')
+  }
+
+  const toNumberArray = (value: unknown, fallback: number[] = []) => {
+    if (!Array.isArray(value)) return fallback
+    const numbers = value.filter((item): item is number => typeof item === 'number' && !Number.isNaN(item))
+    return numbers.length ? numbers : fallback
+  }
+
+  const toStringArray = (value: unknown) => {
+    if (!Array.isArray(value)) return []
+    return value.filter((item): item is string => typeof item === 'string')
+  }
+
   const generateMarkdownSummary = () => {
     const estimates = votes.map(vote => {
       if (vote.factors && typeof vote.factors === 'object') {
-        const factors = vote.factors as Record<string, number>
+        const factors = vote.factors as VoteFactors
         const baseEstimate = factors.time || 1
-        const complexityMultiplier = (factors.effort + factors.sprints + (factors.designerCount || 1) + factors.breakpoints + factors.fidelity) / 5
+        const designerTotal = factors.designerCount || factors.designers || 1
+        const complexityMultiplier = (factors.effort + factors.sprints + designerTotal + factors.breakpoints + factors.fidelity) / 5
         return Math.round(baseEstimate * complexityMultiplier)
       }
       return 0
@@ -139,6 +160,10 @@ export default function VotingResults({ taskTitle, taskId, votes, participants, 
       markdown += `- **Fidelity:** ${getFactorLabel('fidelity', factors.fidelity)}\n`
       if (factors.meetingBuffer) markdown += `- **Meeting Buffer:** ${getFactorLabel('meetingBuffer', factors.meetingBuffer)}\n`
       if (factors.iterationMultiplier) markdown += `- **Design Iterations:** ${getFactorLabel('iterationMultiplier', factors.iterationMultiplier)}\n`
+      const discoverySummary = formatActivities(factors.discoveryActivities, DISCOVERY_ACTIVITY_MAP)
+      if (discoverySummary) markdown += `- **Discovery:** ${discoverySummary}\n`
+      const designSummary = formatActivities(factors.designActivities, DESIGN_TESTING_ACTIVITY_MAP)
+      if (designSummary) markdown += `- **Design & Testing:** ${designSummary}\n`
       markdown += `\n`
     })
     
@@ -163,17 +188,19 @@ export default function VotingResults({ taskTitle, taskId, votes, participants, 
       // Calculate the average estimate using the improved calculateEstimate function
       const estimates = votes.map(vote => {
         if (vote.factors && typeof vote.factors === 'object') {
-          const factors = vote.factors as Record<string, number | number[]>
+          const factors = vote.factors as Record<string, number | number[] | string[]>
           // Use the same calculation as VotingArea
           return calculateEstimate({
             effort: (typeof factors.effort === 'number' ? factors.effort : 1),
             sprints: (typeof factors.sprints === 'number' ? factors.sprints : 0.1),
             designerCount: (typeof factors.designerCount === 'number' ? factors.designerCount : 1),
-            designerLevels: (Array.isArray(factors.designerLevels) ? factors.designerLevels : [1]),
+            designerLevels: toNumberArray(factors.designerLevels, [1]),
             breakpoints: (typeof factors.breakpoints === 'number' ? factors.breakpoints : 1),
             fidelity: (typeof factors.fidelity === 'number' ? factors.fidelity : 1),
             meetingBuffer: (typeof factors.meetingBuffer === 'number' ? factors.meetingBuffer : 0),
-            iterationMultiplier: (typeof factors.iterationMultiplier === 'number' ? factors.iterationMultiplier : 1)
+            iterationMultiplier: (typeof factors.iterationMultiplier === 'number' ? factors.iterationMultiplier : 1),
+            discoveryActivities: toStringArray(factors.discoveryActivities),
+            designActivities: toStringArray(factors.designActivities)
           })
         }
         return vote.value || 0
@@ -207,17 +234,19 @@ export default function VotingResults({ taskTitle, taskId, votes, participants, 
   // Calculate statistics using the improved calculateEstimate function
   const estimates = votes.map(vote => {
     if (vote.factors && typeof vote.factors === 'object') {
-      const factors = vote.factors as Record<string, number | number[]>
+      const factors = vote.factors as Record<string, number | number[] | string[]>
       // Use the same calculation as VotingArea
       return calculateEstimate({
         effort: (typeof factors.effort === 'number' ? factors.effort : 1),
         sprints: (typeof factors.sprints === 'number' ? factors.sprints : 0.1),
         designerCount: (typeof factors.designerCount === 'number' ? factors.designerCount : 1),
-        designerLevels: (Array.isArray(factors.designerLevels) ? factors.designerLevels : [1]),
+        designerLevels: toNumberArray(factors.designerLevels, [1]),
         breakpoints: (typeof factors.breakpoints === 'number' ? factors.breakpoints : 1),
         fidelity: (typeof factors.fidelity === 'number' ? factors.fidelity : 1),
         meetingBuffer: (typeof factors.meetingBuffer === 'number' ? factors.meetingBuffer : 0),
-        iterationMultiplier: (typeof factors.iterationMultiplier === 'number' ? factors.iterationMultiplier : 1)
+        iterationMultiplier: (typeof factors.iterationMultiplier === 'number' ? factors.iterationMultiplier : 1),
+        discoveryActivities: toStringArray(factors.discoveryActivities),
+        designActivities: toStringArray(factors.designActivities)
       })
     }
     return vote.value || 0
@@ -372,6 +401,22 @@ export default function VotingResults({ taskTitle, taskId, votes, participants, 
                         <div className="flex justify-between">
                           <span className="text-gray-500">Iterations:</span>
                           <span className="font-medium text-gray-900">{getFactorLabel('iterationMultiplier', factors.iterationMultiplier)}</span>
+                        </div>
+                      )}
+                      {factors.discoveryActivities && factors.discoveryActivities.length > 0 && (
+                        <div className="col-span-2 flex justify-between">
+                          <span className="text-gray-500">Discovery:</span>
+                          <span className="text-right font-medium text-gray-900">
+                            {formatActivities(factors.discoveryActivities, DISCOVERY_ACTIVITY_MAP)}
+                          </span>
+                        </div>
+                      )}
+                      {factors.designActivities && factors.designActivities.length > 0 && (
+                        <div className="col-span-2 flex justify-between">
+                          <span className="text-gray-500">Design &amp; Testing:</span>
+                          <span className="text-right font-medium text-gray-900">
+                            {formatActivities(factors.designActivities, DESIGN_TESTING_ACTIVITY_MAP)}
+                          </span>
                         </div>
                       )}
                     </div>

@@ -19,7 +19,11 @@ import {
   ITERATION_MULTIPLIER_OPTIONS,
   calculateEstimate,
   estimateToTShirtSize,
-  MAX_POINTS
+  MAX_POINTS,
+  DISCOVERY_ACTIVITY_OPTIONS,
+  DISCOVERY_ACTIVITY_MAP,
+  DESIGN_TESTING_ACTIVITY_GROUPS,
+  DESIGN_TESTING_ACTIVITY_MAP
 } from '@/lib/constants'
 
 interface VotingAreaProps {
@@ -39,7 +43,23 @@ interface EstimationFactors {
   fidelity: number | null
   meetingBuffer: number | null
   iterationMultiplier: number | null
+  discoveryActivities: string[]
+  designActivities: string[]
 }
+
+const createInitialFactors = (): EstimationFactors => ({
+  effort: null,
+  time: null,
+  sprints: null,
+  designerCount: null,
+  designerLevels: [],
+  breakpoints: null,
+  fidelity: null,
+  meetingBuffer: null,
+  iterationMultiplier: null,
+  discoveryActivities: [],
+  designActivities: []
+})
 
 export default function VotingArea({ 
   taskId, 
@@ -47,17 +67,7 @@ export default function VotingArea({
   participantId, 
   onVoteSubmitted 
 }: VotingAreaProps) {
-  const [factors, setFactors] = useState<EstimationFactors>({
-    effort: null,
-    time: null,
-    sprints: null,
-    designerCount: null,
-    designerLevels: [],
-    breakpoints: null,
-    fidelity: null,
-    meetingBuffer: null,
-    iterationMultiplier: null
-  })
+  const [factors, setFactors] = useState<EstimationFactors>(() => createInitialFactors())
   const [hasVoted, setHasVoted] = useState(false)
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [portalContainer, setPortalContainer] = useState<HTMLElement | null>(null)
@@ -73,7 +83,14 @@ export default function VotingArea({
         .single()
 
       if (existingVote) {
-        setFactors(existingVote.factors || {})
+        const storedFactors = (existingVote.factors || {}) as Partial<EstimationFactors>
+        setFactors(prev => ({
+          ...prev,
+          ...storedFactors,
+          designerLevels: Array.isArray(storedFactors.designerLevels) ? storedFactors.designerLevels : prev.designerLevels,
+          discoveryActivities: Array.isArray(storedFactors.discoveryActivities) ? storedFactors.discoveryActivities : prev.discoveryActivities,
+          designActivities: Array.isArray(storedFactors.designActivities) ? storedFactors.designActivities : prev.designActivities
+        }))
         setHasVoted(true)
       }
     } catch (error) {
@@ -193,7 +210,9 @@ export default function VotingArea({
       breakpoints: factors.breakpoints!,
       fidelity: factors.fidelity!,
       meetingBuffer: factors.meetingBuffer || 0,
-      iterationMultiplier: factors.iterationMultiplier || 1
+      iterationMultiplier: factors.iterationMultiplier || 1,
+      discoveryActivities: factors.discoveryActivities,
+      designActivities: factors.designActivities
     })
   }
 
@@ -328,6 +347,93 @@ export default function VotingArea({
     )
   }
 
+  const toggleActivity = (factorType: 'discoveryActivities' | 'designActivities', activityId: string) => {
+    setFactors(prev => {
+      const currentSelections = prev[factorType]
+      const exists = currentSelections.includes(activityId)
+      const updatedSelections = exists
+        ? currentSelections.filter(id => id !== activityId)
+        : [...currentSelections, activityId]
+      return { ...prev, [factorType]: updatedSelections }
+    })
+  }
+
+  const renderDiscoveryActivities = () => {
+    return (
+      <div className="space-y-3">
+        <h4 className="font-semibold text-sm">Discovery Activities</h4>
+        <p className="text-xs text-slate-500">Select the discovery work this task requires</p>
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+          {DISCOVERY_ACTIVITY_OPTIONS.map(option => {
+            const isSelected = factors.discoveryActivities.includes(option.id)
+            return (
+              <Button
+                key={option.id}
+                variant={isSelected ? 'default' : 'outline'}
+                size="sm"
+                className="h-auto p-3 flex flex-col items-start text-left min-h-[60px] break-words"
+                onClick={() => toggleActivity('discoveryActivities', option.id)}
+              >
+                <div className="font-medium text-xs leading-tight">{option.label}</div>
+                <div className="text-xs opacity-70 mt-1 leading-tight break-words">{option.description}</div>
+              </Button>
+            )
+          })}
+        </div>
+      </div>
+    )
+  }
+
+  const renderDesignTestingActivities = () => {
+    return (
+      <div className="space-y-4">
+        <h4 className="font-semibold text-sm">Design &amp; Testing Activities</h4>
+        <p className="text-xs text-slate-500">Capture the level of design execution involved</p>
+        {DESIGN_TESTING_ACTIVITY_GROUPS.map(group => (
+          <div key={group.title} className="space-y-2">
+            <div className="text-[11px] uppercase tracking-wide text-slate-500">{group.title}</div>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+              {group.options.map(option => {
+                const isSelected = factors.designActivities.includes(option.id)
+                return (
+                  <Button
+                    key={option.id}
+                    variant={isSelected ? 'default' : 'outline'}
+                    size="sm"
+                    className="h-auto p-3 flex flex-col items-start text-left min-h-[60px] break-words"
+                    onClick={() => toggleActivity('designActivities', option.id)}
+                  >
+                    <div className="font-medium text-xs leading-tight">{option.label}</div>
+                    <div className="text-xs opacity-70 mt-1 leading-tight break-words">{option.description}</div>
+                  </Button>
+                )
+              })}
+            </div>
+          </div>
+        ))}
+      </div>
+    )
+  }
+
+  const renderActivitySummary = (title: string, selections: string[], map: Record<string, { label: string }>) => {
+    if (!selections.length) return null
+    return (
+      <div>
+        <strong>{title}:</strong>
+        <div className="mt-1 flex flex-wrap gap-2">
+          {selections.map(selection => (
+            <span
+              key={selection}
+              className="inline-flex items-center rounded-full bg-slate-100 px-2 py-0.5 text-[11px] font-medium text-slate-700"
+            >
+              {map[selection]?.label || selection}
+            </span>
+          ))}
+        </div>
+      </div>
+    )
+  }
+
   if (hasVoted) {
     const finalEstimate = getCurrentEstimate()
     const tShirtEstimate = finalEstimate ? estimateToTShirtSize(finalEstimate) : 'Unknown'
@@ -371,6 +477,10 @@ export default function VotingArea({
             <div><strong>Meeting Buffer:</strong> {MEETING_BUFFER_OPTIONS.find(o => o.value === factors.meetingBuffer)?.label}</div>
             <div><strong>Design Iterations:</strong> {ITERATION_MULTIPLIER_OPTIONS.find(o => o.value === factors.iterationMultiplier)?.label}</div>
             <div><strong>Final Estimate:</strong> {finalEstimate ? estimateToTShirtSize(finalEstimate) : 'Not set'}</div>
+          </div>
+          <div className="space-y-3 text-sm">
+            {renderActivitySummary('Discovery', factors.discoveryActivities, DISCOVERY_ACTIVITY_MAP)}
+            {renderActivitySummary('Design & Testing', factors.designActivities, DESIGN_TESTING_ACTIVITY_MAP)}
           </div>
           
         </CardContent>
@@ -440,6 +550,8 @@ export default function VotingArea({
 
         {/* Factor Selectors */}
         <div className="space-y-6">
+          {renderDiscoveryActivities()}
+          {renderDesignTestingActivities()}
           {renderFactorSelector('Sprint Allocation', 'sprints', SPRINT_OPTIONS)}
           {renderDesignerSelector()}
           {renderFactorSelector('Breakpoints', 'breakpoints', BREAKPOINT_OPTIONS)}

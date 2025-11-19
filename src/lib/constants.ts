@@ -1,4 +1,23 @@
 // Effort level options (complexity)
+export interface ActivityOption {
+  id: string
+  label: string
+  description: string
+  impact: number
+}
+
+export interface ActivityGroup {
+  title: string
+  options: ActivityOption[]
+}
+
+const createActivityMap = (options: ActivityOption[]) => {
+  return options.reduce<Record<string, ActivityOption>>((acc, option) => {
+    acc[option.id] = option
+    return acc
+  }, {})
+}
+
 export const EFFORT_OPTIONS = [
   { value: 1, label: 'Very Low', description: 'Minimal complexity' },
   { value: 2, label: 'Low', description: 'Simple task' },
@@ -74,6 +93,57 @@ export const FIDELITY_OPTIONS = [
   { value: 8, label: 'Production-ready', description: 'All designs dev-ready with final specifications' }
 ]
 
+export const DISCOVERY_ACTIVITY_OPTIONS: ActivityOption[] = [
+  { id: 'discovery', label: 'Discovery', description: 'Foundational research to understand the problem space', impact: 0.8 },
+  { id: 'landscape', label: 'Landscape', description: 'Competitive and market landscape analysis', impact: 0.6 },
+  { id: 'ux_audit', label: 'UX audit of current state', description: 'Evaluate existing experience quality', impact: 0.9 },
+  { id: 'accessibility_audit', label: 'Accessibility audit', description: 'Review for accessibility gaps', impact: 1 },
+  { id: 'problem_exploration', label: 'Problem exploration & scope', description: 'Stakeholder workshops and goal setting', impact: 1.1 },
+  { id: 'strategy_baseline', label: 'Strategy and baseline metrics', description: 'Define success metrics and strategy', impact: 0.7 },
+  { id: 'user_testing', label: 'User testing', description: 'Moderated or unmoderated usability tests', impact: 1.2 }
+]
+
+export const DESIGN_TESTING_ACTIVITY_GROUPS: ActivityGroup[] = [
+  {
+    title: 'Design a new atom',
+    options: [
+      { id: 'design_atom', label: 'Design a new atom', description: 'Create a brand-new UI atom component', impact: 1 }
+    ]
+  },
+  {
+    title: 'Design a new molecule',
+    options: [
+      { id: 'design_molecule_existing_atoms', label: 'Use existing atoms', description: 'Compose molecule from already available atoms', impact: 1.1 },
+      { id: 'design_molecule_new_atoms', label: 'Create new atoms', description: 'Requires new atoms alongside molecules', impact: 1.4 }
+    ]
+  },
+  {
+    title: 'Design a new organism',
+    options: [
+      { id: 'design_organism_existing_parts', label: 'Use existing atoms/molecules', description: 'Assemble organism from pre-designed elements', impact: 1.5 },
+      { id: 'design_organism_new_parts', label: 'Create new atoms/molecules', description: 'Requires net-new foundational components', impact: 1.9 }
+    ]
+  },
+  {
+    title: 'Design a new page or template',
+    options: [
+      { id: 'design_page_existing_components', label: 'Use existing components', description: 'Compose page with existing atoms/molecules/organisms', impact: 1.6 },
+      { id: 'design_page_new_components', label: 'Create new components', description: 'Requires inventing new systems for the page', impact: 2 }
+    ]
+  },
+  {
+    title: 'Test a design and iterate',
+    options: [
+      { id: 'test_design_iterate', label: 'Test and iterate', description: 'Run testing cycles and iterate on learnings', impact: 1.3 }
+    ]
+  }
+]
+
+export const DESIGN_TESTING_ACTIVITY_OPTIONS = DESIGN_TESTING_ACTIVITY_GROUPS.flatMap(group => group.options)
+
+export const DISCOVERY_ACTIVITY_MAP = createActivityMap(DISCOVERY_ACTIVITY_OPTIONS)
+export const DESIGN_TESTING_ACTIVITY_MAP = createActivityMap(DESIGN_TESTING_ACTIVITY_OPTIONS)
+
 // Maximum points that can be assigned to a task
 export const MAX_POINTS = 100
 
@@ -88,6 +158,8 @@ export const calculateEstimate = (factors: {
   fidelity: number;
   meetingBuffer?: number; // Optional, defaults to 0
   iterationMultiplier?: number; // Optional, defaults to 1
+  discoveryActivities?: string[];
+  designActivities?: string[];
 }) => {
   // Calculate average designer level (higher level = more efficient, so lower multiplier)
   // We invert this: higher level designers are more efficient, so they reduce the estimate
@@ -98,6 +170,16 @@ export const calculateEstimate = (factors: {
   // Base complexity score from core factors
   // Effort (1-16), Sprints (0.1-3), Breakpoints (1-3), Fidelity (1-8)
   const baseComplexity = (factors.effort + factors.sprints * 5 + factors.breakpoints * 2 + factors.fidelity) / 4;
+
+  const discoveryImpact = (factors.discoveryActivities || []).reduce((sum, activityId) => {
+    return sum + (DISCOVERY_ACTIVITY_MAP[activityId]?.impact || 0)
+  }, 0)
+
+  const designImpact = (factors.designActivities || []).reduce((sum, activityId) => {
+    return sum + (DESIGN_TESTING_ACTIVITY_MAP[activityId]?.impact || 0)
+  }, 0)
+
+  const activityAdjustedComplexity = baseComplexity + discoveryImpact * 0.5 + designImpact
   
   // Designer count multiplier (more designers = more coordination overhead)
   // But higher level designers are more efficient
@@ -105,7 +187,7 @@ export const calculateEstimate = (factors: {
   const designerMultiplier = 1 + (factors.designerCount - 1) * 0.15 * designerEfficiency;
   
   // Calculate base points
-  let basePoints = baseComplexity * designerMultiplier;
+  let basePoints = activityAdjustedComplexity * designerMultiplier;
   
   // Apply meeting buffer (adds percentage to base)
   const meetingBuffer = factors.meetingBuffer || 0;
