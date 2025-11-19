@@ -28,12 +28,13 @@ export default function TopNavigation() {
             >
               Colophon
             </Link>
-            <Link 
+            {/* Debug page temporarily hidden */}
+            {/* <Link 
               href="/debug" 
               className="text-slate-700 hover:text-blue-600 transition-colors text-sm font-medium no-underline"
             >
               Debug
-            </Link>
+            </Link> */}
           </div>
         </div>
       </div>
