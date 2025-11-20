@@ -15,7 +15,6 @@ import {
   INDIVIDUAL_DESIGNER_LEVELS,
   BREAKPOINT_OPTIONS, 
   FIDELITY_OPTIONS,
-  DELIVERABLES_OPTIONS,
   MEETING_BUFFER_OPTIONS,
   ITERATION_MULTIPLIER_OPTIONS,
   calculateEstimate,
@@ -317,6 +316,32 @@ export default function VotingArea({
   }
 
 
+  const calculateOptionPoints = (
+    factorType: keyof EstimationFactors | 'activity',
+    value: number,
+    impact?: number
+  ): number => {
+    // Base calculation for different factor types
+    if (factorType === 'effort') {
+      return Math.round(value * 2) // Effort contributes directly
+    } else if (factorType === 'sprints') {
+      return Math.round(value * 10) // Sprints multiplied by 5 in calculation, then by 2
+    } else if (factorType === 'breakpoints') {
+      return Math.round(value * 4) // Breakpoints * 2 in calculation, then by 2
+    } else if (factorType === 'fidelity') {
+      return Math.round(value * 2) // Fidelity contributes directly
+    } else if (factorType === 'designerCount') {
+      return Math.round((value - 1) * 3) // Designer count overhead
+    } else if (factorType === 'meetingBuffer') {
+      return Math.round(value * 20) // Buffer percentage
+    } else if (factorType === 'iterationMultiplier') {
+      return Math.round((value - 1) * 15) // Iteration multiplier
+    } else if (factorType === 'activity' && impact !== undefined) {
+      return Math.round(impact * 10) // Activity impact contribution
+    }
+    return 0
+  }
+
   const renderFactorSelector = (
     title: string,
     factorType: keyof EstimationFactors,
@@ -338,18 +363,26 @@ export default function VotingArea({
           )}
         </h4>
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2">
-          {options.map((option) => (
-            <Button
-              key={option.value}
-              variant={selectedValue === option.value ? "default" : "outline"}
-              size="sm"
-              className="h-auto p-3 flex flex-col items-start text-left min-h-[60px] break-words"
-              onClick={() => updateFactor(factorType, option.value)}
-            >
-              <div className="font-medium text-xs leading-tight">{option.label}</div>
-              <div className="text-xs opacity-70 mt-1 leading-tight break-words">{option.description}</div>
-            </Button>
-          ))}
+          {options.map((option) => {
+            const points = calculateOptionPoints(factorType, option.value)
+            return (
+              <Button
+                key={option.value}
+                variant={selectedValue === option.value ? "default" : "outline"}
+                size="sm"
+                className="h-auto p-3 flex flex-col items-start text-left min-h-[60px] break-words relative"
+                onClick={() => updateFactor(factorType, option.value)}
+              >
+                {points > 0 && (
+                  <span className="absolute top-1 right-1 text-[9px] font-medium text-slate-500">
+                    {points}pts
+                  </span>
+                )}
+                <div className="font-medium text-xs leading-tight">{option.label}</div>
+                <div className="text-xs opacity-70 mt-1 leading-tight break-words">{option.description}</div>
+              </Button>
+            )
+          })}
         </div>
       </div>
     )
@@ -366,17 +399,25 @@ export default function VotingArea({
         <div className="space-y-2">
           <Label className="text-xs">Number of Designers</Label>
           <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
-            {DESIGNER_COUNT_OPTIONS.map((option) => (
-              <Button
-                key={option.value}
-                variant={factors.designerCount === option.value ? "default" : "outline"}
-                size="sm"
-                className="h-auto p-2 flex flex-col items-center text-center"
-                onClick={() => updateDesignerCount(option.value)}
-              >
-                <div className="font-medium text-xs">{option.label}</div>
-              </Button>
-            ))}
+            {DESIGNER_COUNT_OPTIONS.map((option) => {
+              const points = calculateOptionPoints('designerCount', option.value)
+              return (
+                <Button
+                  key={option.value}
+                  variant={factors.designerCount === option.value ? "default" : "outline"}
+                  size="sm"
+                  className="h-auto p-2 flex flex-col items-center text-center relative"
+                  onClick={() => updateDesignerCount(option.value)}
+                >
+                  {points > 0 && (
+                    <span className="absolute top-1 right-1 text-[9px] font-medium text-slate-500">
+                      {points}pts
+                    </span>
+                  )}
+                  <div className="font-medium text-xs">{option.label}</div>
+                </Button>
+              )
+            })}
           </div>
         </div>
 
@@ -429,14 +470,20 @@ export default function VotingArea({
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
           {DISCOVERY_ACTIVITY_OPTIONS.map(option => {
             const isSelected = factors.discoveryActivities.includes(option.id)
+            const points = calculateOptionPoints('activity', 0, option.impact)
             return (
               <Button
                 key={option.id}
                 variant={isSelected ? 'default' : 'outline'}
                 size="sm"
-                className="h-auto p-3 flex flex-col items-start text-left min-h-[60px] break-words"
+                className="h-auto p-3 flex flex-col items-start text-left min-h-[60px] break-words relative"
                 onClick={() => toggleActivity('discoveryActivities', option.id)}
               >
+                {points > 0 && (
+                  <span className="absolute top-1 right-1 text-[9px] font-medium text-slate-500">
+                    {points}pts
+                  </span>
+                )}
                 <div className="font-medium text-xs leading-tight">{option.label}</div>
                 <div className="text-xs opacity-70 mt-1 leading-tight break-words">{option.description}</div>
               </Button>
@@ -458,14 +505,20 @@ export default function VotingArea({
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
               {group.options.map(option => {
                 const isSelected = factors.designActivities.includes(option.id)
+                const points = calculateOptionPoints('activity', 0, option.impact)
                 return (
                   <Button
                     key={option.id}
                     variant={isSelected ? 'default' : 'outline'}
                     size="sm"
-                    className="h-auto p-3 flex flex-col items-start text-left min-h-[60px] break-words"
+                    className="h-auto p-3 flex flex-col items-start text-left min-h-[60px] break-words relative"
                     onClick={() => toggleActivity('designActivities', option.id)}
                   >
+                    {points > 0 && (
+                      <span className="absolute top-1 right-1 text-[9px] font-medium text-slate-500">
+                        {points}pts
+                      </span>
+                    )}
                     <div className="font-medium text-xs leading-tight">{option.label}</div>
                     <div className="text-xs opacity-70 mt-1 leading-tight break-words">{option.description}</div>
                   </Button>
@@ -618,7 +671,6 @@ export default function VotingArea({
           {renderDesignerSelector()}
           {renderFactorSelector('Breakpoints', 'breakpoints', BREAKPOINT_OPTIONS)}
           {renderFactorSelector('Fidelity Level', 'fidelity', FIDELITY_OPTIONS)}
-          {renderFactorSelector('Deliverables', 'deliverables', DELIVERABLES_OPTIONS)}
           {renderFactorSelector('Meeting Buffer', 'meetingBuffer', MEETING_BUFFER_OPTIONS)}
           {renderFactorSelector('Design Iterations', 'iterationMultiplier', ITERATION_MULTIPLIER_OPTIONS)}
           {renderFactorSelector('Effort Level', 'effort', EFFORT_OPTIONS)}

@@ -97,7 +97,6 @@ export const DELIVERABLES_OPTIONS = [
 ]
 
 export const DISCOVERY_ACTIVITY_OPTIONS: ActivityOption[] = [
-  { id: 'discovery', label: 'Discovery', description: 'Foundational research to understand the problem space', impact: 0.8 },
   { id: 'landscape', label: 'Landscape review', description: 'Competitive and market landscape analysis', impact: 0.6 },
   { id: 'ux_audit', label: 'UX audit of current state', description: 'Evaluate existing experience quality', impact: 0.9 },
   { id: 'accessibility_audit', label: 'Accessibility audit', description: 'Review for accessibility gaps', impact: 1 },
@@ -138,6 +137,13 @@ export const DESIGN_TESTING_ACTIVITY_GROUPS: ActivityGroup[] = [
     title: 'Test and iterate',
     options: [
       { id: 'test_design_iterate', label: 'Test and iterate', description: 'Run testing cycles and iterate on learnings', impact: 1.3 }
+    ]
+  },
+  {
+    title: 'Deliverables',
+    options: [
+      { id: 'wireframes', label: 'Wireframes', description: 'Static wireframe designs', impact: 0.5 },
+      { id: 'interactive_prototype', label: 'Interactive prototype', description: 'Interactive prototype with animations', impact: 0.8 }
     ]
   }
 ]
