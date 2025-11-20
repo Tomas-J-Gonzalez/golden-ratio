@@ -342,8 +342,6 @@ export default function VotingResults({ taskTitle, taskId, votes, participants, 
               const factors = vote.factors as VoteFactors
               const estimate = estimates[votes.indexOf(vote)]
 
-              const discoveryActivities = (factors.discoveryActivities || []).filter(id => id !== 'discovery')
-
               // Design effort variables (factors that affect complexity)
               const designEffortItems = [
                 { label: 'Effort', value: getFactorLabel('effort', factors.effort) },
