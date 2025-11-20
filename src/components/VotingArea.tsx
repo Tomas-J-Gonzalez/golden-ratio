@@ -321,25 +321,241 @@ export default function VotingArea({
     value: number,
     impact?: number
   ): number => {
-    // Base calculation for different factor types
+    // Use default/average values for other factors to calculate contribution
+    const defaultEffort = 4 // Medium
+    const defaultSprints = 0.5 // Half sprint
+    const defaultBreakpoints = 2 // Desktop + Mobile
+    const defaultFidelity = 3 // Hi-fi
+    const defaultDesignerCount = 1
+    const defaultDesignerLevels = [2] // Senior
+    const defaultMeetingBuffer = 0
+    const defaultIterationMultiplier = 1
+    const defaultDiscoveryActivities: string[] = []
+    const defaultDesignActivities: string[] = []
+
+    // Calculate estimate with this option and defaults
+    let estimateWithOption: number
+    let estimateWithoutOption: number
+
     if (factorType === 'effort') {
-      return Math.round(value * 2) // Effort contributes directly
+      estimateWithOption = calculateEstimate({
+        effort: value,
+        sprints: defaultSprints,
+        designerCount: defaultDesignerCount,
+        designerLevels: defaultDesignerLevels,
+        breakpoints: defaultBreakpoints,
+        fidelity: defaultFidelity,
+        meetingBuffer: defaultMeetingBuffer,
+        iterationMultiplier: defaultIterationMultiplier,
+        discoveryActivities: defaultDiscoveryActivities,
+        designActivities: defaultDesignActivities
+      })
+      estimateWithoutOption = calculateEstimate({
+        effort: defaultEffort,
+        sprints: defaultSprints,
+        designerCount: defaultDesignerCount,
+        designerLevels: defaultDesignerLevels,
+        breakpoints: defaultBreakpoints,
+        fidelity: defaultFidelity,
+        meetingBuffer: defaultMeetingBuffer,
+        iterationMultiplier: defaultIterationMultiplier,
+        discoveryActivities: defaultDiscoveryActivities,
+        designActivities: defaultDesignActivities
+      })
     } else if (factorType === 'sprints') {
-      return Math.round(value * 10) // Sprints multiplied by 5 in calculation, then by 2
+      estimateWithOption = calculateEstimate({
+        effort: defaultEffort,
+        sprints: value,
+        designerCount: defaultDesignerCount,
+        designerLevels: defaultDesignerLevels,
+        breakpoints: defaultBreakpoints,
+        fidelity: defaultFidelity,
+        meetingBuffer: defaultMeetingBuffer,
+        iterationMultiplier: defaultIterationMultiplier,
+        discoveryActivities: defaultDiscoveryActivities,
+        designActivities: defaultDesignActivities
+      })
+      estimateWithoutOption = calculateEstimate({
+        effort: defaultEffort,
+        sprints: defaultSprints,
+        designerCount: defaultDesignerCount,
+        designerLevels: defaultDesignerLevels,
+        breakpoints: defaultBreakpoints,
+        fidelity: defaultFidelity,
+        meetingBuffer: defaultMeetingBuffer,
+        iterationMultiplier: defaultIterationMultiplier,
+        discoveryActivities: defaultDiscoveryActivities,
+        designActivities: defaultDesignActivities
+      })
     } else if (factorType === 'breakpoints') {
-      return Math.round(value * 4) // Breakpoints * 2 in calculation, then by 2
+      estimateWithOption = calculateEstimate({
+        effort: defaultEffort,
+        sprints: defaultSprints,
+        designerCount: defaultDesignerCount,
+        designerLevels: defaultDesignerLevels,
+        breakpoints: value,
+        fidelity: defaultFidelity,
+        meetingBuffer: defaultMeetingBuffer,
+        iterationMultiplier: defaultIterationMultiplier,
+        discoveryActivities: defaultDiscoveryActivities,
+        designActivities: defaultDesignActivities
+      })
+      estimateWithoutOption = calculateEstimate({
+        effort: defaultEffort,
+        sprints: defaultSprints,
+        designerCount: defaultDesignerCount,
+        designerLevels: defaultDesignerLevels,
+        breakpoints: defaultBreakpoints,
+        fidelity: defaultFidelity,
+        meetingBuffer: defaultMeetingBuffer,
+        iterationMultiplier: defaultIterationMultiplier,
+        discoveryActivities: defaultDiscoveryActivities,
+        designActivities: defaultDesignActivities
+      })
     } else if (factorType === 'fidelity') {
-      return Math.round(value * 2) // Fidelity contributes directly
+      estimateWithOption = calculateEstimate({
+        effort: defaultEffort,
+        sprints: defaultSprints,
+        designerCount: defaultDesignerCount,
+        designerLevels: defaultDesignerLevels,
+        breakpoints: defaultBreakpoints,
+        fidelity: value,
+        meetingBuffer: defaultMeetingBuffer,
+        iterationMultiplier: defaultIterationMultiplier,
+        discoveryActivities: defaultDiscoveryActivities,
+        designActivities: defaultDesignActivities
+      })
+      estimateWithoutOption = calculateEstimate({
+        effort: defaultEffort,
+        sprints: defaultSprints,
+        designerCount: defaultDesignerCount,
+        designerLevels: defaultDesignerLevels,
+        breakpoints: defaultBreakpoints,
+        fidelity: defaultFidelity,
+        meetingBuffer: defaultMeetingBuffer,
+        iterationMultiplier: defaultIterationMultiplier,
+        discoveryActivities: defaultDiscoveryActivities,
+        designActivities: defaultDesignActivities
+      })
     } else if (factorType === 'designerCount') {
-      return Math.round((value - 1) * 3) // Designer count overhead
+      estimateWithOption = calculateEstimate({
+        effort: defaultEffort,
+        sprints: defaultSprints,
+        designerCount: value,
+        designerLevels: Array(value).fill(2), // Senior level
+        breakpoints: defaultBreakpoints,
+        fidelity: defaultFidelity,
+        meetingBuffer: defaultMeetingBuffer,
+        iterationMultiplier: defaultIterationMultiplier,
+        discoveryActivities: defaultDiscoveryActivities,
+        designActivities: defaultDesignActivities
+      })
+      estimateWithoutOption = calculateEstimate({
+        effort: defaultEffort,
+        sprints: defaultSprints,
+        designerCount: defaultDesignerCount,
+        designerLevels: defaultDesignerLevels,
+        breakpoints: defaultBreakpoints,
+        fidelity: defaultFidelity,
+        meetingBuffer: defaultMeetingBuffer,
+        iterationMultiplier: defaultIterationMultiplier,
+        discoveryActivities: defaultDiscoveryActivities,
+        designActivities: defaultDesignActivities
+      })
     } else if (factorType === 'meetingBuffer') {
-      return Math.round(value * 20) // Buffer percentage
+      const baseEstimate = calculateEstimate({
+        effort: defaultEffort,
+        sprints: defaultSprints,
+        designerCount: defaultDesignerCount,
+        designerLevels: defaultDesignerLevels,
+        breakpoints: defaultBreakpoints,
+        fidelity: defaultFidelity,
+        meetingBuffer: 0,
+        iterationMultiplier: defaultIterationMultiplier,
+        discoveryActivities: defaultDiscoveryActivities,
+        designActivities: defaultDesignActivities
+      })
+      estimateWithOption = calculateEstimate({
+        effort: defaultEffort,
+        sprints: defaultSprints,
+        designerCount: defaultDesignerCount,
+        designerLevels: defaultDesignerLevels,
+        breakpoints: defaultBreakpoints,
+        fidelity: defaultFidelity,
+        meetingBuffer: value,
+        iterationMultiplier: defaultIterationMultiplier,
+        discoveryActivities: defaultDiscoveryActivities,
+        designActivities: defaultDesignActivities
+      })
+      estimateWithoutOption = baseEstimate
     } else if (factorType === 'iterationMultiplier') {
-      return Math.round((value - 1) * 15) // Iteration multiplier
+      const baseEstimate = calculateEstimate({
+        effort: defaultEffort,
+        sprints: defaultSprints,
+        designerCount: defaultDesignerCount,
+        designerLevels: defaultDesignerLevels,
+        breakpoints: defaultBreakpoints,
+        fidelity: defaultFidelity,
+        meetingBuffer: defaultMeetingBuffer,
+        iterationMultiplier: 1,
+        discoveryActivities: defaultDiscoveryActivities,
+        designActivities: defaultDesignActivities
+      })
+      estimateWithOption = calculateEstimate({
+        effort: defaultEffort,
+        sprints: defaultSprints,
+        designerCount: defaultDesignerCount,
+        designerLevels: defaultDesignerLevels,
+        breakpoints: defaultBreakpoints,
+        fidelity: defaultFidelity,
+        meetingBuffer: defaultMeetingBuffer,
+        iterationMultiplier: value,
+        discoveryActivities: defaultDiscoveryActivities,
+        designActivities: defaultDesignActivities
+      })
+      estimateWithoutOption = baseEstimate
     } else if (factorType === 'activity' && impact !== undefined) {
-      return Math.round(impact * 10) // Activity impact contribution
+      // For activities, calculate the actual contribution to the estimate
+      const isDiscovery = DISCOVERY_ACTIVITY_OPTIONS.some(opt => opt.impact === impact)
+      const activityId = isDiscovery 
+        ? DISCOVERY_ACTIVITY_OPTIONS.find(opt => opt.impact === impact)?.id || ''
+        : DESIGN_TESTING_ACTIVITY_GROUPS.flatMap(g => g.options).find(opt => opt.impact === impact)?.id || ''
+      
+      if (!activityId) return 0
+
+      const activitiesWith = isDiscovery 
+        ? [activityId]
+        : [activityId]
+      
+      estimateWithOption = calculateEstimate({
+        effort: defaultEffort,
+        sprints: defaultSprints,
+        designerCount: defaultDesignerCount,
+        designerLevels: defaultDesignerLevels,
+        breakpoints: defaultBreakpoints,
+        fidelity: defaultFidelity,
+        meetingBuffer: defaultMeetingBuffer,
+        iterationMultiplier: defaultIterationMultiplier,
+        discoveryActivities: isDiscovery ? activitiesWith : defaultDiscoveryActivities,
+        designActivities: isDiscovery ? defaultDesignActivities : activitiesWith
+      })
+      estimateWithoutOption = calculateEstimate({
+        effort: defaultEffort,
+        sprints: defaultSprints,
+        designerCount: defaultDesignerCount,
+        designerLevels: defaultDesignerLevels,
+        breakpoints: defaultBreakpoints,
+        fidelity: defaultFidelity,
+        meetingBuffer: defaultMeetingBuffer,
+        iterationMultiplier: defaultIterationMultiplier,
+        discoveryActivities: defaultDiscoveryActivities,
+        designActivities: defaultDesignActivities
+      })
+    } else {
+      return 0
     }
-    return 0
+
+    return Math.max(0, Math.round(estimateWithOption - estimateWithoutOption))
   }
 
   const renderFactorSelector = (
