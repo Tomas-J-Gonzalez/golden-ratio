@@ -49,8 +49,7 @@ export const DESIGNER_COUNT_OPTIONS = [
   { value: 1, label: '1 designer', description: 'Single designer can handle' },
   { value: 2, label: '2 designers', description: 'Two designers working together' },
   { value: 3, label: '3 designers', description: 'Small team collaboration' },
-  { value: 4, label: '4 designers', description: 'Medium team effort' },
-  { value: 5, label: '5+ designers', description: 'Large team required' }
+  { value: 4, label: '4 designers', description: 'Medium team effort' }
 ]
 
 export const DESIGNER_LEVEL_OPTIONS = [

@@ -369,14 +369,6 @@ export default function VotingResults({ taskTitle, taskId, votes, participants, 
                 factors.iterationMultiplier && { label: 'Iterations', value: getFactorLabel('iterationMultiplier', factors.iterationMultiplier) }
               ].filter(Boolean) as { label: string, value: string }[]
 
-              // Discovery activities
-              const discoveryItems = discoveryActivities.length > 0 
-                ? discoveryActivities.map(id => ({
-                    label: DISCOVERY_ACTIVITY_MAP[id]?.label || id,
-                    value: DISCOVERY_ACTIVITY_MAP[id]?.label || id
-                  }))
-                : []
-
               // Design tasks (design activities)
               const designTaskItems = factors.designActivities && factors.designActivities.length > 0
                 ? factors.designActivities.map(id => ({
@@ -389,7 +381,6 @@ export default function VotingResults({ taskTitle, taskId, votes, participants, 
                 { title: 'Design effort variables', items: designEffortItems },
                 { title: 'Team setup', items: teamItems },
                 { title: 'Execution buffers', items: deliveryItems },
-                { title: 'Discovery activities', items: discoveryItems },
                 { title: 'Design tasks', items: designTaskItems }
               ].filter(group => group.items.length > 0)
 
