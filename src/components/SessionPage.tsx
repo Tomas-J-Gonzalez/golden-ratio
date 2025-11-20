@@ -569,7 +569,7 @@ export default function SessionPage({ sessionCode }: SessionPageProps) {
               </div>
             </div>
             <div className="flex items-center gap-3 flex-wrap">
-              {session && <VotingMusicToggle key={`music-${currentTask?.id || 'none'}`} isVotingActive={isVotingInProgress} />}
+              {session && isVotingInProgress && <VotingMusicToggle key={`music-${currentTask?.id || 'none'}`} isVotingActive={isVotingInProgress} />}
               {/* Timer temporarily hidden */}
               {/* {session && <VotingTimer key={`timer-${currentTask?.id || 'none'}`} isVotingActive={isVotingInProgress} onDurationChange={setVotingDuration} />} */}
               {currentParticipant && (

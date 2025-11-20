@@ -108,34 +108,34 @@ export const DISCOVERY_ACTIVITY_OPTIONS: ActivityOption[] = [
 
 export const DESIGN_TESTING_ACTIVITY_GROUPS: ActivityGroup[] = [
   {
-    title: 'Design a new atom',
+    title: 'Atom',
     options: [
       { id: 'design_atom', label: 'Design a new atom', description: 'Create a brand-new UI atom component', impact: 1 }
     ]
   },
   {
-    title: 'Design a new molecule',
+    title: 'Molecule',
     options: [
       { id: 'design_molecule_existing_atoms', label: 'Use existing atoms', description: 'Compose molecule from already available atoms', impact: 1.1 },
       { id: 'design_molecule_new_atoms', label: 'Create new atoms', description: 'Requires new atoms alongside molecules', impact: 1.4 }
     ]
   },
   {
-    title: 'Design a new organism',
+    title: 'Organism',
     options: [
       { id: 'design_organism_existing_parts', label: 'Use existing atoms/molecules', description: 'Assemble organism from pre-designed elements', impact: 1.5 },
       { id: 'design_organism_new_parts', label: 'Create new atoms/molecules', description: 'Requires net-new foundational components', impact: 1.9 }
     ]
   },
   {
-    title: 'Design a new page or template',
+    title: 'Page or template',
     options: [
       { id: 'design_page_existing_components', label: 'Use existing components', description: 'Assemble page from existing design system components', impact: 1.6 },
       { id: 'design_page_new_components', label: 'Create new components', description: 'Requires inventing new systems for the page', impact: 2 }
     ]
   },
   {
-    title: 'Test a design and iterate',
+    title: 'Test and iterate',
     options: [
       { id: 'test_design_iterate', label: 'Test and iterate', description: 'Run testing cycles and iterate on learnings', impact: 1.3 }
     ]
