@@ -126,7 +126,7 @@ export const DESIGN_TESTING_ACTIVITY_GROUPS: ActivityGroup[] = [
   {
     title: 'Design a new page or template',
     options: [
-      { id: 'design_page_existing_components', label: 'Use existing components', description: 'Compose page with existing atoms/molecules/organisms', impact: 1.6 },
+      { id: 'design_page_existing_components', label: 'Use existing components', description: 'Assemble page from existing design system components', impact: 1.6 },
       { id: 'design_page_new_components', label: 'Create new components', description: 'Requires inventing new systems for the page', impact: 2 }
     ]
   },
