@@ -95,7 +95,7 @@ export const FIDELITY_OPTIONS = [
 
 export const DISCOVERY_ACTIVITY_OPTIONS: ActivityOption[] = [
   { id: 'discovery', label: 'Discovery', description: 'Foundational research to understand the problem space', impact: 0.8 },
-  { id: 'landscape', label: 'Landscape', description: 'Competitive and market landscape analysis', impact: 0.6 },
+  { id: 'landscape', label: 'Landscape review', description: 'Competitive and market landscape analysis', impact: 0.6 },
   { id: 'ux_audit', label: 'UX audit of current state', description: 'Evaluate existing experience quality', impact: 0.9 },
   { id: 'accessibility_audit', label: 'Accessibility audit', description: 'Review for accessibility gaps', impact: 1 },
   { id: 'problem_exploration', label: 'Problem exploration & scope', description: 'Stakeholder workshops and goal setting', impact: 1.1 },

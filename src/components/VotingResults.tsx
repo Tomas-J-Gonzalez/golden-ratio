@@ -315,7 +315,7 @@ export default function VotingResults({ taskTitle, taskId, votes, participants, 
               key={card.label}
               className="rounded-2xl border border-slate-200 bg-white px-4 py-3 text-center"
             >
-              <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">{card.label}</p>
+              <p className="text-xs font-medium text-slate-500">{card.label}</p>
               <p className={`text-2xl font-semibold text-slate-900 ${card.highlight ? 'text-emerald-600' : ''}`}>
                 {card.value}
               </p>
@@ -344,7 +344,8 @@ export default function VotingResults({ taskTitle, taskId, votes, participants, 
 
               const discoveryActivities = (factors.discoveryActivities || []).filter(id => id !== 'discovery')
 
-              const scopeItems = [
+              // Design effort variables (factors that affect complexity)
+              const designEffortItems = [
                 { label: 'Effort', value: getFactorLabel('effort', factors.effort) },
                 factors.time && { label: 'Time', value: getFactorLabel('time', factors.time) },
                 { label: 'Sprints', value: getFactorLabel('sprints', factors.sprints) },
@@ -368,28 +369,34 @@ export default function VotingResults({ taskTitle, taskId, votes, participants, 
                 factors.iterationMultiplier && { label: 'Iterations', value: getFactorLabel('iterationMultiplier', factors.iterationMultiplier) }
               ].filter(Boolean) as { label: string, value: string }[]
 
-              const activityItems = [
-                discoveryActivities.length > 0 && {
-                  label: 'Discovery',
-                  value: formatActivities(discoveryActivities, DISCOVERY_ACTIVITY_MAP)
-                },
-                factors.designActivities && factors.designActivities.length > 0 && {
-                  label: 'Design & testing',
-                  value: formatActivities(factors.designActivities, DESIGN_TESTING_ACTIVITY_MAP)
-                }
-              ].filter(Boolean) as { label: string, value: string }[]
+              // Discovery activities
+              const discoveryItems = discoveryActivities.length > 0 
+                ? discoveryActivities.map(id => ({
+                    label: DISCOVERY_ACTIVITY_MAP[id]?.label || id,
+                    value: DISCOVERY_ACTIVITY_MAP[id]?.label || id
+                  }))
+                : []
+
+              // Design tasks (design activities)
+              const designTaskItems = factors.designActivities && factors.designActivities.length > 0
+                ? factors.designActivities.map(id => ({
+                    label: DESIGN_TESTING_ACTIVITY_MAP[id]?.label || id,
+                    value: DESIGN_TESTING_ACTIVITY_MAP[id]?.label || id
+                  }))
+                : []
 
               const grouped = [
-                { title: 'Scope & complexity', items: scopeItems },
+                { title: 'Design effort variables', items: designEffortItems },
                 { title: 'Team setup', items: teamItems },
                 { title: 'Execution buffers', items: deliveryItems },
-                { title: 'Activities', items: activityItems }
+                { title: 'Discovery activities', items: discoveryItems },
+                { title: 'Design tasks', items: designTaskItems }
               ].filter(group => group.items.length > 0)
 
               return (
                 <article
                   key={vote.id}
-                  className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm transition hover:border-slate-300 sm:p-5"
+                  className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm transition hover:border-slate-300 sm:p-5 overflow-hidden"
                 >
                   <header className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                     <div className="space-y-1">
@@ -404,18 +411,17 @@ export default function VotingResults({ taskTitle, taskId, votes, participants, 
 
                   <div className="mt-4 grid gap-4 md:grid-cols-2">
                     {grouped.map((group) => (
-                      <div key={group.title} className="rounded-xl bg-slate-50 p-3">
-                        <p className="text-[11px] font-semibold uppercase tracking-wide text-slate-500">
+                      <div key={group.title} className="rounded-xl bg-slate-50 p-3 overflow-hidden">
+                        <h4 className="text-sm font-semibold text-slate-900 mb-2">
                           {group.title}
-                        </p>
-                        <div className="mt-2 space-y-1.5">
+                        </h4>
+                        <div className="mt-2 space-y-2">
                           {group.items.map(item => (
                             <div
                               key={`${group.title}-${item.label}`}
-                              className="flex flex-col gap-0.5 text-sm text-slate-600"
+                              className="text-sm break-words min-w-0"
                             >
-                              <span className="text-xs uppercase tracking-wide text-slate-500">{item.label}</span>
-                              <span className="font-medium text-slate-900 break-words">
+                              <span className="font-medium text-slate-900">
                                 {item.value}
                               </span>
                             </div>

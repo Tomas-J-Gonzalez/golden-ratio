@@ -546,7 +546,7 @@ export default function SessionPage({ sessionCode }: SessionPageProps) {
       <div className="container mx-auto px-4 py-6">
         {/* Header */}
         <div className="mb-6">
-          <div className="flex items-center justify-between mb-4">
+          <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between mb-4">
             <div>
               <h1 className="text-2xl font-bold text-gray-900">Design Estimation Session</h1>
               <div className="flex items-center gap-2">
@@ -568,7 +568,7 @@ export default function SessionPage({ sessionCode }: SessionPageProps) {
                 </Button>
               </div>
             </div>
-            <div className="flex items-center gap-3">
+            <div className="flex items-center gap-3 flex-wrap">
               {session && <VotingMusicToggle key={`music-${currentTask?.id || 'none'}`} isVotingActive={isVotingInProgress} />}
               {/* Timer temporarily hidden */}
               {/* {session && <VotingTimer key={`timer-${currentTask?.id || 'none'}`} isVotingActive={isVotingInProgress} onDurationChange={setVotingDuration} />} */}

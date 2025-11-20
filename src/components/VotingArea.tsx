@@ -167,6 +167,65 @@ export default function VotingArea({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [factors.sprints, factors.designerCount, factors.breakpoints, factors.fidelity, factors.iterationMultiplier])
 
+  // Auto-suggest sprint allocation based on effort and other factors
+  useEffect(() => {
+    const { effort, designerCount, breakpoints, fidelity, iterationMultiplier } = factors
+    
+    // Need effort and at least 2 other factors selected to make a suggestion
+    if (effort === null) return
+    
+    const selectedFactorsCount = [designerCount, breakpoints, fidelity, iterationMultiplier]
+      .filter(f => f !== null).length
+    
+    if (selectedFactorsCount < 2) return
+
+    // Calculate suggested sprint allocation based on effort and other factors
+    let sprintScore = 0
+    
+    // Effort contribution (higher effort = more sprints needed)
+    if (effort === 1) sprintScore += 0.1      // Very Low -> 0.1 sprint
+    else if (effort === 2) sprintScore += 0.2 // Low -> 0.2 sprint
+    else if (effort === 4) sprintScore += 0.5 // Medium -> 0.5 sprint
+    else if (effort === 8) sprintScore += 1   // High -> 1 sprint
+    else sprintScore += 1.5                   // Very High -> 1.5 sprints
+    
+    // Designer count contribution (more designers = slightly more sprints for coordination)
+    if (designerCount !== null) {
+      if (designerCount >= 3) sprintScore += 0.2
+      if (designerCount >= 4) sprintScore += 0.2
+    }
+    
+    // Breakpoints contribution (more breakpoints = more sprints)
+    if (breakpoints !== null) {
+      sprintScore += (breakpoints - 1) * 0.1
+    }
+    
+    // Fidelity contribution (higher fidelity = more sprints)
+    if (fidelity !== null) {
+      if (fidelity >= 4) sprintScore += 0.3
+      if (fidelity >= 8) sprintScore += 0.2
+    }
+    
+    // Iteration multiplier (more iterations = more sprints)
+    if (iterationMultiplier !== null && iterationMultiplier > 1) {
+      sprintScore += (iterationMultiplier - 1) * 0.3
+    }
+    
+    // Map the score to sprint allocation (0.1, 0.2, 0.5, 1, 1.5, 2, 3)
+    let suggestedSprints = 0.1 // Default to 0.1 sprint
+    if (sprintScore <= 0.15) suggestedSprints = 0.1
+    else if (sprintScore <= 0.35) suggestedSprints = 0.2
+    else if (sprintScore <= 0.75) suggestedSprints = 0.5
+    else if (sprintScore <= 1.25) suggestedSprints = 1
+    else if (sprintScore <= 1.75) suggestedSprints = 1.5
+    else if (sprintScore <= 2.5) suggestedSprints = 2
+    else suggestedSprints = 3
+    
+    // Always update sprints to the suggested value (dynamic)
+    setFactors(prev => ({ ...prev, sprints: suggestedSprints }))
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [factors.effort, factors.designerCount, factors.breakpoints, factors.fidelity, factors.iterationMultiplier])
+
   const updateFactor = (factorType: keyof EstimationFactors, value: number) => {
     setFactors(prev => ({
       ...prev,
@@ -262,13 +321,14 @@ export default function VotingArea({
   ) => {
     const selectedValue = factors[factorType]
     const isEffortSelector = factorType === 'effort'
-    const isSuggested = isEffortSelector && selectedValue !== null
+    const isSprintSelector = factorType === 'sprints'
+    const isSuggested = (isEffortSelector || isSprintSelector) && selectedValue !== null
     
     return (
       <div className="space-y-3">
         <h4 className="font-medium text-sm flex items-center gap-2">
           {title} <span className="text-red-500">*</span>
-          {isEffortSelector && isSuggested && (
+          {isSuggested && (
             <span className="text-xs text-blue-600 font-normal">
               (Suggested based on your selections)
             </span>
@@ -552,13 +612,13 @@ export default function VotingArea({
         <div className="space-y-6">
           {renderDiscoveryActivities()}
           {renderDesignTestingActivities()}
-          {renderFactorSelector('Sprint Allocation', 'sprints', SPRINT_OPTIONS)}
           {renderDesignerSelector()}
           {renderFactorSelector('Breakpoints', 'breakpoints', BREAKPOINT_OPTIONS)}
           {renderFactorSelector('Fidelity Level', 'fidelity', FIDELITY_OPTIONS)}
           {renderFactorSelector('Meeting Buffer', 'meetingBuffer', MEETING_BUFFER_OPTIONS)}
           {renderFactorSelector('Design Iterations', 'iterationMultiplier', ITERATION_MULTIPLIER_OPTIONS)}
           {renderFactorSelector('Effort Level', 'effort', EFFORT_OPTIONS)}
+          {renderFactorSelector('Sprint Allocation', 'sprints', SPRINT_OPTIONS)}
         </div>
       </CardContent>
     </Card>
