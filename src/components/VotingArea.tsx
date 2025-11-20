@@ -454,7 +454,7 @@ export default function VotingArea({
         <p className="text-xs text-slate-500">Capture the level of design execution involved</p>
         {DESIGN_TESTING_ACTIVITY_GROUPS.map(group => (
           <div key={group.title} className="space-y-2">
-            <div className="text-[11px] uppercase tracking-wide text-slate-500">{group.title}</div>
+            <div className="text-sm font-medium text-slate-700">{group.title}</div>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
               {group.options.map(option => {
                 const isSelected = factors.designActivities.includes(option.id)
