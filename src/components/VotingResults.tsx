@@ -15,6 +15,7 @@ import {
   INDIVIDUAL_DESIGNER_LEVELS,
   BREAKPOINT_OPTIONS, 
   FIDELITY_OPTIONS,
+  DELIVERABLES_OPTIONS,
   MEETING_BUFFER_OPTIONS,
   ITERATION_MULTIPLIER_OPTIONS,
   estimateToTShirtSize,
@@ -33,6 +34,7 @@ interface VoteFactors {
   designers?: number // Legacy field
   breakpoints: number
   fidelity: number
+  deliverables?: number
   meetingBuffer?: number
   iterationMultiplier?: number
   finalEstimate?: number
@@ -74,6 +76,8 @@ export default function VotingResults({ taskTitle, taskId, votes, participants, 
         return BREAKPOINT_OPTIONS.find(o => o.value === value)?.label || 'Unknown'
       case 'fidelity':
         return FIDELITY_OPTIONS.find(o => o.value === value)?.label || 'Unknown'
+      case 'deliverables':
+        return DELIVERABLES_OPTIONS.find(o => o.value === value)?.label || 'Unknown'
       case 'prototypes': // Legacy support
         return 'Prototypes (legacy)'
       case 'meetingBuffer':
@@ -363,6 +367,7 @@ export default function VotingResults({ taskTitle, taskId, votes, participants, 
               ].filter(Boolean) as { label: string, value: string }[]
 
               const deliveryItems = [
+                factors.deliverables && { label: 'Deliverables', value: getFactorLabel('deliverables', factors.deliverables) },
                 factors.meetingBuffer && { label: 'Buffer', value: getFactorLabel('meetingBuffer', factors.meetingBuffer) },
                 factors.iterationMultiplier && { label: 'Iterations', value: getFactorLabel('iterationMultiplier', factors.iterationMultiplier) }
               ].filter(Boolean) as { label: string, value: string }[]

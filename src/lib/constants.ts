@@ -88,8 +88,12 @@ export const FIDELITY_OPTIONS = [
   { value: 1, label: 'Lo-fi', description: 'Low fidelity, wireframes/sketches' },
   { value: 2, label: 'Mid-fi', description: 'Medium fidelity, detailed wireframes' },
   { value: 3, label: 'Hi-fi', description: 'High fidelity, pixel-perfect designs' },
-  { value: 4, label: 'Interactive prototype', description: 'Interactive prototype with animations' },
   { value: 8, label: 'Production-ready', description: 'All designs dev-ready with final specifications' }
+]
+
+export const DELIVERABLES_OPTIONS = [
+  { value: 1, label: 'Wireframes', description: 'Static wireframe designs' },
+  { value: 2, label: 'Interactive prototype', description: 'Interactive prototype with animations' }
 ]
 
 export const DISCOVERY_ACTIVITY_OPTIONS: ActivityOption[] = [

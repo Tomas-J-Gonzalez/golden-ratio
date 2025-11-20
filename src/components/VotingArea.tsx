@@ -15,6 +15,7 @@ import {
   INDIVIDUAL_DESIGNER_LEVELS,
   BREAKPOINT_OPTIONS, 
   FIDELITY_OPTIONS,
+  DELIVERABLES_OPTIONS,
   MEETING_BUFFER_OPTIONS,
   ITERATION_MULTIPLIER_OPTIONS,
   calculateEstimate,
@@ -41,6 +42,7 @@ interface EstimationFactors {
   designerLevels: number[] // Array of designer levels
   breakpoints: number | null
   fidelity: number | null
+  deliverables: number | null
   meetingBuffer: number | null
   iterationMultiplier: number | null
   discoveryActivities: string[]
@@ -55,6 +57,7 @@ const createInitialFactors = (): EstimationFactors => ({
   designerLevels: [],
   breakpoints: null,
   fidelity: null,
+  deliverables: null,
   meetingBuffer: null,
   iterationMultiplier: null,
   discoveryActivities: [],
@@ -202,7 +205,7 @@ export default function VotingArea({
     
     // Fidelity contribution (higher fidelity = more sprints)
     if (fidelity !== null) {
-      if (fidelity >= 4) sprintScore += 0.3
+      if (fidelity >= 3) sprintScore += 0.3
       if (fidelity >= 8) sprintScore += 0.2
     }
     
@@ -615,6 +618,7 @@ export default function VotingArea({
           {renderDesignerSelector()}
           {renderFactorSelector('Breakpoints', 'breakpoints', BREAKPOINT_OPTIONS)}
           {renderFactorSelector('Fidelity Level', 'fidelity', FIDELITY_OPTIONS)}
+          {renderFactorSelector('Deliverables', 'deliverables', DELIVERABLES_OPTIONS)}
           {renderFactorSelector('Meeting Buffer', 'meetingBuffer', MEETING_BUFFER_OPTIONS)}
           {renderFactorSelector('Design Iterations', 'iterationMultiplier', ITERATION_MULTIPLIER_OPTIONS)}
           {renderFactorSelector('Effort Level', 'effort', EFFORT_OPTIONS)}
