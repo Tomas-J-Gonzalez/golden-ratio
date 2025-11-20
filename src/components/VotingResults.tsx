@@ -93,7 +93,8 @@ export default function VotingResults({ taskTitle, taskId, votes, participants, 
 
   const formatActivities = (activityIds?: string[], map?: Record<string, { label: string }>) => {
     if (!activityIds || !activityIds.length || !map) return ''
-    return activityIds.map(id => map[id]?.label || id).join(', ')
+    const uniqueIds = Array.from(new Set(activityIds))
+    return uniqueIds.map(id => map[id]?.label || id).join(', ')
   }
 
   const toNumberArray = (value: unknown, fallback: number[] = []) => {
@@ -256,21 +257,27 @@ export default function VotingResults({ taskTitle, taskId, votes, participants, 
   const minEstimate = estimates.length > 0 ? Math.min(...estimates) : 0
   const maxEstimate = estimates.length > 0 ? Math.max(...estimates) : 0
 
+  const summaryCards = [
+    { label: 'Minimum', value: estimateToTShirtSize(minEstimate), sublabel: `${minEstimate} pts` },
+    { label: 'Average', value: estimateToTShirtSize(averageEstimate), sublabel: `${averageEstimate} pts`, highlight: true },
+    { label: 'Maximum', value: estimateToTShirtSize(maxEstimate), sublabel: `${maxEstimate} pts` },
+    { label: 'Participants', value: votes.length, sublabel: 'completed votes' }
+  ]
+
   return (
-    <Card>
-      <CardHeader>
-        <div className="flex items-center justify-between">
-          <div>
-            <CardTitle className="flex items-center gap-2">
-              <span className="text-green-600">✓</span>
-              Voting Results: {taskTitle}
+    <Card className="overflow-hidden">
+      <CardHeader className="space-y-6">
+        <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+          <div className="space-y-1">
+            <CardTitle className="text-lg font-semibold text-slate-900">
+              Voting results · {taskTitle}
             </CardTitle>
-            <CardDescription>
-              All {votes.length} participants have completed their estimates
+            <CardDescription className="text-sm text-slate-500">
+              All {votes.length} participants finished estimating
             </CardDescription>
           </div>
-          <div className="flex items-center gap-2">
-            <Button 
+          <div className="flex flex-wrap gap-2">
+            <Button
               onClick={copyToClipboard}
               variant="outline"
               size="sm"
@@ -284,156 +291,144 @@ export default function VotingResults({ taskTitle, taskId, votes, participants, 
               ) : (
                 <>
                   <Copy className="w-4 h-4" />
-                  Copy Results
+                  Copy summary
                 </>
               )}
             </Button>
             {isModerator && (
-              <Button 
+              <Button
                 onClick={completeTask}
                 disabled={isCompleting}
                 size="sm"
-                className="flex items-center gap-2 bg-green-600 hover:bg-green-700"
+                className="flex items-center gap-2 bg-emerald-600 hover:bg-emerald-700"
               >
                 <CheckCircle className="w-4 h-4" />
-                {isCompleting ? 'Completing...' : 'Complete Task'}
+                {isCompleting ? 'Completing...' : 'Complete task'}
               </Button>
             )}
           </div>
         </div>
-      </CardHeader>
-      <CardContent className="space-y-6">
-        {/* Summary Statistics - Minimal layout */}
-        <div className="rounded-lg border border-gray-200 bg-white">
-          <div className="px-4 pt-4">
-            <h3 className="text-xs font-semibold uppercase tracking-[0.12em] text-gray-500">Final estimate</h3>
-          </div>
-          <div className="grid grid-cols-3 divide-x divide-gray-100 px-4 py-5">
-            <div className="flex flex-col items-center gap-1 text-center">
-              <span className="text-xs text-gray-500">Minimum</span>
-              <span className="text-lg font-semibold text-gray-900">{estimateToTShirtSize(minEstimate)}</span>
-              <span className="text-xs text-gray-400">{minEstimate} pts</span>
-            </div>
-            <div className="flex flex-col items-center gap-1 text-center">
-              <span className="text-xs text-gray-500">Average</span>
-              <span className="text-2xl font-semibold text-gray-900">{estimateToTShirtSize(averageEstimate)}</span>
-              <span className="text-[11px] font-medium text-blue-600/80 bg-blue-50 px-2 py-0.5 rounded-full">{averageEstimate} pts</span>
-            </div>
-            <div className="flex flex-col items-center gap-1 text-center">
-              <span className="text-xs text-gray-500">Maximum</span>
-              <span className="text-lg font-semibold text-gray-900">{estimateToTShirtSize(maxEstimate)}</span>
-              <span className="text-xs text-gray-400">{maxEstimate} pts</span>
-            </div>
-          </div>
-        </div>
 
-        {/* Individual Estimates - Collapsible/Cleaner */}
-        <details className="group">
-          <summary className="cursor-pointer list-none">
-            <div className="flex items-center justify-between py-2 px-1 hover:bg-gray-50 rounded">
-              <h3 className="text-sm font-semibold text-gray-700 flex items-center gap-2">
-                Individual Estimates ({votes.length})
-              </h3>
-              <svg 
-                className="w-5 h-5 text-gray-400 transition-transform group-open:rotate-180" 
-                fill="none" 
-                stroke="currentColor" 
-                viewBox="0 0 24 24"
-              >
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-              </svg>
+        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+          {summaryCards.map(card => (
+            <div
+              key={card.label}
+              className="rounded-2xl border border-slate-200 bg-white px-4 py-3 text-center"
+            >
+              <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">{card.label}</p>
+              <p className={`text-2xl font-semibold text-slate-900 ${card.highlight ? 'text-emerald-600' : ''}`}>
+                {card.value}
+              </p>
+              <p className="text-xs text-slate-500">{card.sublabel}</p>
             </div>
-          </summary>
-          
-          <div className="space-y-3 mt-4">
+          ))}
+        </div>
+      </CardHeader>
+
+      <CardContent className="space-y-8">
+        <section className="space-y-4">
+          <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+            <div>
+              <h3 className="text-sm font-semibold text-slate-900">Voting breakdown</h3>
+              <p className="text-xs text-slate-500">Each participant’s rationale grouped by scope, team and execution</p>
+            </div>
+            <Badge className="w-fit bg-slate-100 text-slate-700">
+              {votes.length} {votes.length === 1 ? 'vote' : 'votes'}
+            </Badge>
+          </div>
+
+          <div className="grid gap-4">
             {votes.map((vote) => {
               const factors = vote.factors as VoteFactors
               const estimate = estimates[votes.indexOf(vote)]
-              
+
+              const discoveryActivities = (factors.discoveryActivities || []).filter(id => id !== 'discovery')
+
+              const scopeItems = [
+                { label: 'Effort', value: getFactorLabel('effort', factors.effort) },
+                factors.time && { label: 'Time', value: getFactorLabel('time', factors.time) },
+                { label: 'Sprints', value: getFactorLabel('sprints', factors.sprints) },
+                { label: 'Breakpoints', value: getFactorLabel('breakpoints', factors.breakpoints) },
+                { label: 'Fidelity', value: getFactorLabel('fidelity', factors.fidelity) }
+              ].filter(Boolean) as { label: string, value: string }[]
+
+              const teamItems = [
+                (factors.designerCount || factors.designers) && {
+                  label: 'Designers',
+                  value: getFactorLabel('designerCount', factors.designerCount || factors.designers || 0)
+                },
+                factors.designerLevels && factors.designerLevels.length > 0 && {
+                  label: 'Designer levels',
+                  value: getDesignerLevels(factors.designerLevels)
+                }
+              ].filter(Boolean) as { label: string, value: string }[]
+
+              const deliveryItems = [
+                factors.meetingBuffer && { label: 'Buffer', value: getFactorLabel('meetingBuffer', factors.meetingBuffer) },
+                factors.iterationMultiplier && { label: 'Iterations', value: getFactorLabel('iterationMultiplier', factors.iterationMultiplier) }
+              ].filter(Boolean) as { label: string, value: string }[]
+
+              const activityItems = [
+                discoveryActivities.length > 0 && {
+                  label: 'Discovery',
+                  value: formatActivities(discoveryActivities, DISCOVERY_ACTIVITY_MAP)
+                },
+                factors.designActivities && factors.designActivities.length > 0 && {
+                  label: 'Design & testing',
+                  value: formatActivities(factors.designActivities, DESIGN_TESTING_ACTIVITY_MAP)
+                }
+              ].filter(Boolean) as { label: string, value: string }[]
+
+              const grouped = [
+                { title: 'Scope & complexity', items: scopeItems },
+                { title: 'Team setup', items: teamItems },
+                { title: 'Execution buffers', items: deliveryItems },
+                { title: 'Activities', items: activityItems }
+              ].filter(group => group.items.length > 0)
+
               return (
-                <div key={vote.id} className="border border-gray-200 rounded-lg overflow-hidden hover:border-gray-300 transition-colors">
-                  {/* Header */}
-                  <div className="bg-gray-50 px-4 py-3 flex items-center justify-between border-b border-gray-200">
-                    <div className="font-medium text-gray-900">{getParticipantName(vote.participant_id)}</div>
-                    <Badge className="bg-green-600 text-white text-sm px-3 py-1">
+                <article
+                  key={vote.id}
+                  className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm transition hover:border-slate-300 sm:p-5"
+                >
+                  <header className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                    <div className="space-y-1">
+                      <p className="text-sm font-semibold text-slate-900 break-words">
+                        {getParticipantName(vote.participant_id)}
+                      </p>
+                    </div>
+                    <Badge className="w-fit bg-emerald-50 text-emerald-700">
                       {estimateToTShirtSize(estimate)}
                     </Badge>
+                  </header>
+
+                  <div className="mt-4 grid gap-4 md:grid-cols-2">
+                    {grouped.map((group) => (
+                      <div key={group.title} className="rounded-xl bg-slate-50 p-3">
+                        <p className="text-[11px] font-semibold uppercase tracking-wide text-slate-500">
+                          {group.title}
+                        </p>
+                        <div className="mt-2 space-y-1.5">
+                          {group.items.map(item => (
+                            <div
+                              key={`${group.title}-${item.label}`}
+                              className="flex flex-col gap-0.5 text-sm text-slate-600"
+                            >
+                              <span className="text-xs uppercase tracking-wide text-slate-500">{item.label}</span>
+                              <span className="font-medium text-slate-900 break-words">
+                                {item.value}
+                              </span>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    ))}
                   </div>
-                  
-                  {/* Factor Details */}
-                  <div className="p-4 bg-white">
-                    <div className="grid grid-cols-2 gap-x-6 gap-y-3 text-sm">
-                      <div className="flex justify-between">
-                        <span className="text-gray-500">Effort:</span>
-                        <span className="font-medium text-gray-900">{getFactorLabel('effort', factors.effort)}</span>
-                      </div>
-                      {factors.time && (
-                        <div className="flex justify-between">
-                          <span className="text-gray-500">Time:</span>
-                          <span className="font-medium text-gray-900">{getFactorLabel('time', factors.time)}</span>
-                        </div>
-                      )}
-                      <div className="flex justify-between">
-                        <span className="text-gray-500">Sprints:</span>
-                        <span className="font-medium text-gray-900">{getFactorLabel('sprints', factors.sprints)}</span>
-                      </div>
-                      {(factors.designerCount || factors.designers) && (
-                        <div className="flex justify-between">
-                          <span className="text-gray-500">Designers:</span>
-                          <span className="font-medium text-gray-900">{getFactorLabel('designerCount', factors.designerCount || factors.designers || 0)}</span>
-                        </div>
-                      )}
-                      <div className="flex justify-between">
-                        <span className="text-gray-500">Breakpoints:</span>
-                        <span className="font-medium text-gray-900">{getFactorLabel('breakpoints', factors.breakpoints)}</span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span className="text-gray-500">Fidelity:</span>
-                        <span className="font-medium text-gray-900">{getFactorLabel('fidelity', factors.fidelity)}</span>
-                      </div>
-                      {factors.meetingBuffer && (
-                        <div className="flex justify-between">
-                          <span className="text-gray-500">Buffer:</span>
-                          <span className="font-medium text-gray-900">{getFactorLabel('meetingBuffer', factors.meetingBuffer)}</span>
-                        </div>
-                      )}
-                      {factors.iterationMultiplier && (
-                        <div className="flex justify-between">
-                          <span className="text-gray-500">Iterations:</span>
-                          <span className="font-medium text-gray-900">{getFactorLabel('iterationMultiplier', factors.iterationMultiplier)}</span>
-                        </div>
-                      )}
-                      {factors.discoveryActivities && factors.discoveryActivities.length > 0 && (
-                        <div className="col-span-2 flex justify-between">
-                          <span className="text-gray-500">Discovery:</span>
-                          <span className="text-right font-medium text-gray-900">
-                            {formatActivities(factors.discoveryActivities, DISCOVERY_ACTIVITY_MAP)}
-                          </span>
-                        </div>
-                      )}
-                      {factors.designActivities && factors.designActivities.length > 0 && (
-                        <div className="col-span-2 flex justify-between">
-                          <span className="text-gray-500">Design &amp; Testing:</span>
-                          <span className="text-right font-medium text-gray-900">
-                            {formatActivities(factors.designActivities, DESIGN_TESTING_ACTIVITY_MAP)}
-                          </span>
-                        </div>
-                      )}
-                    </div>
-                    
-                    {/* Designer Levels - Full Width */}
-                    {factors.designerLevels && factors.designerLevels.length > 0 && (
-                      <div className="mt-3 pt-3 border-t border-gray-100">
-                        <span className="text-xs text-gray-500 block mb-1">Designer Levels:</span>
-                        <span className="text-xs text-gray-700">{getDesignerLevels(factors.designerLevels)}</span>
-                      </div>
-                    )}
-                  </div>
-                </div>
+                </article>
               )
             })}
           </div>
-        </details>
+        </section>
       </CardContent>
     </Card>
   )
