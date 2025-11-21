@@ -280,6 +280,17 @@ export default function TaskManagement({ sessionId, tasks, onTaskUpdate, isModer
   const addTask = async () => {
     if (!newTaskTitle.trim()) return
 
+    // Check for duplicate task name (case-insensitive, all statuses)
+    const normalizedTitle = newTaskTitle.trim().toLowerCase()
+    const duplicateTask = tasks.find(task => 
+      task.title.toLowerCase() === normalizedTitle
+    )
+
+    if (duplicateTask) {
+      toast.error(`A task with the name "${newTaskTitle.trim()}" already exists in this session.`)
+      return
+    }
+
     setIsAdding(true)
     try {
       // Add task to Supabase
@@ -287,7 +298,7 @@ export default function TaskManagement({ sessionId, tasks, onTaskUpdate, isModer
         .from('tasks')
         .insert({
           session_id: sessionId,
-          title: newTaskTitle,
+          title: newTaskTitle.trim(),
           description: newTaskDescription || null,
           status: 'pending',
           tags: newTaskTags.length > 0 ? newTaskTags : null

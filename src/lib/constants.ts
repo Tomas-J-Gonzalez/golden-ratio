@@ -85,10 +85,9 @@ export const PROTOTYPE_OPTIONS = [
 ]
 
 export const FIDELITY_OPTIONS = [
-  { value: 1, label: 'Lo-fi', description: 'Low fidelity, wireframes/sketches' },
+  { value: 1, label: 'Lo-fi (Wireframe)', description: 'Low fidelity, wireframes/sketches' },
   { value: 2, label: 'Mid-fi', description: 'Medium fidelity, detailed wireframes' },
-  { value: 3, label: 'Hi-fi', description: 'High fidelity, pixel-perfect designs' },
-  { value: 8, label: 'Production-ready', description: 'All designs dev-ready with final specifications' }
+  { value: 3, label: 'Hi-fi (Prod-ready)', description: 'High fidelity, pixel-perfect designs' }
 ]
 
 export const DELIVERABLES_OPTIONS = [
@@ -142,7 +141,7 @@ export const DESIGN_TESTING_ACTIVITY_GROUPS: ActivityGroup[] = [
   {
     title: 'Deliverables',
     options: [
-      { id: 'wireframes', label: 'Wireframes', description: 'Static wireframe designs', impact: 0.5 },
+      { id: 'wireframes', label: 'IA (Sitemap)', description: 'Information architecture and sitemap', impact: 0.5 },
       { id: 'interactive_prototype', label: 'Interactive prototype', description: 'Interactive prototype with animations', impact: 0.8 }
     ]
   }
@@ -177,7 +176,7 @@ export const calculateEstimate = (factors: {
     : 1;
   
   // Base complexity score from core factors
-  // Effort (1-16), Sprints (0.1-3), Breakpoints (1-3), Fidelity (1-8)
+  // Effort (1-16), Sprints (0.1-3), Breakpoints (1-3), Fidelity (1-3)
   const baseComplexity = (factors.effort + factors.sprints * 5 + factors.breakpoints * 2 + factors.fidelity) / 4;
 
   const discoveryImpact = (factors.discoveryActivities || []).reduce((sum, activityId) => {
