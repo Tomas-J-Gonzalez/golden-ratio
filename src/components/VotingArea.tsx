@@ -77,13 +77,12 @@ export default function VotingArea({
     checkExistingVote()
   }, [checkExistingVote])
 
-  const submitVote = async () => {
+  const submitPointVote = async () => {
     if (selectedPoint === null) return
 
     setIsSubmitting(true)
     
     try {
-      // Submit vote to Supabase
       const { error } = await supabase
         .from('votes')
         .upsert({
@@ -99,6 +98,50 @@ export default function VotingArea({
       onVoteSubmitted()
     } catch (error) {
       console.error('Error submitting vote:', error)
+      toast.error(`Failed to submit vote: ${error instanceof Error ? error.message : 'Unknown error'}`)
+    } finally {
+      setIsSubmitting(false)
+    }
+  }
+
+  const submitEmojiVote = async () => {
+    if (!selectedEmoji) return
+
+    setIsSubmitting(true)
+
+    try {
+      const factors: {
+        skipped: boolean
+        wantsCoffeeBreak?: boolean
+        taskTooBig?: boolean
+        scopeUnclear?: boolean
+      } = {
+        skipped: true
+      }
+
+      if (selectedEmoji === 'coffee') {
+        factors.wantsCoffeeBreak = true
+      } else if (selectedEmoji === 'infinity') {
+        factors.taskTooBig = true
+      } else if (selectedEmoji === 'question') {
+        factors.scopeUnclear = true
+      }
+
+      const { error } = await supabase
+        .from('votes')
+        .upsert({
+          task_id: taskId,
+          participant_id: participantId,
+          value: -1,
+          factors
+        })
+
+      if (error) throw error
+
+      setHasVoted(true)
+      onVoteSubmitted()
+    } catch (error) {
+      console.error('Error submitting emoji vote:', error)
       toast.error(`Failed to submit vote: ${error instanceof Error ? error.message : 'Unknown error'}`)
     } finally {
       setIsSubmitting(false)
@@ -133,49 +176,10 @@ export default function VotingArea({
     }
   }
 
-  const handleEmojiClick = async (emojiType: 'coffee' | 'infinity' | 'question') => {
+  const handleEmojiClick = (emojiType: 'coffee' | 'infinity' | 'question') => {
     if (hasVoted) return
-
-    setIsSubmitting(true)
-    
-    try {
-      const factors: {
-        skipped: boolean
-        wantsCoffeeBreak?: boolean
-        taskTooBig?: boolean
-        scopeUnclear?: boolean
-      } = {
-        skipped: true
-      }
-
-      if (emojiType === 'coffee') {
-        factors.wantsCoffeeBreak = true
-      } else if (emojiType === 'infinity') {
-        factors.taskTooBig = true
-      } else if (emojiType === 'question') {
-        factors.scopeUnclear = true
-      }
-
-      const { error } = await supabase
-        .from('votes')
-        .upsert({
-          task_id: taskId,
-          participant_id: participantId,
-          value: -1,
-          factors
-        })
-
-      if (error) throw error
-
-      setSelectedEmoji(emojiType)
-      setHasVoted(true)
-      onVoteSubmitted()
-    } catch (error) {
-      console.error('Error submitting emoji vote:', error)
-      toast.error(`Failed to submit vote: ${error instanceof Error ? error.message : 'Unknown error'}`)
-    } finally {
-      setIsSubmitting(false)
-    }
+    setSelectedEmoji(prev => (prev === emojiType ? null : emojiType))
+    setSelectedPoint(null)
   }
 
   if (hasVoted) {
@@ -243,38 +247,42 @@ export default function VotingArea({
           <CardTitle>Estimate Task</CardTitle>
           <CardDescription>
             Select your point estimate for: <span className="font-medium">&ldquo;{taskTitle}&rdquo;</span>
-        </CardDescription>
-      </CardHeader>
+          </CardDescription>
+        </CardHeader>
         <CardContent className="space-y-6">
           {/* Point Selection */}
           <div className="space-y-3">
             <div className="text-sm font-medium text-gray-700">Select Points</div>
             <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
               {POINT_OPTIONS.map((option) => (
-                <Button
-                  key={option.value}
-                  onClick={() => setSelectedPoint(option.value)}
-                  variant={selectedPoint === option.value ? "default" : "outline"}
-                  className={`h-16 relative flex flex-col items-start justify-center gap-1 px-3 text-left ${
-                    selectedPoint === option.value 
-                      ? 'bg-blue-600 hover:bg-blue-700 text-white' 
-                      : 'hover:bg-gray-50'
-                  }`}
-                >
-                  <span className="text-2xl font-bold flex items-baseline gap-1">
-                    {option.label}
-                    <span className="text-xs font-semibold">pt</span>
-                  </span>
-                  <span
-                    title={option.description}
-                    className="absolute top-2 right-2 text-gray-400 hover:text-gray-600"
+                <div key={option.value} className="relative group">
+                  <Button
+                    onClick={() => setSelectedPoint(option.value)}
+                    variant={selectedPoint === option.value ? "default" : "outline"}
+                    className={`h-16 flex flex-col items-start justify-center gap-1 px-3 text-left ${
+                      selectedPoint === option.value 
+                        ? 'bg-blue-600 hover:bg-blue-700 text-white' 
+                        : 'hover:bg-gray-50'
+                    }`}
                   >
-                    <Info className="w-3 h-3" />
-                  </span>
-                  <span className="text-xs opacity-80">{option.description.split(' - ')[1]}</span>
-                </Button>
+                    <span className="text-2xl font-bold flex items-baseline gap-1">
+                      {option.label}
+                      <span className="text-xs font-semibold">pt</span>
+                    </span>
+                    <span className="text-xs opacity-80">{option.description.split(' - ')[1]}</span>
+                    <span
+                      className="absolute top-2 right-2 text-gray-400 transition-colors hover:text-gray-600"
+                      aria-hidden="true"
+                    >
+                      <Info className="w-3 h-3" />
+                    </span>
+                  </Button>
+                  <div className="pointer-events-none absolute top-0 right-0 mt-10 mr-2 hidden w-40 rounded border border-slate-200 bg-slate-900/90 p-2 text-xs text-white shadow-lg opacity-0 transition-opacity group-hover:block group-hover:opacity-100">
+                    {option.description}
+                  </div>
+                </div>
               ))}
-          </div>
+            </div>
           </div>
 
           {/* Emoji Action Buttons - Single Select */}
@@ -313,19 +321,20 @@ export default function VotingArea({
 
           {/* Action Buttons */}
           <div className="space-y-2">
-            {/* Submit Button - Only show when point is selected */}
-            {selectedPoint !== null && (
-          <Button 
-            onClick={submitVote} 
-            disabled={isSubmitting}
-            className="w-full bg-blue-600 hover:bg-blue-700"
-            size="sm"
-          >
-            {isSubmitting ? 'Submitting...' : 'Submit Estimate'}
-          </Button>
-        )}
-            
-            {/* Skip Vote Button - Always visible */}
+            <Button 
+              onClick={() => {
+                if (selectedPoint !== null) {
+                  submitPointVote()
+                } else if (selectedEmoji) {
+                  submitEmojiVote()
+                }
+              }} 
+              disabled={isSubmitting || (!selectedPoint && !selectedEmoji)}
+              className="w-full bg-blue-600 hover:bg-blue-700"
+              size="sm"
+            >
+              {isSubmitting ? 'Submitting...' : 'Submit Estimate'}
+            </Button>
             <Button 
               onClick={skipVote} 
               disabled={isSubmitting || hasVoted}
