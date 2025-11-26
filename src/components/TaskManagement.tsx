@@ -309,7 +309,6 @@ export default function TaskManagement({ sessionId, tasks, onTaskUpdate, isModer
       setNewTaskTitle('')
       setNewTaskDescription('')
       setNewTaskTags([])
-      toast.success('Task added successfully')
       onTaskUpdate()
     } catch (error) {
       console.error('Error adding task:', error)
@@ -330,7 +329,6 @@ export default function TaskManagement({ sessionId, tasks, onTaskUpdate, isModer
         .eq('id', taskToDelete)
 
       if (error) throw error
-      toast.success('Task deleted successfully')
       onTaskUpdate()
     } catch (error) {
       console.error('Error deleting task:', error)
@@ -376,7 +374,6 @@ export default function TaskManagement({ sessionId, tasks, onTaskUpdate, isModer
         }
       }
       
-      toast.success('Voting started')
       onTaskUpdate()
     } catch (error) {
       console.error('Error starting voting:', error)
@@ -404,7 +401,6 @@ export default function TaskManagement({ sessionId, tasks, onTaskUpdate, isModer
 
       if (updateTaskError) throw updateTaskError
 
-      toast.success('Voting stopped and votes cleared')
       onTaskUpdate()
     } catch (error) {
       console.error('Error stopping voting:', error)

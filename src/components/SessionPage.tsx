@@ -13,7 +13,6 @@ import VotesHidden from './VotesHidden'
 import TaskHistory from './TaskHistory'
 import { EmojiPicker } from './EmojiPicker'
 import { ConfirmDialog } from './ui/confirm-dialog'
-import { VotingMusicToggle } from './VotingMusicToggle'
 // import { VotingTimer } from './VotingTimer' // Temporarily hidden
 import { Users, Copy, Check, LogOut, X } from 'lucide-react'
 import { toast } from 'sonner'
@@ -145,8 +144,6 @@ export default function SessionPage({ sessionCode }: SessionPageProps) {
       
       // Reload session data to get updated participants list
       await loadSessionData()
-      
-      toast.success('Joined session successfully!')
     } catch (error) {
       console.error('Error joining session:', error)
       toast.error('Failed to join session. Please try again.')
@@ -248,9 +245,7 @@ export default function SessionPage({ sessionCode }: SessionPageProps) {
             // Handle DELETE events - if a participant was deleted, show a toast
             if (payload.eventType === 'DELETE' && payload.old) {
               const deletedNickname = payload.old.nickname
-              if (deletedNickname) {
-                toast.info(`${deletedNickname} left the session`)
-              }
+              // Participant left - UI will update automatically via realtime subscription
             }
             
             // Also update currentParticipant if it changed
@@ -290,7 +285,6 @@ export default function SessionPage({ sessionCode }: SessionPageProps) {
   const copySessionCode = () => {
     navigator.clipboard.writeText(sessionCode)
     setCodeCopied(true)
-    toast.success('Session code copied!')
     setTimeout(() => setCodeCopied(false), 2000)
   }
 
@@ -329,7 +323,6 @@ export default function SessionPage({ sessionCode }: SessionPageProps) {
         localStorage.removeItem(`participant_${sessionCode}`)
 
         setLeaveDialogOpen(false)
-        toast.success('Left session successfully')
         
         // Redirect to home page
         setTimeout(() => {
@@ -374,7 +367,6 @@ export default function SessionPage({ sessionCode }: SessionPageProps) {
         throw error
       }
       
-      toast.success('Votes revealed!')
       loadSessionData()
     } catch (error) {
       console.error('Error revealing votes:', error)
@@ -403,7 +395,6 @@ export default function SessionPage({ sessionCode }: SessionPageProps) {
         throw error
       }
       
-      toast.success('Votes hidden!')
       loadSessionData()
     } catch (error) {
       console.error('Error hiding votes:', error)
@@ -429,7 +420,6 @@ export default function SessionPage({ sessionCode }: SessionPageProps) {
         throw error
       }
       
-      toast.success('Avatar updated!')
       loadSessionData()
     } catch (error) {
       console.error('Error updating avatar:', error)
@@ -637,7 +627,6 @@ export default function SessionPage({ sessionCode }: SessionPageProps) {
               </div>
             </div>
             <div className="flex items-center gap-3 flex-wrap">
-              {session && isVotingInProgress && <VotingMusicToggle key={`music-${currentTask?.id || 'none'}`} isVotingActive={isVotingInProgress} />}
               {/* Timer temporarily hidden */}
               {/* {session && <VotingTimer key={`timer-${currentTask?.id || 'none'}`} isVotingActive={isVotingInProgress} onDurationChange={setVotingDuration} />} */}
               {currentParticipant && (

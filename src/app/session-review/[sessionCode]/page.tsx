@@ -175,7 +175,6 @@ export default function SessionReviewPage({ params }: SessionReviewPageProps) {
     navigator.clipboard.writeText(markdown)
     setCopied(true)
     setTimeout(() => setCopied(false), 2000)
-    toast.success('Summary copied!')
   }
 
   const exportToCSV = async () => {
@@ -211,7 +210,6 @@ export default function SessionReviewPage({ params }: SessionReviewPageProps) {
       document.body.appendChild(link)
       link.click()
       document.body.removeChild(link)
-      toast.success('CSV exported successfully!')
     } catch (error) {
       console.error('Error exporting CSV:', error)
       toast.error('Failed to export CSV. Please try again.')
@@ -260,7 +258,6 @@ export default function SessionReviewPage({ params }: SessionReviewPageProps) {
 
       if (error) throw error
 
-      toast.success('Sequencing started!')
       setSetupDialogOpen(false)
       setShowSequencing(true)
       loadSessionData()

@@ -55,7 +55,6 @@ export default function HomePage() {
       localStorage.setItem(`participant_${newSessionCode}`, participant.id)
 
       // Navigate to session
-      toast.success('Session created successfully!')
       router.push(`/session/${newSessionCode}`)
     } catch (error) {
       console.error('Error creating session:', error)
@@ -99,7 +98,6 @@ export default function HomePage() {
       localStorage.setItem(`participant_${sessionCode}`, participant.id)
 
       // Navigate directly to session
-      toast.success('Joined session successfully!')
       router.push(`/session/${sessionCode}`)
     } catch (error) {
       console.error('Error joining session:', error)

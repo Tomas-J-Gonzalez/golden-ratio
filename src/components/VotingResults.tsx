@@ -233,8 +233,6 @@ export default function VotingResults({ taskTitle, taskId, votes, participants, 
 
       if (error) throw error
       
-      toast.success('Task completed successfully!')
-      
       if (onTaskCompleted) {
         onTaskCompleted()
       }

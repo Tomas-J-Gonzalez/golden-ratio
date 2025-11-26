@@ -54,7 +54,7 @@ export default function RootLayout({
       >
         <DemoModeBanner />
         {children}
-        <Toaster position="top-right" richColors closeButton />
+        <Toaster position="top-right" richColors closeButton duration={3000} />
       </body>
     </html>
   );

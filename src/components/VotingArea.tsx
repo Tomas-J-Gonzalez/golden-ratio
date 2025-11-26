@@ -8,6 +8,7 @@ import { Label } from '@/components/ui/label'
 import { CheckCircle, Calculator } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
 import { toast } from 'sonner'
+import { ConfirmDialog } from './ui/confirm-dialog'
 import { 
   EFFORT_OPTIONS, 
   SPRINT_OPTIONS, 
@@ -73,9 +74,9 @@ export default function VotingArea({
   const [hasVoted, setHasVoted] = useState(false)
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [portalContainer, setPortalContainer] = useState<HTMLElement | null>(null)
-  const [wantsCoffeeBreak, setWantsCoffeeBreak] = useState(false)
-  const [taskTooBig, setTaskTooBig] = useState(false)
-  const [scopeUnclear, setScopeUnclear] = useState(false)
+  const [selectedEmoji, setSelectedEmoji] = useState<'coffee' | 'infinity' | 'question' | null>(null)
+  const [emojiConfirmOpen, setEmojiConfirmOpen] = useState(false)
+  const [pendingEmojiType, setPendingEmojiType] = useState<'coffee' | 'infinity' | 'question' | null>(null)
 
   const checkExistingVote = useCallback(async () => {
     try {
@@ -101,9 +102,14 @@ export default function VotingArea({
           discoveryActivities: Array.isArray(storedFactors.discoveryActivities) ? storedFactors.discoveryActivities : prev.discoveryActivities,
           designActivities: Array.isArray(storedFactors.designActivities) ? storedFactors.designActivities : prev.designActivities
         }))
-        setWantsCoffeeBreak(storedFactors.wantsCoffeeBreak || false)
-        setTaskTooBig(storedFactors.taskTooBig || false)
-        setScopeUnclear(storedFactors.scopeUnclear || false)
+        // Determine which emoji was selected (if any)
+        if (storedFactors.wantsCoffeeBreak) {
+          setSelectedEmoji('coffee')
+        } else if (storedFactors.taskTooBig) {
+          setSelectedEmoji('infinity')
+        } else if (storedFactors.scopeUnclear) {
+          setSelectedEmoji('question')
+        }
         setHasVoted(true)
       }
     } catch (error) {
@@ -315,17 +321,13 @@ export default function VotingArea({
           participant_id: participantId,
           value: finalEstimate,
           factors: {
-            ...factors,
-            wantsCoffeeBreak,
-            taskTooBig,
-            scopeUnclear
+            ...factors
           }
         })
 
       if (error) throw error
 
       setHasVoted(true)
-      toast.success('Estimate submitted successfully!')
       onVoteSubmitted()
     } catch (error) {
       console.error('Error submitting vote:', error)
@@ -354,23 +356,72 @@ export default function VotingArea({
           participant_id: participantId,
           value: -1, // Special value to indicate skipped
           factors: {
-            skipped: true,
-            wantsCoffeeBreak,
-            taskTooBig,
-            scopeUnclear
+            skipped: true
           }
         })
 
       if (error) throw error
 
       setHasVoted(true)
-      toast.success('Vote skipped')
       onVoteSubmitted()
     } catch (error) {
       console.error('Error skipping vote:', error)
       toast.error(`Failed to skip vote: ${error instanceof Error ? error.message : 'Unknown error'}`)
     } finally {
       setIsSubmitting(false)
+    }
+  }
+
+  const handleEmojiClick = (emojiType: 'coffee' | 'infinity' | 'question') => {
+    // If already voted, don't allow changes
+    if (hasVoted) return
+    
+    // Set pending emoji and show confirmation
+    setPendingEmojiType(emojiType)
+    setEmojiConfirmOpen(true)
+  }
+
+  const submitEmojiVote = async () => {
+    if (!pendingEmojiType) return
+
+    setIsSubmitting(true)
+    setEmojiConfirmOpen(false)
+    
+    try {
+      // Determine which emoji flag to set
+      const factors: any = {
+        skipped: true
+      }
+      
+      if (pendingEmojiType === 'coffee') {
+        factors.wantsCoffeeBreak = true
+      } else if (pendingEmojiType === 'infinity') {
+        factors.taskTooBig = true
+      } else if (pendingEmojiType === 'question') {
+        factors.scopeUnclear = true
+      }
+
+      // Submit vote with value -1 and the appropriate emoji flag
+      const { error } = await supabase
+        .from('votes')
+        .upsert({
+          task_id: taskId,
+          participant_id: participantId,
+          value: -1, // Special value to indicate skipped
+          factors
+        })
+
+      if (error) throw error
+
+      setSelectedEmoji(pendingEmojiType)
+      setHasVoted(true)
+      onVoteSubmitted()
+    } catch (error) {
+      console.error('Error submitting emoji vote:', error)
+      toast.error(`Failed to submit vote: ${error instanceof Error ? error.message : 'Unknown error'}`)
+    } finally {
+      setIsSubmitting(false)
+      setPendingEmojiType(null)
     }
   }
 
@@ -845,6 +896,40 @@ export default function VotingArea({
   }
 
   if (hasVoted) {
+    // If emoji vote was submitted, show a simpler message
+    if (selectedEmoji) {
+      const emojiMessages = {
+        coffee: { emoji: '☕', message: 'Coffee break requested', bgColor: 'bg-amber-50' },
+        infinity: { emoji: '∞', message: 'Task marked as too big', bgColor: 'bg-red-50' },
+        question: { emoji: '❓', message: 'Scope marked as unclear', bgColor: 'bg-yellow-50' }
+      }
+      const emojiInfo = emojiMessages[selectedEmoji]
+      
+      return (
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <CheckCircle className="w-5 h-5 text-green-600" />
+              Vote Submitted
+            </CardTitle>
+            <CardDescription>
+              Your response for &ldquo;{taskTitle}&rdquo;
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className={`p-4 ${emojiInfo.bgColor} rounded-lg`}>
+              <div className="text-center">
+                <div className="text-4xl mb-2">{emojiInfo.emoji}</div>
+                <div className="text-lg font-semibold text-gray-700">{emojiInfo.message}</div>
+                <div className="text-sm text-gray-500 mt-1">Your turn has been skipped</div>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      )
+    }
+    
+    // Regular vote submission
     const finalEstimate = getCurrentEstimate()
     const tShirtEstimate = finalEstimate ? estimateToTShirtSize(finalEstimate) : 'Unknown'
     
@@ -933,31 +1018,34 @@ export default function VotingArea({
           <div className="text-sm font-medium text-blue-800 mt-2">{hoursEstimate}</div>
         </div>
 
-        {/* Emoji Action Buttons */}
+        {/* Emoji Action Buttons - Single Select */}
         <div className="flex gap-2 justify-center">
           <Button
-            onClick={() => setWantsCoffeeBreak(!wantsCoffeeBreak)}
-            variant={wantsCoffeeBreak ? "default" : "outline"}
+            onClick={() => handleEmojiClick('coffee')}
+            variant={selectedEmoji === 'coffee' ? "default" : "outline"}
             size="sm"
-            className={`flex-1 ${wantsCoffeeBreak ? 'bg-amber-100 hover:bg-amber-200 border-amber-300 text-amber-800' : ''}`}
+            disabled={hasVoted || isSubmitting}
+            className={`flex-1 ${selectedEmoji === 'coffee' ? 'bg-amber-100 hover:bg-amber-200 border-amber-300 text-amber-800' : ''}`}
             title="I need a coffee break"
           >
             ☕
           </Button>
           <Button
-            onClick={() => setTaskTooBig(!taskTooBig)}
-            variant={taskTooBig ? "default" : "outline"}
+            onClick={() => handleEmojiClick('infinity')}
+            variant={selectedEmoji === 'infinity' ? "default" : "outline"}
             size="sm"
-            className={`flex-1 ${taskTooBig ? 'bg-red-100 hover:bg-red-200 border-red-300 text-red-800' : ''}`}
+            disabled={hasVoted || isSubmitting}
+            className={`flex-1 ${selectedEmoji === 'infinity' ? 'bg-red-100 hover:bg-red-200 border-red-300 text-red-800' : ''}`}
             title="This task is way too big"
           >
             ∞
           </Button>
           <Button
-            onClick={() => setScopeUnclear(!scopeUnclear)}
-            variant={scopeUnclear ? "default" : "outline"}
+            onClick={() => handleEmojiClick('question')}
+            variant={selectedEmoji === 'question' ? "default" : "outline"}
             size="sm"
-            className={`flex-1 ${scopeUnclear ? 'bg-yellow-100 hover:bg-yellow-200 border-yellow-300 text-yellow-800' : ''}`}
+            disabled={hasVoted || isSubmitting}
+            className={`flex-1 ${selectedEmoji === 'question' ? 'bg-yellow-100 hover:bg-yellow-200 border-yellow-300 text-yellow-800' : ''}`}
             title="Scope is unclear or I have questions"
           >
             ❓
@@ -1021,6 +1109,23 @@ export default function VotingArea({
         </div>
       </CardContent>
     </Card>
+    
+    {/* Emoji Vote Confirmation Dialog */}
+    <ConfirmDialog
+      open={emojiConfirmOpen}
+      onOpenChange={setEmojiConfirmOpen}
+      title="Submit emoji vote?"
+      description={
+        pendingEmojiType === 'coffee' 
+          ? "This will submit your vote as a coffee break request and skip your turn. Continue?"
+          : pendingEmojiType === 'infinity'
+          ? "This will submit your vote as 'task too big' and skip your turn. Continue?"
+          : "This will submit your vote as 'scope unclear' and skip your turn. Continue?"
+      }
+      confirmText="Yes, submit"
+      cancelText="Cancel"
+      onConfirm={submitEmojiVote}
+    />
     </>
   )
 }

@@ -250,7 +250,6 @@ export function TaskSequencingBoard({
     document.body.appendChild(link)
     link.click()
     document.body.removeChild(link)
-    toast.success('Sequencing exported to CSV!')
   }
 
   const exportToMiro = async () => {
@@ -345,7 +344,6 @@ export function TaskSequencingBoard({
 
       if (error) throw error
 
-      toast.success('Sequencing cleared!')
       onConfigUpdate()
     } catch (error) {
       console.error('Error clearing sequencing:', error)
@@ -403,7 +401,6 @@ export function TaskSequencingBoard({
 
       if (error) throw error
 
-      toast.success('Task updated successfully')
       onConfigUpdate()
     } catch (error) {
       console.error('Error updating task:', error)
@@ -533,7 +530,6 @@ export function TaskSequencingBoard({
             return
           }
 
-          toast.success('Configuration updated!')
           setSetupDialogOpen(false)
           onConfigUpdate()
         }}

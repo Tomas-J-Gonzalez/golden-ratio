@@ -120,7 +120,6 @@ export default function TaskHistory({ tasks, sessionId, participants }: TaskHist
     navigator.clipboard.writeText(jiraText)
     setCopiedTaskId(task.id)
     setTimeout(() => setCopiedTaskId(null), 2000)
-    toast.success('Task copied for Jira!')
   }
 
   if (completedTasks.length === 0) {
