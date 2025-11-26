@@ -61,20 +61,32 @@ export default function VotingResults({ taskTitle, taskId, votes, participants, 
   const averageEstimate = pointValues.length > 0 
     ? Math.round((pointValues.reduce((sum, val) => sum + val, 0) / pointValues.length) * 10) / 10
     : 0
-  const minEstimate = pointValues.length > 0 ? Math.min(...pointValues) : 0
-  const maxEstimate = pointValues.length > 0 ? Math.max(...pointValues) : 0
-  
   // Format display values (remove trailing zeros for whole numbers, keep one decimal for decimals)
   const formatPointValue = (value: number): string => {
     if (value % 1 === 0) return value.toString()
     return value.toFixed(1)
   }
 
+  const getSuggestedScore = (): number => {
+    if (pointValues.length === 0) {
+      return POINT_OPTIONS[0].value
+    }
+    const target = averageEstimate
+    let closest = POINT_OPTIONS[0].value
+    let minDiff = Math.abs(target - closest)
+    POINT_OPTIONS.forEach(option => {
+      const diff = Math.abs(target - option.value)
+      if (diff < minDiff) {
+        minDiff = diff
+        closest = option.value
+      }
+    })
+    return closest
+  }
+
   const summaryCards = [
-    { label: 'Minimum', value: formatPointValue(minEstimate), sublabel: 'points' },
-    { label: 'Average', value: formatPointValue(averageEstimate), sublabel: 'points', highlight: true },
-    { label: 'Maximum', value: formatPointValue(maxEstimate), sublabel: 'points' },
-    { label: 'Participants', value: nonSkippedVotes.length, sublabel: skippedVotes.length > 0 ? `${skippedVotes.length} skipped` : 'completed votes' }
+    { label: 'Score Average', value: formatPointValue(averageEstimate), sublabel: 'pt' },
+    { label: 'Suggested Score', value: formatPointValue(getSuggestedScore()), sublabel: 'pt', highlight: true }
   ]
 
   const generateMarkdownSummary = () => {
@@ -87,9 +99,8 @@ export default function VotingResults({ taskTitle, taskId, votes, participants, 
     markdown += `## Summary\n\n`
     markdown += `| Metric | Points |\n`
     markdown += `|--------|--------|\n`
-    markdown += `| **Average** | ${formatPointValue(averageEstimate)} |\n`
-    markdown += `| **Minimum** | ${formatPointValue(minEstimate)} |\n`
-    markdown += `| **Maximum** | ${formatPointValue(maxEstimate)} |\n\n`
+    markdown += `| **Score Average** | ${formatPointValue(averageEstimate)} |\n`
+    markdown += `| **Suggested Score** | ${formatPointValue(getSuggestedScore())} |\n\n`
     
     // Individual Estimates
     markdown += `## Individual Estimates\n\n`
@@ -186,7 +197,7 @@ export default function VotingResults({ taskTitle, taskId, votes, participants, 
                 Hide Votes
               </Button>
             )}
-            <Button
+            <Button 
               onClick={copyToClipboard}
               variant="outline"
               size="sm"
@@ -205,7 +216,7 @@ export default function VotingResults({ taskTitle, taskId, votes, participants, 
               )}
             </Button>
             {isModerator && (
-              <Button
+              <Button 
                 onClick={completeTask}
                 disabled={isCompleting}
                 size="sm"
@@ -219,7 +230,7 @@ export default function VotingResults({ taskTitle, taskId, votes, participants, 
         </div>
 
         {/* Summary Cards */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+        <div className="grid grid-cols-2 gap-3">
           {summaryCards.map((card, index) => (
             <Card key={index} className={card.highlight ? 'border-blue-500 bg-blue-50' : ''}>
               <CardContent className="p-4">
@@ -235,11 +246,6 @@ export default function VotingResults({ taskTitle, taskId, votes, participants, 
       </CardHeader>
 
       <CardContent className="space-y-6">
-        <div className="text-sm font-medium text-slate-700">
-          {nonSkippedVotes.length} {nonSkippedVotes.length === 1 ? 'vote' : 'votes'}
-          {skippedVotes.length > 0 && ` • ${skippedVotes.length} skipped`}
-        </div>
-
         {/* Show skipped votes first */}
         {skippedVotes.length > 0 && (
           <div className="space-y-2 mb-4">
@@ -257,7 +263,7 @@ export default function VotingResults({ taskTitle, taskId, votes, participants, 
                         <Badge variant="outline" className="bg-gray-100 text-gray-600 border-gray-300">
                           {emoji || 'Skipped'}
                         </Badge>
-                      </div>
+            </div>
                     </CardHeader>
                   </Card>
                 )
@@ -271,8 +277,8 @@ export default function VotingResults({ taskTitle, taskId, votes, participants, 
           {nonSkippedVotes.map((vote) => {
             const pointValue = vote.value || 0
             const pointOption = POINT_OPTIONS.find(o => o.value === pointValue)
-            
-            return (
+              
+              return (
               <Card key={vote.id} className="border-slate-200">
                 <CardHeader className="pb-3">
                   <div className="flex items-center justify-between">
@@ -280,7 +286,7 @@ export default function VotingResults({ taskTitle, taskId, votes, participants, 
                       {getParticipantName(vote.participant_id)}
                     </CardTitle>
                     <Badge className="bg-blue-600 text-white text-sm px-3 py-1">
-                      {formatPointValue(pointValue)} points
+                      {formatPointValue(pointValue)} pt
                     </Badge>
                   </div>
                 </CardHeader>
@@ -292,9 +298,9 @@ export default function VotingResults({ taskTitle, taskId, votes, participants, 
                   </CardContent>
                 )}
               </Card>
-            )
-          })}
-        </div>
+              )
+            })}
+          </div>
       </CardContent>
     </Card>
   )

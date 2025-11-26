@@ -3,10 +3,10 @@
 import { useState, useEffect, useCallback } from 'react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
-import { CheckCircle } from 'lucide-react'
+import { CheckCircle, Info } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
 import { toast } from 'sonner'
-import { ConfirmDialog } from './ui/confirm-dialog'
+import { POINT_OPTIONS } from '@/lib/constants'
 import { POINT_OPTIONS } from '@/lib/constants'
 
 interface VotingAreaProps {
@@ -26,8 +26,10 @@ export default function VotingArea({
   const [hasVoted, setHasVoted] = useState(false)
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [selectedEmoji, setSelectedEmoji] = useState<'coffee' | 'infinity' | 'question' | null>(null)
-  const [emojiConfirmOpen, setEmojiConfirmOpen] = useState(false)
-  const [pendingEmojiType, setPendingEmojiType] = useState<'coffee' | 'infinity' | 'question' | null>(null)
+  const formatPointWithPt = (value: number) => {
+    const formatted = value % 1 === 0 ? value.toString() : value.toFixed(1)
+    return `${formatted} pt`
+  }
 
   const checkExistingVote = useCallback(async () => {
     try {
@@ -62,7 +64,7 @@ export default function VotingArea({
           const validPoint = POINT_OPTIONS.find(o => o.value === existingVote.value)
           if (validPoint) {
             setSelectedPoint(existingVote.value)
-            setHasVoted(true)
+        setHasVoted(true)
           }
         }
       }
@@ -132,23 +134,12 @@ export default function VotingArea({
     }
   }
 
-  const handleEmojiClick = (emojiType: 'coffee' | 'infinity' | 'question') => {
-    // If already voted, don't allow changes
+  const handleEmojiClick = async (emojiType: 'coffee' | 'infinity' | 'question') => {
     if (hasVoted) return
-    
-    // Set pending emoji and show confirmation
-    setPendingEmojiType(emojiType)
-    setEmojiConfirmOpen(true)
-  }
-
-  const submitEmojiVote = async () => {
-    if (!pendingEmojiType) return
 
     setIsSubmitting(true)
-    setEmojiConfirmOpen(false)
     
     try {
-      // Determine which emoji flag to set
       const factors: {
         skipped: boolean
         wantsCoffeeBreak?: boolean
@@ -157,28 +148,27 @@ export default function VotingArea({
       } = {
         skipped: true
       }
-      
-      if (pendingEmojiType === 'coffee') {
+
+      if (emojiType === 'coffee') {
         factors.wantsCoffeeBreak = true
-      } else if (pendingEmojiType === 'infinity') {
+      } else if (emojiType === 'infinity') {
         factors.taskTooBig = true
-      } else if (pendingEmojiType === 'question') {
+      } else if (emojiType === 'question') {
         factors.scopeUnclear = true
       }
 
-      // Submit vote with value -1 and the appropriate emoji flag
       const { error } = await supabase
         .from('votes')
         .upsert({
           task_id: taskId,
           participant_id: participantId,
-          value: -1, // Special value to indicate skipped
+          value: -1,
           factors
         })
 
       if (error) throw error
 
-      setSelectedEmoji(pendingEmojiType)
+      setSelectedEmoji(emojiType)
       setHasVoted(true)
       onVoteSubmitted()
     } catch (error) {
@@ -186,12 +176,10 @@ export default function VotingArea({
       toast.error(`Failed to submit vote: ${error instanceof Error ? error.message : 'Unknown error'}`)
     } finally {
       setIsSubmitting(false)
-      setPendingEmojiType(null)
     }
   }
 
   if (hasVoted) {
-    // If emoji vote was submitted, show a simpler message
     if (selectedEmoji) {
       const emojiMessages = {
         coffee: { emoji: '☕', message: 'Coffee break requested', bgColor: 'bg-amber-50' },
@@ -199,7 +187,7 @@ export default function VotingArea({
         question: { emoji: '❓', message: 'Scope marked as unclear', bgColor: 'bg-yellow-50' }
       }
       const emojiInfo = emojiMessages[selectedEmoji]
-      
+
     return (
         <Card>
           <CardHeader>
@@ -224,12 +212,7 @@ export default function VotingArea({
     )
   }
 
-    // Regular vote submission
     const selectedOption = POINT_OPTIONS.find(o => o.value === selectedPoint)
-    const formatPointValue = (value: number): string => {
-      if (value % 1 === 0) return value.toString()
-      return value.toFixed(1)
-    }
     
     return (
       <Card>
@@ -245,7 +228,7 @@ export default function VotingArea({
         <CardContent className="space-y-4">
           <div className="p-4 bg-green-50 rounded-lg">
             <div className="text-center">
-              <div className="text-2xl font-bold text-green-600">{formatPointValue(selectedPoint!)} points</div>
+              <div className="text-2xl font-bold text-green-600">{formatPointWithPt(selectedPoint!)}</div>
               <div className="text-sm text-green-700">{selectedOption?.description || ''}</div>
             </div>
           </div>
@@ -267,57 +250,66 @@ export default function VotingArea({
           {/* Point Selection */}
           <div className="space-y-3">
             <div className="text-sm font-medium text-gray-700">Select Points</div>
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+            <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
               {POINT_OPTIONS.map((option) => (
                 <Button
                   key={option.value}
                   onClick={() => setSelectedPoint(option.value)}
                   variant={selectedPoint === option.value ? "default" : "outline"}
-                  className={`h-20 flex flex-col items-center justify-center gap-1 ${
+                  className={`h-16 relative flex flex-col items-start justify-center gap-1 px-3 text-left ${
                     selectedPoint === option.value 
                       ? 'bg-blue-600 hover:bg-blue-700 text-white' 
                       : 'hover:bg-gray-50'
                   }`}
                 >
-                  <span className="text-2xl font-bold">{option.label}</span>
+                  <span className="text-2xl font-bold flex items-baseline gap-1">
+                    {option.label}
+                    <span className="text-xs font-semibold">pt</span>
+                  </span>
+                  <span
+                    title={option.description}
+                    className="absolute top-2 right-2 text-gray-400 hover:text-gray-600"
+                  >
+                    <Info className="w-3 h-3" />
+                  </span>
                   <span className="text-xs opacity-80">{option.description.split(' - ')[1]}</span>
                 </Button>
               ))}
-            </div>
+          </div>
           </div>
 
           {/* Emoji Action Buttons - Single Select */}
-          <div className="flex gap-2 justify-center">
-            <Button
-              onClick={() => handleEmojiClick('coffee')}
-              variant={selectedEmoji === 'coffee' ? "default" : "outline"}
-              size="sm"
-              disabled={hasVoted || isSubmitting}
-              className={`flex-1 ${selectedEmoji === 'coffee' ? 'bg-amber-100 hover:bg-amber-200 border-amber-300 text-amber-800' : ''}`}
-              title="I need a coffee break"
-            >
-              ☕
-            </Button>
-            <Button
-              onClick={() => handleEmojiClick('infinity')}
-              variant={selectedEmoji === 'infinity' ? "default" : "outline"}
-              size="sm"
-              disabled={hasVoted || isSubmitting}
-              className={`flex-1 ${selectedEmoji === 'infinity' ? 'bg-red-100 hover:bg-red-200 border-red-300 text-red-800' : ''}`}
-              title="This task is way too big"
-            >
-              ∞
-            </Button>
-            <Button
-              onClick={() => handleEmojiClick('question')}
-              variant={selectedEmoji === 'question' ? "default" : "outline"}
-              size="sm"
-              disabled={hasVoted || isSubmitting}
-              className={`flex-1 ${selectedEmoji === 'question' ? 'bg-yellow-100 hover:bg-yellow-200 border-yellow-300 text-yellow-800' : ''}`}
-              title="Scope is unclear or I have questions"
-            >
-              ❓
-            </Button>
+        <div className="flex gap-2 justify-start">
+          <Button
+            onClick={() => handleEmojiClick('coffee')}
+            variant={selectedEmoji === 'coffee' ? "default" : "outline"}
+            size="sm"
+            disabled={hasVoted || isSubmitting}
+            className={`px-3 py-1 ${selectedEmoji === 'coffee' ? 'bg-amber-100 hover:bg-amber-200 border-amber-300 text-amber-800' : ''}`}
+            title="I need a coffee break"
+          >
+            ☕
+          </Button>
+          <Button
+            onClick={() => handleEmojiClick('infinity')}
+            variant={selectedEmoji === 'infinity' ? "default" : "outline"}
+            size="sm"
+            disabled={hasVoted || isSubmitting}
+            className={`px-3 py-1 ${selectedEmoji === 'infinity' ? 'bg-red-100 hover:bg-red-200 border-red-300 text-red-800' : ''}`}
+            title="This task is way too big"
+          >
+            ∞
+          </Button>
+          <Button
+            onClick={() => handleEmojiClick('question')}
+            variant={selectedEmoji === 'question' ? "default" : "outline"}
+            size="sm"
+            disabled={hasVoted || isSubmitting}
+            className={`px-3 py-1 ${selectedEmoji === 'question' ? 'bg-yellow-100 hover:bg-yellow-200 border-yellow-300 text-yellow-800' : ''}`}
+            title="Scope is unclear or I have questions"
+          >
+            ❓
+          </Button>
         </div>
 
           {/* Action Buttons */}
@@ -348,22 +340,6 @@ export default function VotingArea({
       </CardContent>
     </Card>
       
-      {/* Emoji Vote Confirmation Dialog */}
-      <ConfirmDialog
-        open={emojiConfirmOpen}
-        onOpenChange={setEmojiConfirmOpen}
-        title="Submit emoji vote?"
-        description={
-          pendingEmojiType === 'coffee' 
-            ? "This will submit your vote as a coffee break request and skip your turn. Continue?"
-            : pendingEmojiType === 'infinity'
-            ? "This will submit your vote as 'task too big' and skip your turn. Continue?"
-            : "This will submit your vote as 'scope unclear' and skip your turn. Continue?"
-        }
-        confirmText="Yes, submit"
-        cancelText="Cancel"
-        onConfirm={submitEmojiVote}
-      />
     </>
   )
 }
