@@ -8,7 +8,6 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogClose } from '@/components/ui/dialog'
 import { Task, Participant, Vote, supabase } from '@/lib/supabase'
 import { FileText, ChevronDown, Copy, Check } from 'lucide-react'
-import { toast } from 'sonner'
 import { estimateToTShirtSize } from '@/lib/constants'
 
 // Helper function to get tag color classes
@@ -35,7 +34,7 @@ interface TaskHistoryProps {
   participants: Participant[]
 }
 
-export default function TaskHistory({ tasks, sessionId, participants }: TaskHistoryProps) {
+export default function TaskHistory({ tasks, participants }: TaskHistoryProps) {
   const [isCollapsed, setIsCollapsed] = useState(false)
   const [copiedTaskId, setCopiedTaskId] = useState<string | null>(null)
   const [selectedTask, setSelectedTask] = useState<Task | null>(null)

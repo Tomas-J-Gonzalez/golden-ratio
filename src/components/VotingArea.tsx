@@ -389,7 +389,12 @@ export default function VotingArea({
     
     try {
       // Determine which emoji flag to set
-      const factors: any = {
+      const factors: {
+        skipped: boolean
+        wantsCoffeeBreak?: boolean
+        taskTooBig?: boolean
+        scopeUnclear?: boolean
+      } = {
         skipped: true
       }
       

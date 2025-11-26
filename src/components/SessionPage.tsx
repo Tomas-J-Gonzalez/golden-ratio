@@ -242,9 +242,8 @@ export default function SessionPage({ sessionCode }: SessionPageProps) {
             if (participantsError) throw participantsError
             setParticipants(participantsData || [])
             
-            // Handle DELETE events - if a participant was deleted, show a toast
+            // Handle DELETE events - participant left, UI will update automatically via realtime subscription
             if (payload.eventType === 'DELETE' && payload.old) {
-              const deletedNickname = payload.old.nickname
               // Participant left - UI will update automatically via realtime subscription
             }
             
