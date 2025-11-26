@@ -248,6 +248,14 @@ export default function TaskManagement({ sessionId, tasks, onTaskUpdate, isModer
     }
   }, [hasActiveVoting])
 
+  // Auto-expand when a task is completed
+  useEffect(() => {
+    const completedTasks = tasks.filter(task => task.status === 'completed')
+    if (completedTasks.length > 0) {
+      setIsCardCollapsed(false)
+    }
+  }, [tasks])
+
   // Configure sensors for drag and drop
   const sensors = useSensors(
     useSensor(PointerSensor, {

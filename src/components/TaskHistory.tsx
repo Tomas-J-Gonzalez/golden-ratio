@@ -7,8 +7,10 @@ import { Badge } from '@/components/ui/badge'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogClose } from '@/components/ui/dialog'
 import { Task, Participant, Vote, supabase } from '@/lib/supabase'
-import { FileText, ChevronDown, Copy, Check } from 'lucide-react'
+import { FileText, ChevronDown, Copy, Check, Trash2 } from 'lucide-react'
 import { estimateToTShirtSize } from '@/lib/constants'
+import { ConfirmDialog } from './ui/confirm-dialog'
+import { toast } from 'sonner'
 
 // Helper function to get tag color classes
 const getTagColorClasses = (colorName: string) => {
@@ -32,14 +34,18 @@ interface TaskHistoryProps {
   tasks: Task[]
   sessionId: string
   participants: Participant[]
+  isModerator?: boolean
+  onTaskUpdate?: () => void
 }
 
-export default function TaskHistory({ tasks, participants }: TaskHistoryProps) {
+export default function TaskHistory({ tasks, participants, isModerator = false, onTaskUpdate }: TaskHistoryProps) {
   const [isCollapsed, setIsCollapsed] = useState(false)
   const [copiedTaskId, setCopiedTaskId] = useState<string | null>(null)
   const [selectedTask, setSelectedTask] = useState<Task | null>(null)
   const [taskDialogOpen, setTaskDialogOpen] = useState(false)
   const [taskVotes, setTaskVotes] = useState<Vote[]>([])
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false)
+  const [taskToDelete, setTaskToDelete] = useState<Task | null>(null)
 
   const completedTasks = tasks.filter(task => task.status === 'completed')
 
@@ -121,6 +127,46 @@ export default function TaskHistory({ tasks, participants }: TaskHistoryProps) {
     setTimeout(() => setCopiedTaskId(null), 2000)
   }
 
+  const handleDeleteClick = (task: Task) => {
+    setTaskToDelete(task)
+    setDeleteDialogOpen(true)
+  }
+
+  const confirmDeleteTask = async () => {
+    if (!taskToDelete) return
+
+    try {
+      // Delete associated votes first
+      const { error: votesError } = await supabase
+        .from('votes')
+        .delete()
+        .eq('task_id', taskToDelete.id)
+
+      if (votesError) {
+        console.error('Error deleting votes:', votesError)
+        // Continue with task deletion even if votes deletion fails
+      }
+
+      // Delete task from Supabase
+      const { error } = await supabase
+        .from('tasks')
+        .delete()
+        .eq('id', taskToDelete.id)
+
+      if (error) throw error
+
+      if (onTaskUpdate) {
+        onTaskUpdate()
+      }
+      
+      setDeleteDialogOpen(false)
+      setTaskToDelete(null)
+    } catch (error) {
+      console.error('Error deleting task:', error)
+      toast.error('Failed to delete task. Please try again.')
+    }
+  }
+
   if (completedTasks.length === 0) {
     return (
       <Card>
@@ -171,7 +217,7 @@ export default function TaskHistory({ tasks, participants }: TaskHistoryProps) {
                 <TableHead>Total Points</TableHead>
                 <TableHead>Duration</TableHead>
                 <TableHead>Date</TableHead>
-                <TableHead className="w-20"></TableHead>
+                <TableHead className="w-20">{isModerator && <span className="sr-only">Actions</span>}</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -232,19 +278,32 @@ export default function TaskHistory({ tasks, participants }: TaskHistoryProps) {
                       </span>
                     </TableCell>
                     <TableCell>
-                      <Button
-                        onClick={() => copyTaskForJira(task)}
-                        variant="ghost"
-                        size="sm"
-                        className="h-7 px-2"
-                        title="Copy for Jira"
-                      >
-                        {copiedTaskId === task.id ? (
-                          <Check className="w-3 h-3 text-green-600" />
-                        ) : (
-                          <Copy className="w-3 h-3 text-gray-500" />
+                      <div className="flex items-center gap-1">
+                        <Button
+                          onClick={() => copyTaskForJira(task)}
+                          variant="ghost"
+                          size="sm"
+                          className="h-7 px-2"
+                          title="Copy for Jira"
+                        >
+                          {copiedTaskId === task.id ? (
+                            <Check className="w-3 h-3 text-green-600" />
+                          ) : (
+                            <Copy className="w-3 h-3 text-gray-500" />
+                          )}
+                        </Button>
+                        {isModerator && (
+                          <Button
+                            onClick={() => handleDeleteClick(task)}
+                            variant="ghost"
+                            size="sm"
+                            className="h-7 px-2 text-red-600 hover:text-red-700 hover:bg-red-50"
+                            title="Delete task"
+                          >
+                            <Trash2 className="w-3 h-3" />
+                          </Button>
                         )}
-                      </Button>
+                      </div>
                     </TableCell>
                   </TableRow>
                 )
@@ -393,6 +452,22 @@ export default function TaskHistory({ tasks, participants }: TaskHistoryProps) {
           </DialogContent>
         )}
       </Dialog>
+
+      {/* Delete Confirmation Dialog */}
+      <ConfirmDialog
+        open={deleteDialogOpen}
+        onOpenChange={setDeleteDialogOpen}
+        title="Delete Task"
+        description={
+          taskToDelete
+            ? `Are you sure you want to delete "${taskToDelete.title}"? This will permanently remove the task and all associated votes. This action cannot be undone.`
+            : ''
+        }
+        confirmText="Delete"
+        cancelText="Cancel"
+        onConfirm={confirmDeleteTask}
+        variant="destructive"
+      />
     </Card>
   )
 }

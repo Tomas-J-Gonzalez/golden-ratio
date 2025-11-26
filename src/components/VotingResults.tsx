@@ -7,41 +7,7 @@ import { Button } from '@/components/ui/button'
 import { Copy, Check, CheckCircle, EyeOff } from 'lucide-react'
 import { Vote, Participant, supabase } from '@/lib/supabase'
 import { toast } from 'sonner'
-import { 
-  EFFORT_OPTIONS, 
-  TIME_OPTIONS,
-  SPRINT_OPTIONS, 
-  DESIGNER_COUNT_OPTIONS,
-  INDIVIDUAL_DESIGNER_LEVELS,
-  BREAKPOINT_OPTIONS, 
-  FIDELITY_OPTIONS,
-  DELIVERABLES_OPTIONS,
-  MEETING_BUFFER_OPTIONS,
-  ITERATION_MULTIPLIER_OPTIONS,
-  estimateToTShirtSize,
-  calculateEstimate,
-  DISCOVERY_ACTIVITY_MAP,
-  DESIGN_TESTING_ACTIVITY_MAP
-} from '@/lib/constants'
-
-// Support both old and new factor structures for backward compatibility
-interface VoteFactors {
-  effort: number
-  time?: number
-  sprints: number
-  designerCount?: number
-  designerLevels?: number[]
-  designers?: number // Legacy field
-  breakpoints: number
-  fidelity: number | number[] // Can be single number or array
-  deliverables?: number
-  meetingBuffer?: number
-  iterationMultiplier?: number
-  finalEstimate?: number
-  prototypes?: number // Legacy field
-  discoveryActivities?: string[]
-  designActivities?: string[]
-}
+import { POINT_OPTIONS } from '@/lib/constants'
 
 interface VotingResultsProps {
   taskTitle: string
@@ -62,79 +28,56 @@ export default function VotingResults({ taskTitle, taskId, votes, participants, 
     return participant ? participant.nickname : 'Unknown'
   }
 
-  const getFactorLabel = (factorType: string, value: number | number[]) => {
-    switch (factorType) {
-      case 'effort':
-        return EFFORT_OPTIONS.find(o => o.value === value)?.label || 'Unknown'
-      case 'time':
-        return TIME_OPTIONS.find(o => o.value === value)?.label || 'Unknown'
-      case 'sprints':
-        return SPRINT_OPTIONS.find(o => o.value === value)?.label || 'Unknown'
-      case 'designerCount':
-      case 'designers': // Legacy support
-        return DESIGNER_COUNT_OPTIONS.find(o => o.value === value)?.label || 'Unknown'
-      case 'breakpoints':
-        return BREAKPOINT_OPTIONS.find(o => o.value === value)?.label || 'Unknown'
-      case 'fidelity':
-        if (Array.isArray(value)) {
-          return value.map(val => FIDELITY_OPTIONS.find(o => o.value === val)?.label || 'Unknown').join(', ')
-        }
-        return FIDELITY_OPTIONS.find(o => o.value === value)?.label || 'Unknown'
-      case 'deliverables':
-        return DELIVERABLES_OPTIONS.find(o => o.value === value)?.label || 'Unknown'
-      case 'prototypes': // Legacy support
-        return 'Prototypes (legacy)'
-      case 'meetingBuffer':
-        return MEETING_BUFFER_OPTIONS.find(o => o.value === value)?.label || 'Unknown'
-      case 'iterationMultiplier':
-        return ITERATION_MULTIPLIER_OPTIONS.find(o => o.value === value)?.label || 'Unknown'
-      default:
-        return 'Unknown'
-    }
+  // Check if vote is skipped
+  const isSkippedVote = (vote: Vote) => {
+    if (vote.value === -1) return true
+    const factors = vote.factors as { skipped?: boolean } | undefined
+    return factors?.skipped === true
   }
 
-  const getDesignerLevels = (designerLevels: number[]) => {
-    return designerLevels.map((level, index) => 
-      `Designer ${index + 1}: ${INDIVIDUAL_DESIGNER_LEVELS.find(l => l.value === level)?.label || 'Unknown'}`
-    ).join(', ')
+  // Get emoji for skipped vote
+  const getEmojiForSkippedVote = (vote: Vote) => {
+    const factors = vote.factors as { 
+      skipped?: boolean
+      wantsCoffeeBreak?: boolean
+      taskTooBig?: boolean
+      scopeUnclear?: boolean
+    } | undefined
+    
+    if (factors?.wantsCoffeeBreak) return '☕'
+    if (factors?.taskTooBig) return '∞'
+    if (factors?.scopeUnclear) return '❓'
+    return null
   }
 
-  const formatActivities = (activityIds?: string[], map?: Record<string, { label: string }>) => {
-    if (!activityIds || !activityIds.length || !map) return ''
-    const uniqueIds = Array.from(new Set(activityIds))
-    return uniqueIds.map(id => map[id]?.label || id).join(', ')
+  // Filter out skipped votes for calculations
+  const nonSkippedVotes = votes.filter(vote => !isSkippedVote(vote))
+  const skippedVotes = votes.filter(vote => isSkippedVote(vote))
+
+  // Get point values directly from votes (no calculation needed)
+  const pointValues = nonSkippedVotes.map(vote => vote.value || 0).filter(v => v > 0)
+  
+  // Calculate average, preserving one decimal place for values like 0.5, 1.5, etc.
+  const averageEstimate = pointValues.length > 0 
+    ? Math.round((pointValues.reduce((sum, val) => sum + val, 0) / pointValues.length) * 10) / 10
+    : 0
+  const minEstimate = pointValues.length > 0 ? Math.min(...pointValues) : 0
+  const maxEstimate = pointValues.length > 0 ? Math.max(...pointValues) : 0
+  
+  // Format display values (remove trailing zeros for whole numbers, keep one decimal for decimals)
+  const formatPointValue = (value: number): string => {
+    if (value % 1 === 0) return value.toString()
+    return value.toFixed(1)
   }
 
-  const toNumberArray = (value: unknown, fallback: number[] = []) => {
-    if (!Array.isArray(value)) return fallback
-    const numbers = value.filter((item): item is number => typeof item === 'number' && !Number.isNaN(item))
-    return numbers.length ? numbers : fallback
-  }
-
-  const toStringArray = (value: unknown) => {
-    if (!Array.isArray(value)) return []
-    return value.filter((item): item is string => typeof item === 'string')
-  }
+  const summaryCards = [
+    { label: 'Minimum', value: formatPointValue(minEstimate), sublabel: 'points' },
+    { label: 'Average', value: formatPointValue(averageEstimate), sublabel: 'points', highlight: true },
+    { label: 'Maximum', value: formatPointValue(maxEstimate), sublabel: 'points' },
+    { label: 'Participants', value: nonSkippedVotes.length, sublabel: skippedVotes.length > 0 ? `${skippedVotes.length} skipped` : 'completed votes' }
+  ]
 
   const generateMarkdownSummary = () => {
-    const estimates = votes.map(vote => {
-      if (vote.factors && typeof vote.factors === 'object') {
-      const factors = vote.factors as VoteFactors
-      const fidelityValue = Array.isArray(factors.fidelity) 
-        ? factors.fidelity.reduce((sum, val) => sum + val, 0)
-        : factors.fidelity
-      const baseEstimate = factors.time || 1
-      const designerTotal = factors.designerCount || factors.designers || 1
-      const complexityMultiplier = (factors.effort + factors.sprints + designerTotal + factors.breakpoints + fidelityValue) / 5
-      return Math.round(baseEstimate * complexityMultiplier)
-      }
-      return 0
-    })
-
-    const averageEstimate = estimates.length > 0 ? Math.round(estimates.reduce((sum, est) => sum + est, 0) / estimates.length) : 0
-    const minEstimate = estimates.length > 0 ? Math.min(...estimates) : 0
-    const maxEstimate = estimates.length > 0 ? Math.max(...estimates) : 0
-
     let markdown = `# Task Estimation Results\n\n`
     markdown += `## Task: ${taskTitle}\n\n`
     markdown += `**Participants:** ${votes.length}\n\n`
@@ -142,42 +85,37 @@ export default function VotingResults({ taskTitle, taskId, votes, participants, 
     
     // Summary Statistics
     markdown += `## Summary\n\n`
-    markdown += `| Metric | Estimate | Points |\n`
-    markdown += `|--------|----------|--------|\n`
-    markdown += `| **Average** | ${estimateToTShirtSize(averageEstimate)} | ${averageEstimate} |\n`
-    markdown += `| **Minimum** | ${estimateToTShirtSize(minEstimate)} | ${minEstimate} |\n`
-    markdown += `| **Maximum** | ${estimateToTShirtSize(maxEstimate)} | ${maxEstimate} |\n\n`
+    markdown += `| Metric | Points |\n`
+    markdown += `|--------|--------|\n`
+    markdown += `| **Average** | ${formatPointValue(averageEstimate)} |\n`
+    markdown += `| **Minimum** | ${formatPointValue(minEstimate)} |\n`
+    markdown += `| **Maximum** | ${formatPointValue(maxEstimate)} |\n\n`
     
     // Individual Estimates
     markdown += `## Individual Estimates\n\n`
     
-    votes.forEach((vote) => {
-      const factors = vote.factors as VoteFactors
-      const estimate = estimates[votes.indexOf(vote)]
+    nonSkippedVotes.forEach((vote) => {
       const participantName = getParticipantName(vote.participant_id)
+      const pointValue = vote.value || 0
+      const pointOption = POINT_OPTIONS.find(o => o.value === pointValue)
       
       markdown += `### ${participantName}\n\n`
-      markdown += `**Estimate:** ${estimateToTShirtSize(estimate)} (${estimate} points)\n\n`
-      markdown += `**Factors:**\n`
-      markdown += `- **Effort:** ${getFactorLabel('effort', factors.effort)}\n`
-      if (factors.time) markdown += `- **Time:** ${getFactorLabel('time', factors.time)}\n`
-      markdown += `- **Sprints:** ${getFactorLabel('sprints', factors.sprints)}\n`
-      if (factors.designerCount || factors.designers) {
-        markdown += `- **Designers:** ${getFactorLabel('designerCount', factors.designerCount || factors.designers || 0)}\n`
+      markdown += `**Estimate:** ${formatPointValue(pointValue)} points\n`
+      if (pointOption) {
+        markdown += `**Description:** ${pointOption.description}\n`
       }
-      if (factors.designerLevels && factors.designerLevels.length > 0) {
-        markdown += `- **Designer Levels:** ${getDesignerLevels(factors.designerLevels)}\n`
-      }
-      markdown += `- **Breakpoints:** ${getFactorLabel('breakpoints', factors.breakpoints)}\n`
-      markdown += `- **Fidelity:** ${getFactorLabel('fidelity', factors.fidelity)}\n`
-      if (factors.meetingBuffer) markdown += `- **Meeting Buffer:** ${getFactorLabel('meetingBuffer', factors.meetingBuffer)}\n`
-      if (factors.iterationMultiplier) markdown += `- **Design Iterations:** ${getFactorLabel('iterationMultiplier', factors.iterationMultiplier)}\n`
-      const discoverySummary = formatActivities(factors.discoveryActivities, DISCOVERY_ACTIVITY_MAP)
-      if (discoverySummary) markdown += `- **Discovery:** ${discoverySummary}\n`
-      const designSummary = formatActivities(factors.designActivities, DESIGN_TESTING_ACTIVITY_MAP)
-      if (designSummary) markdown += `- **Design & Testing:** ${designSummary}\n`
       markdown += `\n`
     })
+
+    if (skippedVotes.length > 0) {
+      markdown += `## Skipped Votes\n\n`
+      skippedVotes.forEach((vote) => {
+        const participantName = getParticipantName(vote.participant_id)
+        const emoji = getEmojiForSkippedVote(vote)
+        markdown += `- **${participantName}:** ${emoji || 'Skipped'}\n`
+      })
+      markdown += `\n`
+    }
     
     markdown += `---\n\n`
     markdown += `*Generated on ${new Date().toLocaleDateString()} at ${new Date().toLocaleTimeString()}*\n`
@@ -197,30 +135,10 @@ export default function VotingResults({ taskTitle, taskId, votes, participants, 
     
     setIsCompleting(true)
     try {
-      // Calculate the average estimate using the improved calculateEstimate function
-      const estimates = votes.map(vote => {
-        if (vote.factors && typeof vote.factors === 'object') {
-          const factors = vote.factors as Record<string, number | number[] | string[]>
-          // Use the same calculation as VotingArea
-          const fidelityValue: number | number[] = Array.isArray(factors.fidelity) && factors.fidelity.every(v => typeof v === 'number')
-            ? factors.fidelity as number[]
-            : (typeof factors.fidelity === 'number' ? factors.fidelity : [1])
-          return calculateEstimate({
-            effort: (typeof factors.effort === 'number' ? factors.effort : 1),
-            sprints: (typeof factors.sprints === 'number' ? factors.sprints : 0.1),
-            designerCount: (typeof factors.designerCount === 'number' ? factors.designerCount : 1),
-            designerLevels: toNumberArray(factors.designerLevels, [1]),
-            breakpoints: (typeof factors.breakpoints === 'number' ? factors.breakpoints : 1),
-            fidelity: fidelityValue,
-            meetingBuffer: (typeof factors.meetingBuffer === 'number' ? factors.meetingBuffer : 0),
-            iterationMultiplier: (typeof factors.iterationMultiplier === 'number' ? factors.iterationMultiplier : 1),
-            discoveryActivities: toStringArray(factors.discoveryActivities),
-            designActivities: toStringArray(factors.designActivities)
-          })
-        }
-        return vote.value || 0
-      })
-      const averageEstimate = estimates.length > 0 ? Math.round(estimates.reduce((sum, est) => sum + est, 0) / estimates.length) : 0
+      // Use average of point values (same calculation as display)
+      const averageEstimate = pointValues.length > 0 
+        ? Math.round((pointValues.reduce((sum, val) => sum + val, 0) / pointValues.length) * 10) / 10
+        : 0
 
       // Update task status to completed in Supabase
       const { error } = await supabase
@@ -243,52 +161,6 @@ export default function VotingResults({ taskTitle, taskId, votes, participants, 
       setIsCompleting(false)
     }
   }
-
-  // Check if vote is skipped
-  const isSkippedVote = (vote: Vote) => {
-    if (vote.value === -1) return true
-    const factors = vote.factors as { skipped?: boolean } | undefined
-    return factors?.skipped === true
-  }
-
-  // Filter out skipped votes for calculations
-  const nonSkippedVotes = votes.filter(vote => !isSkippedVote(vote))
-  const skippedVotes = votes.filter(vote => isSkippedVote(vote))
-
-  // Calculate statistics using the improved calculateEstimate function (only for non-skipped votes)
-  const estimates = nonSkippedVotes.map(vote => {
-    if (vote.factors && typeof vote.factors === 'object') {
-      const factors = vote.factors as Record<string, number | number[] | string[]>
-      // Use the same calculation as VotingArea
-      const fidelityValue: number | number[] = Array.isArray(factors.fidelity) && factors.fidelity.every(v => typeof v === 'number')
-        ? factors.fidelity as number[]
-        : (typeof factors.fidelity === 'number' ? factors.fidelity : [1])
-      return calculateEstimate({
-        effort: (typeof factors.effort === 'number' ? factors.effort : 1),
-        sprints: (typeof factors.sprints === 'number' ? factors.sprints : 0.1),
-        designerCount: (typeof factors.designerCount === 'number' ? factors.designerCount : 1),
-        designerLevels: toNumberArray(factors.designerLevels, [1]),
-        breakpoints: (typeof factors.breakpoints === 'number' ? factors.breakpoints : 1),
-        fidelity: fidelityValue,
-        meetingBuffer: (typeof factors.meetingBuffer === 'number' ? factors.meetingBuffer : 0),
-        iterationMultiplier: (typeof factors.iterationMultiplier === 'number' ? factors.iterationMultiplier : 1),
-        discoveryActivities: toStringArray(factors.discoveryActivities),
-        designActivities: toStringArray(factors.designActivities)
-      })
-    }
-    return vote.value || 0
-  })
-
-  const averageEstimate = estimates.length > 0 ? Math.round(estimates.reduce((sum, est) => sum + est, 0) / estimates.length) : 0
-  const minEstimate = estimates.length > 0 ? Math.min(...estimates) : 0
-  const maxEstimate = estimates.length > 0 ? Math.max(...estimates) : 0
-
-  const summaryCards = [
-    { label: 'Minimum', value: estimateToTShirtSize(minEstimate), sublabel: `${minEstimate} pts` },
-    { label: 'Average', value: estimateToTShirtSize(averageEstimate), sublabel: `${averageEstimate} pts`, highlight: true },
-    { label: 'Maximum', value: estimateToTShirtSize(maxEstimate), sublabel: `${maxEstimate} pts` },
-    { label: 'Participants', value: nonSkippedVotes.length, sublabel: skippedVotes.length > 0 ? `${skippedVotes.length} skipped` : 'completed votes' }
-  ]
 
   return (
     <Card className="overflow-hidden">
@@ -340,47 +212,42 @@ export default function VotingResults({ taskTitle, taskId, votes, participants, 
                 className="flex items-center gap-2 bg-emerald-600 hover:bg-emerald-700"
               >
                 <CheckCircle className="w-4 h-4" />
-                {isCompleting ? 'Completing...' : 'Complete task'}
+                {isCompleting ? 'Completing...' : 'Complete Task'}
               </Button>
             )}
           </div>
         </div>
 
-        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-          {summaryCards.map(card => (
-            <div
-              key={card.label}
-              className="rounded-2xl border border-slate-200 bg-white px-4 py-3 text-center"
-            >
-              <p className="text-xs font-medium text-slate-500">{card.label}</p>
-              <p className={`text-2xl font-semibold text-slate-900 ${card.highlight ? 'text-emerald-600' : ''}`}>
-                {card.value}
-              </p>
-              <p className="text-xs text-slate-500">{card.sublabel}</p>
-            </div>
+        {/* Summary Cards */}
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+          {summaryCards.map((card, index) => (
+            <Card key={index} className={card.highlight ? 'border-blue-500 bg-blue-50' : ''}>
+              <CardContent className="p-4">
+                <div className="text-xs font-medium text-slate-600 mb-1">{card.label}</div>
+                <div className={`text-2xl font-bold ${card.highlight ? 'text-blue-700' : 'text-slate-900'}`}>
+                  {card.value}
+                </div>
+                <div className="text-xs text-slate-500 mt-1">{card.sublabel}</div>
+              </CardContent>
+            </Card>
           ))}
         </div>
       </CardHeader>
 
-      <CardContent className="space-y-8">
-        <section className="space-y-4">
-          <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-            <div>
-              <h3 className="text-sm font-semibold text-slate-900">Voting breakdown</h3>
-              <p className="text-xs text-slate-500">Each participant’s rationale grouped by scope, team and execution</p>
-            </div>
-            <Badge className="w-fit bg-slate-100 text-slate-700">
-              {nonSkippedVotes.length} {nonSkippedVotes.length === 1 ? 'vote' : 'votes'}
-              {skippedVotes.length > 0 && ` • ${skippedVotes.length} skipped`}
-            </Badge>
-          </div>
+      <CardContent className="space-y-6">
+        <div className="text-sm font-medium text-slate-700">
+          {nonSkippedVotes.length} {nonSkippedVotes.length === 1 ? 'vote' : 'votes'}
+          {skippedVotes.length > 0 && ` • ${skippedVotes.length} skipped`}
+        </div>
 
-          {/* Show skipped votes first */}
-          {skippedVotes.length > 0 && (
-            <div className="space-y-2 mb-4">
-              <h4 className="text-xs font-medium text-slate-600">Skipped Votes</h4>
-              <div className="space-y-2">
-                {skippedVotes.map((vote) => (
+        {/* Show skipped votes first */}
+        {skippedVotes.length > 0 && (
+          <div className="space-y-2 mb-4">
+            <h4 className="text-xs font-medium text-slate-600">Skipped Votes</h4>
+            <div className="space-y-2">
+              {skippedVotes.map((vote) => {
+                const emoji = getEmojiForSkippedVote(vote)
+                return (
                   <Card key={vote.id} className="border-gray-200 bg-gray-50">
                     <CardHeader className="pb-3">
                       <div className="flex items-center justify-between">
@@ -388,105 +255,46 @@ export default function VotingResults({ taskTitle, taskId, votes, participants, 
                           {getParticipantName(vote.participant_id)}
                         </CardTitle>
                         <Badge variant="outline" className="bg-gray-100 text-gray-600 border-gray-300">
-                          Skipped
+                          {emoji || 'Skipped'}
                         </Badge>
                       </div>
                     </CardHeader>
                   </Card>
-                ))}
-              </div>
+                )
+              })}
             </div>
-          )}
-
-          {/* Show non-skipped votes */}
-          <div className="grid gap-4">
-            {nonSkippedVotes.map((vote) => {
-              const factors = vote.factors as VoteFactors
-              const estimate = estimates[nonSkippedVotes.indexOf(vote)]
-
-              // Design effort variables (factors that affect complexity)
-              const designEffortItems = [
-                { label: 'Effort', value: getFactorLabel('effort', factors.effort) },
-                factors.time && { label: 'Time', value: getFactorLabel('time', factors.time) },
-                { label: 'Sprints', value: getFactorLabel('sprints', factors.sprints) },
-                { label: 'Breakpoints', value: getFactorLabel('breakpoints', factors.breakpoints) },
-                { label: 'Fidelity', value: getFactorLabel('fidelity', factors.fidelity) }
-              ].filter(Boolean) as { label: string, value: string }[]
-
-              const teamItems = [
-                (factors.designerCount || factors.designers) && {
-                  label: 'Designers',
-                  value: getFactorLabel('designerCount', factors.designerCount || factors.designers || 0)
-                },
-                factors.designerLevels && factors.designerLevels.length > 0 && {
-                  label: 'Designer levels',
-                  value: getDesignerLevels(factors.designerLevels)
-                }
-              ].filter(Boolean) as { label: string, value: string }[]
-
-              const deliveryItems = [
-                factors.deliverables && { label: 'Deliverables', value: getFactorLabel('deliverables', factors.deliverables) },
-                factors.meetingBuffer && { label: 'Buffer', value: getFactorLabel('meetingBuffer', factors.meetingBuffer) },
-                factors.iterationMultiplier && { label: 'Iterations', value: getFactorLabel('iterationMultiplier', factors.iterationMultiplier) }
-              ].filter(Boolean) as { label: string, value: string }[]
-
-              // Design tasks (design activities)
-              const designTaskItems = factors.designActivities && factors.designActivities.length > 0
-                ? factors.designActivities.map(id => ({
-                    label: DESIGN_TESTING_ACTIVITY_MAP[id]?.label || id,
-                    value: DESIGN_TESTING_ACTIVITY_MAP[id]?.label || id
-                  }))
-                : []
-
-              const grouped = [
-                { title: 'Design effort variables', items: designEffortItems },
-                { title: 'Team setup', items: teamItems },
-                { title: 'Execution buffers', items: deliveryItems },
-                { title: 'Design tasks', items: designTaskItems }
-              ].filter(group => group.items.length > 0)
-
-              return (
-                <article
-                  key={vote.id}
-                  className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm transition hover:border-slate-300 sm:p-5 overflow-hidden"
-                >
-                  <header className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-                    <div className="space-y-1">
-                      <p className="text-sm font-semibold text-slate-900 break-words">
-                        {getParticipantName(vote.participant_id)}
-                      </p>
-                    </div>
-                    <Badge className="w-fit bg-emerald-50 text-emerald-700">
-                      {estimateToTShirtSize(estimate)}
-                    </Badge>
-                  </header>
-
-                  <div className="mt-4 grid gap-4 md:grid-cols-2">
-                    {grouped.map((group) => (
-                      <div key={group.title} className="rounded-xl bg-slate-50 p-3 overflow-hidden">
-                        <h4 className="text-sm font-semibold text-slate-900 mb-2">
-                          {group.title}
-                        </h4>
-                        <div className="mt-2 space-y-2">
-                          {group.items.map(item => (
-                            <div
-                              key={`${group.title}-${item.label}`}
-                              className="text-sm break-words min-w-0"
-                            >
-                              <span className="font-medium text-slate-900">
-                                {item.value}
-                              </span>
-                            </div>
-                          ))}
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </article>
-              )
-            })}
           </div>
-        </section>
+        )}
+
+        {/* Show non-skipped votes */}
+        <div className="grid gap-4">
+          {nonSkippedVotes.map((vote) => {
+            const pointValue = vote.value || 0
+            const pointOption = POINT_OPTIONS.find(o => o.value === pointValue)
+            
+            return (
+              <Card key={vote.id} className="border-slate-200">
+                <CardHeader className="pb-3">
+                  <div className="flex items-center justify-between">
+                    <CardTitle className="text-sm font-medium text-slate-900">
+                      {getParticipantName(vote.participant_id)}
+                    </CardTitle>
+                    <Badge className="bg-blue-600 text-white text-sm px-3 py-1">
+                      {formatPointValue(pointValue)} points
+                    </Badge>
+                  </div>
+                </CardHeader>
+                {pointOption && (
+                  <CardContent className="pt-0">
+                    <div className="text-xs text-slate-600">
+                      {pointOption.description}
+                    </div>
+                  </CardContent>
+                )}
+              </Card>
+            )
+          })}
+        </div>
       </CardContent>
     </Card>
   )

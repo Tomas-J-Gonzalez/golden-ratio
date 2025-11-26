@@ -152,6 +152,17 @@ export const DESIGN_TESTING_ACTIVITY_OPTIONS = DESIGN_TESTING_ACTIVITY_GROUPS.fl
 export const DISCOVERY_ACTIVITY_MAP = createActivityMap(DISCOVERY_ACTIVITY_OPTIONS)
 export const DESIGN_TESTING_ACTIVITY_MAP = createActivityMap(DESIGN_TESTING_ACTIVITY_OPTIONS)
 
+// Point Poker Options - Based on estimation matrix
+export const POINT_OPTIONS = [
+  { value: 0.5, label: '0.5', description: 'Very Small - Less than 4 hr - Simple UI changes, icon tweaks, text updates' },
+  { value: 1, label: '1', description: 'Small - 1/2 day (4hr) - Quick, low complexity, minor UX changes' },
+  { value: 2, label: '2', description: 'Medium - 1 day (8hr) - Known pattern, existing components. I know exactly what to do.' },
+  { value: 3, label: '3', description: 'Large - 1.5 days (12hr) - New pattern or requires new components. I have to figure out how to do it before I do it.' },
+  { value: 5, label: '5', description: 'XL - 2.5-3 days (20hr) - New logic, complex single screen, or simple multi-screen flow' },
+  { value: 8, label: '8', description: 'XXL - 1 week (32hr) - Major feature design, full journey' },
+  { value: 13, label: '13', description: 'Sprint - 1 sprint (2 weeks) (52hr) - Discovery pieces' }
+]
+
 // Maximum points that can be assigned to a task
 export const MAX_POINTS = 100
 

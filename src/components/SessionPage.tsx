@@ -752,7 +752,13 @@ export default function SessionPage({ sessionCode }: SessionPageProps) {
 
               {/* Task History - Show if there are completed tasks */}
               {tasks.some(task => task.status === 'completed') && (
-                <TaskHistory tasks={tasks} sessionId={session?.id || sessionCode} participants={participants} />
+                <TaskHistory 
+                  tasks={tasks} 
+                  sessionId={session?.id || sessionCode} 
+                  participants={participants}
+                  isModerator={isModerator}
+                  onTaskUpdate={handleTaskUpdate}
+                />
               )}
 
               {/* Current Estimate Display - Only show when there's an active vote and user hasn't voted */}
