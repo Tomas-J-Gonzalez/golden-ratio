@@ -7,7 +7,6 @@ import { CheckCircle, Info } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
 import { toast } from 'sonner'
 import { POINT_OPTIONS } from '@/lib/constants'
-import { POINT_OPTIONS } from '@/lib/constants'
 
 interface VotingAreaProps {
   taskId: string
