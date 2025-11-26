@@ -163,7 +163,7 @@ export const calculateEstimate = (factors: {
   designerCount: number;
   designerLevels: number[]; // Array of designer levels
   breakpoints: number;
-  fidelity: number;
+  fidelity: number | number[]; // Can be single number or array
   meetingBuffer?: number; // Optional, defaults to 0
   iterationMultiplier?: number; // Optional, defaults to 1
   discoveryActivities?: string[];
@@ -175,9 +175,14 @@ export const calculateEstimate = (factors: {
     ? factors.designerLevels.reduce((sum, level) => sum + level, 0) / factors.designerLevels.length
     : 1;
   
+  // Handle fidelity as array or single number
+  const fidelityValue = Array.isArray(factors.fidelity) 
+    ? factors.fidelity.reduce((sum, val) => sum + val, 0)
+    : factors.fidelity
+  
   // Base complexity score from core factors
   // Effort (1-16), Sprints (0.1-3), Breakpoints (1-3), Fidelity (1-3)
-  const baseComplexity = (factors.effort + factors.sprints * 5 + factors.breakpoints * 2 + factors.fidelity) / 4;
+  const baseComplexity = (factors.effort + factors.sprints * 5 + factors.breakpoints * 2 + fidelityValue) / 4;
 
   const discoveryImpact = (factors.discoveryActivities || []).reduce((sum, activityId) => {
     return sum + (DISCOVERY_ACTIVITY_MAP[activityId]?.impact || 0)

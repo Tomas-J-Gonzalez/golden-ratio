@@ -7,7 +7,7 @@ import { Badge } from '@/components/ui/badge'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogClose } from '@/components/ui/dialog'
 import { supabase, Session, Task, Participant, Vote } from '@/lib/supabase'
-import { Copy, Check, Home, Users, Calendar, Clock, Kanban } from 'lucide-react'
+import { Copy, Check, Home, Users, Calendar, Clock, Kanban, Download } from 'lucide-react'
 import { toast } from 'sonner'
 import TopNavigation from '@/components/TopNavigation'
 import { estimateToTShirtSize } from '@/lib/constants'
@@ -31,6 +31,7 @@ export default function SessionReviewPage({ params }: SessionReviewPageProps) {
   const [showSequencing, setShowSequencing] = useState(false)
   const [setupDialogOpen, setSetupDialogOpen] = useState(false)
   const [currentParticipantId, setCurrentParticipantId] = useState<string | null>(null)
+  const [isExporting, setIsExporting] = useState(false)
 
   useEffect(() => {
     loadSessionData()
@@ -177,6 +178,48 @@ export default function SessionReviewPage({ params }: SessionReviewPageProps) {
     toast.success('Summary copied!')
   }
 
+  const exportToCSV = async () => {
+    setIsExporting(true)
+    try {
+      const csvData = completedTasks.map(task => ({
+        'Task Title': task.title,
+        'Description': task.description || '',
+        'Final Estimate': task.final_estimate || 0,
+        'Meeting Buffer': task.meeting_buffer ? `${Math.round(task.meeting_buffer * 100)}%` : '0%',
+        'Iteration Multiplier': task.iteration_multiplier || 1,
+        'Total Points': task.final_estimate 
+          ? Math.round((task.final_estimate + (task.final_estimate * (task.meeting_buffer || 0))) * (task.iteration_multiplier || 1))
+          : 0,
+        'Voting Duration': task.voting_duration_seconds 
+          ? `${Math.floor(task.voting_duration_seconds / 60)}:${(task.voting_duration_seconds % 60).toString().padStart(2, '0')}`
+          : 'N/A',
+        'Created At': new Date(task.created_at).toLocaleDateString()
+      }))
+
+      const headers = Object.keys(csvData[0] || {})
+      const csvContent = [
+        headers.join(','),
+        ...csvData.map(row => headers.map(header => `"${row[header as keyof typeof row]}"`).join(','))
+      ].join('\n')
+
+      const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' })
+      const link = document.createElement('a')
+      const url = URL.createObjectURL(blob)
+      link.setAttribute('href', url)
+      link.setAttribute('download', `estimation-session-${sessionCode}-${new Date().toISOString().split('T')[0]}.csv`)
+      link.style.visibility = 'hidden'
+      document.body.appendChild(link)
+      link.click()
+      document.body.removeChild(link)
+      toast.success('CSV exported successfully!')
+    } catch (error) {
+      console.error('Error exporting CSV:', error)
+      toast.error('Failed to export CSV. Please try again.')
+    } finally {
+      setIsExporting(false)
+    }
+  }
+
   if (isLoading) {
     return (
       <>
@@ -265,6 +308,12 @@ export default function SessionReviewPage({ params }: SessionReviewPageProps) {
                     size="sm"
                   >
                     View Summary
+                  </Button>
+                )}
+                {completedTasks.length > 0 && (
+                  <Button onClick={exportToCSV} variant="outline" size="sm" disabled={isExporting}>
+                    <Download className="w-4 h-4 mr-2" />
+                    {isExporting ? 'Exporting...' : 'Export CSV'}
                   </Button>
                 )}
                 <Button onClick={copySummary} variant="outline" size="sm">

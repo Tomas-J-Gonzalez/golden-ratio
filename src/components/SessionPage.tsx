@@ -15,7 +15,7 @@ import { EmojiPicker } from './EmojiPicker'
 import { ConfirmDialog } from './ui/confirm-dialog'
 import { VotingMusicToggle } from './VotingMusicToggle'
 // import { VotingTimer } from './VotingTimer' // Temporarily hidden
-import { Users, Copy, Check, LogOut } from 'lucide-react'
+import { Users, Copy, Check, LogOut, X } from 'lucide-react'
 import { toast } from 'sonner'
 
 interface SessionPageProps {
@@ -32,6 +32,8 @@ export default function SessionPage({ sessionCode }: SessionPageProps) {
   const [isLoading, setIsLoading] = useState(true)
   const [codeCopied, setCodeCopied] = useState(false)
   const [leaveDialogOpen, setLeaveDialogOpen] = useState(false)
+  const [kickDialogOpen, setKickDialogOpen] = useState(false)
+  const [participantToKick, setParticipantToKick] = useState<Participant | null>(null)
   const [emojiPickerOpen, setEmojiPickerOpen] = useState(false)
   const [selectedParticipantForEmoji, setSelectedParticipantForEmoji] = useState<Participant | null>(null)
   const [nickname, setNickname] = useState('')
@@ -406,6 +408,39 @@ export default function SessionPage({ sessionCode }: SessionPageProps) {
     }
   }
 
+  const kickParticipant = async () => {
+    if (!participantToKick) return
+
+    try {
+      // First, delete all votes from this participant to prevent breaking voting logic
+      const { error: votesError } = await supabase
+        .from('votes')
+        .delete()
+        .eq('participant_id', participantToKick.id)
+
+      if (votesError) {
+        console.error('Error deleting votes:', votesError)
+        // Continue anyway - votes should cascade delete, but we try explicitly
+      }
+
+      // Then delete participant from Supabase
+      const { error } = await supabase
+        .from('participants')
+        .delete()
+        .eq('id', participantToKick.id)
+
+      if (error) throw error
+
+      toast.success(`${participantToKick.nickname} has been removed from the session`)
+      setKickDialogOpen(false)
+      setParticipantToKick(null)
+      loadSessionData()
+    } catch (error) {
+      console.error('Error kicking participant:', error)
+      toast.error('Failed to remove participant. Please try again.')
+    }
+  }
+
   const handleParticipantClick = (participant: Participant) => {
     // Only allow users to change their own avatar
     if (currentParticipant?.id === participant.id) {
@@ -442,7 +477,17 @@ export default function SessionPage({ sessionCode }: SessionPageProps) {
 
   // Calculate derived values
   const isModerator = currentParticipant?.is_moderator || false
-  const allParticipantsVoted = currentTask && votes.length >= participants.length
+  // Only count votes from active participants to prevent issues when participants are kicked
+  const activeParticipantIds = new Set(participants.map(p => p.id))
+  const activeVotes = votes.filter(vote => activeParticipantIds.has(vote.participant_id))
+  // Check if vote is skipped (value === -1 or factors.skipped === true)
+  const isSkippedVote = (vote: Vote) => {
+    if (vote.value === -1) return true
+    const factors = vote.factors as { skipped?: boolean } | undefined
+    return factors?.skipped === true
+  }
+  // All participants have voted (either submitted or skipped)
+  const allParticipantsVoted = currentTask && activeVotes.length >= participants.length && participants.length > 0
   const isVotingInProgress = currentTask?.status === 'voting'
   
   // Debug logging for music toggle visibility
@@ -604,7 +649,7 @@ export default function SessionPage({ sessionCode }: SessionPageProps) {
                     <VotingResults
                       taskTitle={currentTask.title}
                       taskId={currentTask.id}
-                      votes={votes}
+                      votes={activeVotes}
                       participants={participants}
                       isModerator={isModerator}
                       onTaskCompleted={handleTaskUpdate}
@@ -612,7 +657,7 @@ export default function SessionPage({ sessionCode }: SessionPageProps) {
                   ) : (
                     <VotesHidden
                       taskTitle={currentTask.title}
-                      votes={votes}
+                      votes={activeVotes}
                       participants={participants}
                       isModerator={isModerator}
                       onRevealVotes={revealVotes}
@@ -630,7 +675,7 @@ export default function SessionPage({ sessionCode }: SessionPageProps) {
                     <CardContent className="pt-6 text-center">
                       <p>Waiting for participants to vote on: <strong>{currentTask.title}</strong></p>
                       <p className="text-sm text-gray-600 mt-2">
-                        {votes.length} of {participants.length} participants have voted
+                        {activeVotes.length} of {participants.length} participants have voted
                       </p>
                     </CardContent>
                   </Card>
@@ -656,21 +701,37 @@ export default function SessionPage({ sessionCode }: SessionPageProps) {
                     {participants.map((participant) => {
                       const hasVoted = currentTask ? votes.some(vote => vote.participant_id === participant.id) : false
                       const isCurrentUser = currentParticipant?.id === participant.id
+                      const isModerator = currentParticipant?.is_moderator || false
+                      const canKick = isModerator && !participant.is_moderator && !isCurrentUser
                       return (
-                        <Badge 
-                          key={participant.id} 
-                          variant={hasVoted ? "default" : "outline"}
-                          className={`text-xs px-2 py-0.5 ${
-                            isCurrentUser ? 'cursor-pointer hover:ring-2 hover:ring-blue-300' : ''
-                          }`}
-                          onClick={() => isCurrentUser && handleParticipantClick(participant)}
-                          title={isCurrentUser ? 'Click to change your avatar' : ''}
-                        >
-                          {participant.avatar_emoji && `${participant.avatar_emoji} `}
-                          {participant.nickname}
-                          {participant.is_moderator && " (M)"}
-                          {hasVoted && " ✓"}
-                        </Badge>
+                        <div key={participant.id} className="relative group">
+                          <Badge 
+                            variant={hasVoted ? "default" : "outline"}
+                            className={`text-xs px-2 py-0.5 pr-6 ${
+                              isCurrentUser ? 'cursor-pointer hover:ring-2 hover:ring-blue-300' : ''
+                            }`}
+                            onClick={() => isCurrentUser && handleParticipantClick(participant)}
+                            title={isCurrentUser ? 'Click to change your avatar' : ''}
+                          >
+                            {participant.avatar_emoji && `${participant.avatar_emoji} `}
+                            {participant.nickname}
+                            {participant.is_moderator && " (M)"}
+                            {hasVoted && " ✓"}
+                          </Badge>
+                          {canKick && (
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation()
+                                setParticipantToKick(participant)
+                                setKickDialogOpen(true)
+                              }}
+                              className="absolute -top-1 -right-1 bg-red-500 hover:bg-red-600 text-white rounded-full p-0.5 opacity-0 group-hover:opacity-100 transition-opacity"
+                              title={`Remove ${participant.nickname} from session`}
+                            >
+                              <X className="w-3 h-3" />
+                            </button>
+                          )}
+                        </div>
                       )
                     })}
                   </div>
@@ -695,12 +756,36 @@ export default function SessionPage({ sessionCode }: SessionPageProps) {
       <ConfirmDialog
         open={leaveDialogOpen}
         onOpenChange={setLeaveDialogOpen}
+        onConfirm={() => {
+          if (currentParticipant?.is_moderator) {
+            endSession()
+          } else {
+            leaveSession()
+          }
+        }}
         title={currentParticipant?.is_moderator ? "End Session?" : "Leave Session?"}
         description={
           currentParticipant?.is_moderator
             ? "This will end the session for all participants and take you to a summary page. The session data will be preserved."
             : "Are you sure you want to leave this session? You can rejoin using the session code."
         }
+      />
+
+      {/* Kick Participant Confirmation Dialog */}
+      <ConfirmDialog
+        open={kickDialogOpen}
+        onOpenChange={setKickDialogOpen}
+        onConfirm={kickParticipant}
+        title="Remove Participant?"
+        description={
+          participantToKick
+            ? `Are you sure you want to remove ${participantToKick.nickname} from this session? This action cannot be undone.`
+            : ""
+        }
+        confirmText="Remove"
+        cancelText="Cancel"
+        variant="destructive"
+      />
         confirmText={currentParticipant?.is_moderator ? "End Session" : "Leave Session"}
         cancelText={currentParticipant?.is_moderator ? "Continue Session" : "Stay"}
         onConfirm={confirmLeaveSession}

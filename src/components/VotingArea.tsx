@@ -40,7 +40,7 @@ interface EstimationFactors {
   designerCount: number | null
   designerLevels: number[] // Array of designer levels
   breakpoints: number | null
-  fidelity: number | null
+  fidelity: number[] // Array of selected fidelity levels
   deliverables: number | null
   meetingBuffer: number | null
   iterationMultiplier: number | null
@@ -55,7 +55,7 @@ const createInitialFactors = (): EstimationFactors => ({
   designerCount: null,
   designerLevels: [],
   breakpoints: null,
-  fidelity: null,
+  fidelity: [],
   deliverables: null,
   meetingBuffer: null,
   iterationMultiplier: null,
@@ -73,6 +73,9 @@ export default function VotingArea({
   const [hasVoted, setHasVoted] = useState(false)
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [portalContainer, setPortalContainer] = useState<HTMLElement | null>(null)
+  const [wantsCoffeeBreak, setWantsCoffeeBreak] = useState(false)
+  const [taskTooBig, setTaskTooBig] = useState(false)
+  const [scopeUnclear, setScopeUnclear] = useState(false)
 
   const checkExistingVote = useCallback(async () => {
     try {
@@ -85,14 +88,22 @@ export default function VotingArea({
         .single()
 
       if (existingVote) {
-        const storedFactors = (existingVote.factors || {}) as Partial<EstimationFactors>
+        const storedFactors = (existingVote.factors || {}) as Partial<EstimationFactors> & {
+          wantsCoffeeBreak?: boolean
+          taskTooBig?: boolean
+          scopeUnclear?: boolean
+        }
         setFactors(prev => ({
           ...prev,
           ...storedFactors,
           designerLevels: Array.isArray(storedFactors.designerLevels) ? storedFactors.designerLevels : prev.designerLevels,
+          fidelity: Array.isArray(storedFactors.fidelity) ? storedFactors.fidelity : (typeof storedFactors.fidelity === 'number' ? [storedFactors.fidelity] : prev.fidelity),
           discoveryActivities: Array.isArray(storedFactors.discoveryActivities) ? storedFactors.discoveryActivities : prev.discoveryActivities,
           designActivities: Array.isArray(storedFactors.designActivities) ? storedFactors.designActivities : prev.designActivities
         }))
+        setWantsCoffeeBreak(storedFactors.wantsCoffeeBreak || false)
+        setTaskTooBig(storedFactors.taskTooBig || false)
+        setScopeUnclear(storedFactors.scopeUnclear || false)
         setHasVoted(true)
       }
     } catch (error) {
@@ -115,8 +126,13 @@ export default function VotingArea({
     const { sprints, designerCount, breakpoints, fidelity, iterationMultiplier } = factors
     
     // Need at least 3 factors selected to make a suggestion
-    const selectedFactorsCount = [sprints, designerCount, breakpoints, fidelity, iterationMultiplier]
-      .filter(f => f !== null).length
+    const selectedFactorsCount = [
+      sprints !== null,
+      designerCount !== null,
+      breakpoints !== null,
+      fidelity.length > 0,
+      iterationMultiplier !== null
+    ].filter(Boolean).length
     
     if (selectedFactorsCount < 3) return
 
@@ -146,9 +162,10 @@ export default function VotingArea({
       effortScore += breakpoints
     }
     
-    // Fidelity contribution (higher fidelity = more effort)
-    if (fidelity !== null) {
-      effortScore += fidelity
+    // Fidelity contribution (sum of selected fidelity values = more effort)
+    if (fidelity.length > 0) {
+      const fidelitySum = fidelity.reduce((sum, val) => sum + val, 0)
+      effortScore += fidelitySum
     }
     
     // Iteration multiplier (more iterations = more effort)
@@ -176,8 +193,12 @@ export default function VotingArea({
     // Need effort and at least 2 other factors selected to make a suggestion
     if (effort === null) return
     
-    const selectedFactorsCount = [designerCount, breakpoints, fidelity, iterationMultiplier]
-      .filter(f => f !== null).length
+    const selectedFactorsCount = [
+      designerCount !== null,
+      breakpoints !== null,
+      fidelity.length > 0,
+      iterationMultiplier !== null
+    ].filter(Boolean).length
     
     if (selectedFactorsCount < 2) return
 
@@ -202,10 +223,11 @@ export default function VotingArea({
       sprintScore += (breakpoints - 1) * 0.1
     }
     
-    // Fidelity contribution (higher fidelity = more sprints)
-    if (fidelity !== null) {
-      if (fidelity >= 3) sprintScore += 0.3
-      if (fidelity >= 8) sprintScore += 0.2
+    // Fidelity contribution (sum of selected fidelity values = more sprints)
+    if (fidelity.length > 0) {
+      const fidelitySum = fidelity.reduce((sum, val) => sum + val, 0)
+      if (fidelitySum >= 3) sprintScore += 0.3
+      if (fidelitySum >= 6) sprintScore += 0.2
     }
     
     // Iteration multiplier (more iterations = more sprints)
@@ -256,7 +278,7 @@ export default function VotingArea({
            factors.designerCount !== null &&
            factors.designerLevels.length === factors.designerCount &&
            factors.breakpoints !== null &&
-           factors.fidelity !== null &&
+           factors.fidelity.length > 0 &&
            factors.meetingBuffer !== null &&
            factors.iterationMultiplier !== null
   }
@@ -292,7 +314,12 @@ export default function VotingArea({
           task_id: taskId,
           participant_id: participantId,
           value: finalEstimate,
-          factors: factors
+          factors: {
+            ...factors,
+            wantsCoffeeBreak,
+            taskTooBig,
+            scopeUnclear
+          }
         })
 
       if (error) throw error
@@ -315,6 +342,38 @@ export default function VotingArea({
     }
   }
 
+  const skipVote = async () => {
+    setIsSubmitting(true)
+    
+    try {
+      // Submit a skip vote with value -1 and skipped flag
+      const { error } = await supabase
+        .from('votes')
+        .upsert({
+          task_id: taskId,
+          participant_id: participantId,
+          value: -1, // Special value to indicate skipped
+          factors: {
+            skipped: true,
+            wantsCoffeeBreak,
+            taskTooBig,
+            scopeUnclear
+          }
+        })
+
+      if (error) throw error
+
+      setHasVoted(true)
+      toast.success('Vote skipped')
+      onVoteSubmitted()
+    } catch (error) {
+      console.error('Error skipping vote:', error)
+      toast.error(`Failed to skip vote: ${error instanceof Error ? error.message : 'Unknown error'}`)
+    } finally {
+      setIsSubmitting(false)
+    }
+  }
+
 
   const calculateOptionPoints = (
     factorType: keyof EstimationFactors | 'activity',
@@ -325,7 +384,7 @@ export default function VotingArea({
     const defaultEffort = 4 // Medium
     const defaultSprints = 0.5 // Half sprint
     const defaultBreakpoints = 2 // Desktop + Mobile
-    const defaultFidelity = 3 // Hi-fi
+    const defaultFidelity = [3] // Hi-fi (as array)
     const defaultDesignerCount = 1
     const defaultDesignerLevels = [2] // Senior
     const defaultMeetingBuffer = 0
@@ -413,13 +472,15 @@ export default function VotingArea({
         designActivities: defaultDesignActivities
       })
     } else if (factorType === 'fidelity') {
+      // For fidelity, add this value to the default array
+      const fidelityWithOption = [...defaultFidelity, value]
       estimateWithOption = calculateEstimate({
         effort: defaultEffort,
         sprints: defaultSprints,
         designerCount: defaultDesignerCount,
         designerLevels: defaultDesignerLevels,
         breakpoints: defaultBreakpoints,
-        fidelity: value,
+        fidelity: fidelityWithOption,
         meetingBuffer: defaultMeetingBuffer,
         iterationMultiplier: defaultIterationMultiplier,
         discoveryActivities: defaultDiscoveryActivities,
@@ -566,7 +627,9 @@ export default function VotingArea({
     const selectedValue = factors[factorType]
     const isEffortSelector = factorType === 'effort'
     const isSprintSelector = factorType === 'sprints'
+    const isFidelitySelector = factorType === 'fidelity'
     const isSuggested = (isEffortSelector || isSprintSelector) && selectedValue !== null
+    const selectedFidelity = isFidelitySelector ? (selectedValue as number[]) : []
     
     return (
       <div className="space-y-3">
@@ -581,13 +644,17 @@ export default function VotingArea({
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2">
           {options.map((option) => {
             const points = calculateOptionPoints(factorType, option.value)
+            const isSelected = isFidelitySelector 
+              ? selectedFidelity.includes(option.value)
+              : selectedValue === option.value
+            
             return (
               <Button
                 key={option.value}
-                variant={selectedValue === option.value ? "default" : "outline"}
+                variant={isSelected ? "default" : "outline"}
                 size="sm"
                 className="h-auto p-3 flex flex-col items-start text-left min-h-[60px] break-words relative"
-                onClick={() => updateFactor(factorType, option.value)}
+                onClick={() => isFidelitySelector ? toggleFidelity(option.value) : updateFactor(factorType, option.value)}
               >
                 {points > 0 && (
                   <span className="absolute top-1 right-1 text-[9px] font-medium text-slate-500">
@@ -675,6 +742,17 @@ export default function VotingArea({
         ? currentSelections.filter(id => id !== activityId)
         : [...currentSelections, activityId]
       return { ...prev, [factorType]: updatedSelections }
+    })
+  }
+
+  const toggleFidelity = (fidelityValue: number) => {
+    setFactors(prev => {
+      const currentSelections = prev.fidelity
+      const exists = currentSelections.includes(fidelityValue)
+      const updatedSelections = exists
+        ? currentSelections.filter(val => val !== fidelityValue)
+        : [...currentSelections, fidelityValue]
+      return { ...prev, fidelity: updatedSelections }
     })
   }
 
@@ -851,17 +929,62 @@ export default function VotingArea({
           <div className="text-sm font-medium text-blue-800 mt-2">{hoursEstimate}</div>
         </div>
 
-        {/* Submit Button - Only show when estimation is complete */}
-        {isEstimationComplete() && (
-          <Button 
-            onClick={submitVote} 
-            disabled={isSubmitting}
-            className="w-full bg-blue-600 hover:bg-blue-700"
+        {/* Emoji Action Buttons */}
+        <div className="flex gap-2 justify-center">
+          <Button
+            onClick={() => setWantsCoffeeBreak(!wantsCoffeeBreak)}
+            variant={wantsCoffeeBreak ? "default" : "outline"}
             size="sm"
+            className={`flex-1 ${wantsCoffeeBreak ? 'bg-amber-100 hover:bg-amber-200 border-amber-300 text-amber-800' : ''}`}
+            title="I need a coffee break"
           >
-            {isSubmitting ? 'Submitting...' : 'Submit Estimate'}
+            ☕
           </Button>
-        )}
+          <Button
+            onClick={() => setTaskTooBig(!taskTooBig)}
+            variant={taskTooBig ? "default" : "outline"}
+            size="sm"
+            className={`flex-1 ${taskTooBig ? 'bg-red-100 hover:bg-red-200 border-red-300 text-red-800' : ''}`}
+            title="This task is way too big"
+          >
+            ∞
+          </Button>
+          <Button
+            onClick={() => setScopeUnclear(!scopeUnclear)}
+            variant={scopeUnclear ? "default" : "outline"}
+            size="sm"
+            className={`flex-1 ${scopeUnclear ? 'bg-yellow-100 hover:bg-yellow-200 border-yellow-300 text-yellow-800' : ''}`}
+            title="Scope is unclear or I have questions"
+          >
+            ❓
+          </Button>
+        </div>
+
+        {/* Action Buttons */}
+        <div className="space-y-2">
+          {/* Submit Button - Only show when estimation is complete */}
+          {isEstimationComplete() && (
+            <Button 
+              onClick={submitVote} 
+              disabled={isSubmitting}
+              className="w-full bg-blue-600 hover:bg-blue-700"
+              size="sm"
+            >
+              {isSubmitting ? 'Submitting...' : 'Submit Estimate'}
+            </Button>
+          )}
+          
+          {/* Skip Vote Button - Always visible */}
+          <Button 
+            onClick={skipVote} 
+            disabled={isSubmitting || hasVoted}
+            className="w-full bg-gray-200 hover:bg-gray-300 text-gray-700"
+            size="sm"
+            variant="outline"
+          >
+            {isSubmitting ? 'Processing...' : 'Skip Vote'}
+          </Button>
+        </div>
       </CardContent>
     </Card>
   )

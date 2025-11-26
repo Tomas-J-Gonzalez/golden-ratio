@@ -68,15 +68,18 @@ export default function VotesHidden({
           <div className="space-y-2">
             <h4 className="text-sm font-medium text-gray-700 mb-3">Participants Who Voted:</h4>
             <div className="flex flex-wrap gap-2">
-              {votes.map((vote) => (
-                <Badge 
-                  key={vote.id}
-                  variant="default"
-                  className="bg-green-100 text-green-800 border-green-200"
-                >
-                  {getParticipantName(vote.participant_id)} ✓
-                </Badge>
-              ))}
+              {votes.map((vote) => {
+                const isSkipped = vote.value === -1 || (vote.factors as { skipped?: boolean } | undefined)?.skipped === true
+                return (
+                  <Badge 
+                    key={vote.id}
+                    variant="default"
+                    className={isSkipped ? "bg-gray-100 text-gray-600 border-gray-200" : "bg-green-100 text-green-800 border-green-200"}
+                  >
+                    {getParticipantName(vote.participant_id)} {isSkipped ? '⊘' : '✓'}
+                  </Badge>
+                )
+              })}
             </div>
           </div>
         </div>

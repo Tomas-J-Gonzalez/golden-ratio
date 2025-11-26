@@ -33,7 +33,7 @@ interface VoteFactors {
   designerLevels?: number[]
   designers?: number // Legacy field
   breakpoints: number
-  fidelity: number
+  fidelity: number | number[] // Can be single number or array
   deliverables?: number
   meetingBuffer?: number
   iterationMultiplier?: number
@@ -61,7 +61,7 @@ export default function VotingResults({ taskTitle, taskId, votes, participants, 
     return participant ? participant.nickname : 'Unknown'
   }
 
-  const getFactorLabel = (factorType: string, value: number) => {
+  const getFactorLabel = (factorType: string, value: number | number[]) => {
     switch (factorType) {
       case 'effort':
         return EFFORT_OPTIONS.find(o => o.value === value)?.label || 'Unknown'
@@ -75,6 +75,9 @@ export default function VotingResults({ taskTitle, taskId, votes, participants, 
       case 'breakpoints':
         return BREAKPOINT_OPTIONS.find(o => o.value === value)?.label || 'Unknown'
       case 'fidelity':
+        if (Array.isArray(value)) {
+          return value.map(val => FIDELITY_OPTIONS.find(o => o.value === val)?.label || 'Unknown').join(', ')
+        }
         return FIDELITY_OPTIONS.find(o => o.value === value)?.label || 'Unknown'
       case 'deliverables':
         return DELIVERABLES_OPTIONS.find(o => o.value === value)?.label || 'Unknown'
@@ -115,11 +118,14 @@ export default function VotingResults({ taskTitle, taskId, votes, participants, 
   const generateMarkdownSummary = () => {
     const estimates = votes.map(vote => {
       if (vote.factors && typeof vote.factors === 'object') {
-        const factors = vote.factors as VoteFactors
-        const baseEstimate = factors.time || 1
-        const designerTotal = factors.designerCount || factors.designers || 1
-        const complexityMultiplier = (factors.effort + factors.sprints + designerTotal + factors.breakpoints + factors.fidelity) / 5
-        return Math.round(baseEstimate * complexityMultiplier)
+      const factors = vote.factors as VoteFactors
+      const fidelityValue = Array.isArray(factors.fidelity) 
+        ? factors.fidelity.reduce((sum, val) => sum + val, 0)
+        : factors.fidelity
+      const baseEstimate = factors.time || 1
+      const designerTotal = factors.designerCount || factors.designers || 1
+      const complexityMultiplier = (factors.effort + factors.sprints + designerTotal + factors.breakpoints + fidelityValue) / 5
+      return Math.round(baseEstimate * complexityMultiplier)
       }
       return 0
     })
@@ -195,13 +201,16 @@ export default function VotingResults({ taskTitle, taskId, votes, participants, 
         if (vote.factors && typeof vote.factors === 'object') {
           const factors = vote.factors as Record<string, number | number[] | string[]>
           // Use the same calculation as VotingArea
+          const fidelityValue: number | number[] = Array.isArray(factors.fidelity) && factors.fidelity.every(v => typeof v === 'number')
+            ? factors.fidelity as number[]
+            : (typeof factors.fidelity === 'number' ? factors.fidelity : [1])
           return calculateEstimate({
             effort: (typeof factors.effort === 'number' ? factors.effort : 1),
             sprints: (typeof factors.sprints === 'number' ? factors.sprints : 0.1),
             designerCount: (typeof factors.designerCount === 'number' ? factors.designerCount : 1),
             designerLevels: toNumberArray(factors.designerLevels, [1]),
             breakpoints: (typeof factors.breakpoints === 'number' ? factors.breakpoints : 1),
-            fidelity: (typeof factors.fidelity === 'number' ? factors.fidelity : 1),
+            fidelity: fidelityValue,
             meetingBuffer: (typeof factors.meetingBuffer === 'number' ? factors.meetingBuffer : 0),
             iterationMultiplier: (typeof factors.iterationMultiplier === 'number' ? factors.iterationMultiplier : 1),
             discoveryActivities: toStringArray(factors.discoveryActivities),
@@ -236,18 +245,32 @@ export default function VotingResults({ taskTitle, taskId, votes, participants, 
     }
   }
 
-  // Calculate statistics using the improved calculateEstimate function
-  const estimates = votes.map(vote => {
+  // Check if vote is skipped
+  const isSkippedVote = (vote: Vote) => {
+    if (vote.value === -1) return true
+    const factors = vote.factors as { skipped?: boolean } | undefined
+    return factors?.skipped === true
+  }
+
+  // Filter out skipped votes for calculations
+  const nonSkippedVotes = votes.filter(vote => !isSkippedVote(vote))
+  const skippedVotes = votes.filter(vote => isSkippedVote(vote))
+
+  // Calculate statistics using the improved calculateEstimate function (only for non-skipped votes)
+  const estimates = nonSkippedVotes.map(vote => {
     if (vote.factors && typeof vote.factors === 'object') {
       const factors = vote.factors as Record<string, number | number[] | string[]>
       // Use the same calculation as VotingArea
+      const fidelityValue: number | number[] = Array.isArray(factors.fidelity) && factors.fidelity.every(v => typeof v === 'number')
+        ? factors.fidelity as number[]
+        : (typeof factors.fidelity === 'number' ? factors.fidelity : [1])
       return calculateEstimate({
         effort: (typeof factors.effort === 'number' ? factors.effort : 1),
         sprints: (typeof factors.sprints === 'number' ? factors.sprints : 0.1),
         designerCount: (typeof factors.designerCount === 'number' ? factors.designerCount : 1),
         designerLevels: toNumberArray(factors.designerLevels, [1]),
         breakpoints: (typeof factors.breakpoints === 'number' ? factors.breakpoints : 1),
-        fidelity: (typeof factors.fidelity === 'number' ? factors.fidelity : 1),
+        fidelity: fidelityValue,
         meetingBuffer: (typeof factors.meetingBuffer === 'number' ? factors.meetingBuffer : 0),
         iterationMultiplier: (typeof factors.iterationMultiplier === 'number' ? factors.iterationMultiplier : 1),
         discoveryActivities: toStringArray(factors.discoveryActivities),
@@ -265,7 +288,7 @@ export default function VotingResults({ taskTitle, taskId, votes, participants, 
     { label: 'Minimum', value: estimateToTShirtSize(minEstimate), sublabel: `${minEstimate} pts` },
     { label: 'Average', value: estimateToTShirtSize(averageEstimate), sublabel: `${averageEstimate} pts`, highlight: true },
     { label: 'Maximum', value: estimateToTShirtSize(maxEstimate), sublabel: `${maxEstimate} pts` },
-    { label: 'Participants', value: votes.length, sublabel: 'completed votes' }
+    { label: 'Participants', value: nonSkippedVotes.length, sublabel: skippedVotes.length > 0 ? `${skippedVotes.length} skipped` : 'completed votes' }
   ]
 
   return (
@@ -337,14 +360,39 @@ export default function VotingResults({ taskTitle, taskId, votes, participants, 
               <p className="text-xs text-slate-500">Each participant’s rationale grouped by scope, team and execution</p>
             </div>
             <Badge className="w-fit bg-slate-100 text-slate-700">
-              {votes.length} {votes.length === 1 ? 'vote' : 'votes'}
+              {nonSkippedVotes.length} {nonSkippedVotes.length === 1 ? 'vote' : 'votes'}
+              {skippedVotes.length > 0 && ` • ${skippedVotes.length} skipped`}
             </Badge>
           </div>
 
+          {/* Show skipped votes first */}
+          {skippedVotes.length > 0 && (
+            <div className="space-y-2 mb-4">
+              <h4 className="text-xs font-medium text-slate-600">Skipped Votes</h4>
+              <div className="space-y-2">
+                {skippedVotes.map((vote) => (
+                  <Card key={vote.id} className="border-gray-200 bg-gray-50">
+                    <CardHeader className="pb-3">
+                      <div className="flex items-center justify-between">
+                        <CardTitle className="text-sm font-medium text-gray-700">
+                          {getParticipantName(vote.participant_id)}
+                        </CardTitle>
+                        <Badge variant="outline" className="bg-gray-100 text-gray-600 border-gray-300">
+                          Skipped
+                        </Badge>
+                      </div>
+                    </CardHeader>
+                  </Card>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Show non-skipped votes */}
           <div className="grid gap-4">
-            {votes.map((vote) => {
+            {nonSkippedVotes.map((vote) => {
               const factors = vote.factors as VoteFactors
-              const estimate = estimates[votes.indexOf(vote)]
+              const estimate = estimates[nonSkippedVotes.indexOf(vote)]
 
               // Design effort variables (factors that affect complexity)
               const designEffortItems = [
