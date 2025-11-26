@@ -480,12 +480,6 @@ export default function SessionPage({ sessionCode }: SessionPageProps) {
   // Only count votes from active participants to prevent issues when participants are kicked
   const activeParticipantIds = new Set(participants.map(p => p.id))
   const activeVotes = votes.filter(vote => activeParticipantIds.has(vote.participant_id))
-  // Check if vote is skipped (value === -1 or factors.skipped === true)
-  const isSkippedVote = (vote: Vote) => {
-    if (vote.value === -1) return true
-    const factors = vote.factors as { skipped?: boolean } | undefined
-    return factors?.skipped === true
-  }
   // All participants have voted (either submitted or skipped)
   const allParticipantsVoted = currentTask && activeVotes.length >= participants.length && participants.length > 0
   const isVotingInProgress = currentTask?.status === 'voting'
@@ -756,13 +750,7 @@ export default function SessionPage({ sessionCode }: SessionPageProps) {
       <ConfirmDialog
         open={leaveDialogOpen}
         onOpenChange={setLeaveDialogOpen}
-        onConfirm={() => {
-          if (currentParticipant?.is_moderator) {
-            endSession()
-          } else {
-            leaveSession()
-          }
-        }}
+        onConfirm={confirmLeaveSession}
         title={currentParticipant?.is_moderator ? "End Session?" : "Leave Session?"}
         description={
           currentParticipant?.is_moderator
