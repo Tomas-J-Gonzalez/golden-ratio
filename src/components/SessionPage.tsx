@@ -382,6 +382,35 @@ export default function SessionPage({ sessionCode }: SessionPageProps) {
     }
   }
 
+  const hideVotes = async () => {
+    if (!currentTask || !isModerator) return
+
+    try {
+      const { error } = await supabase
+        .from('tasks')
+        .update({ votes_revealed: false })
+        .eq('id', currentTask.id)
+
+      if (error) {
+        console.error('Error details:', error)
+        // If column doesn't exist yet, just hide results anyway
+        if (error.message?.includes('column') || error.code === '42703') {
+          toast.info('Hiding results (database migration needed)')
+          // Force update by reloading
+          loadSessionData()
+          return
+        }
+        throw error
+      }
+      
+      toast.success('Votes hidden!')
+      loadSessionData()
+    } catch (error) {
+      console.error('Error hiding votes:', error)
+      toast.error('Failed to hide votes. Please try again.')
+    }
+  }
+
   const updateParticipantEmoji = async (emoji: string) => {
     if (!selectedParticipantForEmoji) return
 
@@ -647,6 +676,7 @@ export default function SessionPage({ sessionCode }: SessionPageProps) {
                       participants={participants}
                       isModerator={isModerator}
                       onTaskCompleted={handleTaskUpdate}
+                      onHideVotes={hideVotes}
                     />
                   ) : (
                     <VotesHidden

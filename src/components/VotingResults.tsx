@@ -4,7 +4,7 @@ import { useState } from 'react'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
-import { Copy, Check, CheckCircle } from 'lucide-react'
+import { Copy, Check, CheckCircle, EyeOff } from 'lucide-react'
 import { Vote, Participant, supabase } from '@/lib/supabase'
 import { toast } from 'sonner'
 import { 
@@ -50,9 +50,10 @@ interface VotingResultsProps {
   participants: Participant[]
   isModerator: boolean
   onTaskCompleted?: () => void
+  onHideVotes?: () => void
 }
 
-export default function VotingResults({ taskTitle, taskId, votes, participants, isModerator, onTaskCompleted }: VotingResultsProps) {
+export default function VotingResults({ taskTitle, taskId, votes, participants, isModerator, onTaskCompleted, onHideVotes }: VotingResultsProps) {
   const [copied, setCopied] = useState(false)
   const [isCompleting, setIsCompleting] = useState(false)
 
@@ -304,6 +305,17 @@ export default function VotingResults({ taskTitle, taskId, votes, participants, 
             </CardDescription>
           </div>
           <div className="flex flex-wrap gap-2">
+            {isModerator && onHideVotes && (
+              <Button
+                onClick={onHideVotes}
+                variant="outline"
+                size="sm"
+                className="flex items-center gap-2"
+              >
+                <EyeOff className="w-4 h-4" />
+                Hide Votes
+              </Button>
+            )}
             <Button
               onClick={copyToClipboard}
               variant="outline"
