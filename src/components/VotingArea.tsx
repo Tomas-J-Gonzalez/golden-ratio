@@ -883,7 +883,11 @@ export default function VotingArea({
               )}
             </div>
             <div><strong>Breakpoints:</strong> {BREAKPOINT_OPTIONS.find(o => o.value === factors.breakpoints)?.label}</div>
-            <div><strong>Fidelity:</strong> {FIDELITY_OPTIONS.find(o => o.value === factors.fidelity)?.label}</div>
+            <div><strong>Fidelity:</strong> {
+              Array.isArray(factors.fidelity) 
+                ? factors.fidelity.map(val => FIDELITY_OPTIONS.find(o => o.value === val)?.label).filter(Boolean).join(', ')
+                : FIDELITY_OPTIONS.find(o => o.value === factors.fidelity)?.label
+            }</div>
             <div><strong>Meeting Buffer:</strong> {MEETING_BUFFER_OPTIONS.find(o => o.value === factors.meetingBuffer)?.label}</div>
             <div><strong>Design Iterations:</strong> {ITERATION_MULTIPLIER_OPTIONS.find(o => o.value === factors.iterationMultiplier)?.label}</div>
             <div><strong>Final Estimate:</strong> {finalEstimate ? estimateToTShirtSize(finalEstimate) : 'Not set'}</div>
