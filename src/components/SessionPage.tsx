@@ -769,6 +769,9 @@ export default function SessionPage({ sessionCode }: SessionPageProps) {
             ? "This will end the session for all participants and take you to a summary page. The session data will be preserved."
             : "Are you sure you want to leave this session? You can rejoin using the session code."
         }
+        confirmText={currentParticipant?.is_moderator ? "End Session" : "Leave Session"}
+        cancelText={currentParticipant?.is_moderator ? "Continue Session" : "Stay"}
+        variant="destructive"
       />
 
       {/* Kick Participant Confirmation Dialog */}
@@ -784,11 +787,6 @@ export default function SessionPage({ sessionCode }: SessionPageProps) {
         }
         confirmText="Remove"
         cancelText="Cancel"
-        variant="destructive"
-      />
-        confirmText={currentParticipant?.is_moderator ? "End Session" : "Leave Session"}
-        cancelText={currentParticipant?.is_moderator ? "Continue Session" : "Stay"}
-        onConfirm={confirmLeaveSession}
         variant="destructive"
       />
 
