@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
@@ -46,6 +46,10 @@ export default function TaskHistory({ tasks, participants, isModerator = false, 
   const [taskVotes, setTaskVotes] = useState<Vote[]>([])
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false)
   const [taskToDelete, setTaskToDelete] = useState<Task | null>(null)
+  const tableWrapperRef = useRef<HTMLDivElement | null>(null)
+  const dragStartX = useRef(0)
+  const scrollStartX = useRef(0)
+  const [isDragging, setIsDragging] = useState(false)
 
   const completedTasks = tasks.filter(task => task.status === 'completed')
 
@@ -206,7 +210,23 @@ export default function TaskHistory({ tasks, participants, isModerator = false, 
       </CardHeader>
       {!isCollapsed && (
         <CardContent>
-          <div className="rounded-md border">
+          <div
+            className="rounded-md border overflow-auto"
+            ref={tableWrapperRef}
+            onMouseDown={(e) => {
+              dragStartX.current = e.clientX
+              scrollStartX.current = tableWrapperRef.current?.scrollLeft || 0
+              setIsDragging(true)
+            }}
+            onMouseMove={(e) => {
+              if (!isDragging || !tableWrapperRef.current) return
+              const delta = dragStartX.current - e.clientX
+              tableWrapperRef.current.scrollLeft = scrollStartX.current + delta
+            }}
+            onMouseLeave={() => setIsDragging(false)}
+            onMouseUp={() => setIsDragging(false)}
+            style={{ cursor: isDragging ? 'grabbing' : 'grab' }}
+          >
             <Table>
             <TableHeader>
               <TableRow>

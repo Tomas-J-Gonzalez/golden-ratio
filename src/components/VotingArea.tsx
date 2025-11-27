@@ -255,11 +255,11 @@ export default function VotingArea({
             <div className="text-sm font-medium text-gray-700">Select Points</div>
             <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
               {POINT_OPTIONS.map((option) => (
-                <div key={option.value} className="relative group">
+                <div key={option.value} className="relative group min-h-[64px]">
                   <Button
                     onClick={() => setSelectedPoint(option.value)}
                     variant={selectedPoint === option.value ? "default" : "outline"}
-                    className={`h-16 flex flex-col items-start justify-center gap-1 px-3 text-left ${
+                    className={`h-16 w-full flex flex-col items-start justify-center gap-1 px-3 text-left ${
                       selectedPoint === option.value 
                         ? 'bg-blue-600 hover:bg-blue-700 text-white' 
                         : 'hover:bg-gray-50'
@@ -277,7 +277,7 @@ export default function VotingArea({
                       <Info className="w-3 h-3" />
                     </span>
                   </Button>
-                  <div className="pointer-events-none absolute top-0 right-0 mt-10 mr-2 hidden w-40 rounded border border-slate-200 bg-slate-900/90 p-2 text-xs text-white shadow-lg opacity-0 transition-opacity group-hover:block group-hover:opacity-100">
+                  <div className="pointer-events-none absolute left-1/2 top-full mt-2 hidden w-48 -translate-x-1/2 rounded border border-slate-200 bg-slate-900/90 p-2 text-xs text-white shadow-lg opacity-0 transition-opacity group-hover:block group-hover:opacity-100">
                     {option.description}
                   </div>
                 </div>
