@@ -270,16 +270,15 @@ export default function VotingArea({
                       <span className="text-xs font-semibold">pt</span>
                     </span>
                     <span className="text-xs opacity-80">{option.description.split(' - ')[1]}</span>
-                    <span
-                      className="absolute top-2 right-2 text-gray-400 transition-colors hover:text-gray-600"
-                      aria-hidden="true"
-                    >
-                      <Info className="w-3 h-3" />
+                <span className="absolute top-2 right-2">
+                  <span className="relative inline-flex group" aria-hidden="true">
+                    <Info className="w-3 h-3 text-gray-400 transition-colors hover:text-gray-600" />
+                    <span className="pointer-events-none absolute left-1/2 top-full z-50 mt-2 -translate-x-1/2 rounded border border-slate-200 bg-slate-900/90 p-2 text-xs text-white shadow-lg opacity-0 transition-opacity group-hover:block group-hover:opacity-100">
+                      {option.description}
                     </span>
-                  </Button>
-                  <div className="pointer-events-none absolute left-1/2 top-full mt-2 hidden w-48 -translate-x-1/2 rounded border border-slate-200 bg-slate-900/90 p-2 text-xs text-white shadow-lg opacity-0 transition-opacity group-hover:block group-hover:opacity-100">
-                    {option.description}
-                  </div>
+                  </span>
+                </span>
+              </Button>
                 </div>
               ))}
             </div>
